@@ -1,9 +1,12 @@
+import os
+# Set up display for headless environment before importing pygame
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+
 import pygame
 import math
 import time
 import random
 import json
-import os
 
 # Sierra 256-color VGA palette (as RGB tuples for modern Pygame)
 VGA_PALETTE = [
@@ -328,7 +331,11 @@ class Room:
 class Game:
     def __init__(self):
         pygame.init()
-        pygame.mixer.init()
+        # Try to initialize audio, but don't fail if no audio device is available
+        try:
+            pygame.mixer.init()
+        except pygame.error:
+            print("Warning: No audio device available. Game will run without sound.")
         
         self.width, self.height = 320, 200
         self.screen = pygame.display.set_mode((self.width, self.height))
