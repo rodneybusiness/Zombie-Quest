@@ -5,7 +5,7 @@ import random
 import json
 import os
 
-# Sierra 256-color VGA palette
+# Sierra 256-color VGA palette (as RGB tuples for modern Pygame)
 VGA_PALETTE = [
     (0, 0, 0), (0, 0, 170), (0, 170, 0), (0, 170, 170), (170, 0, 0), (170, 0, 170), (170, 85, 0), (170, 170, 170),
     (85, 85, 85), (85, 85, 255), (85, 255, 85), (85, 255, 255), (255, 85, 85), (255, 85, 255), (255, 255, 85), (255, 255, 255),
@@ -333,9 +333,6 @@ class Game:
         self.width, self.height = 320, 200
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("1950's Zombie Quest - Enhanced Edition")
-        
-        # Note: Modern Pygame doesn't support palette-based surfaces
-        # We'll use the VGA colors directly in our drawing functions
         
         # Create game objects
         self.inventory = Inventory()

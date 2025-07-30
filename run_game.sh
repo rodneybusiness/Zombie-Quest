@@ -6,6 +6,6 @@ if ! python3 -c "import pygame" 2>/dev/null; then
     pip3 install pygame
 fi
 
-# Run the game
-echo "Starting 1950's Zombie Quest - Enhanced Edition..."
-python3 zombie_quest.py
+# Run the fixed game
+echo "Starting 1950's Zombie Quest - Enhanced Edition (Fixed)..."
+python3 zombie_quest_fixed.py
