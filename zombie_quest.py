@@ -279,8 +279,6 @@ class Room:
         self.zombies = zombies or []
         self.priority_mask = priority_mask
         self.background_surface = None
-        self.palette_cycle_timer = 0
-        self.palette_cycle_index = 0
         
     def generate_background(self, width, height):
         if self.background_surface is None:
@@ -336,8 +334,8 @@ class Game:
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("1950's Zombie Quest - Enhanced Edition")
         
-        # Set VGA palette
-        self.screen.set_palette(VGA_PALETTE)
+        # Note: Modern Pygame doesn't support palette-based surfaces
+        # We'll use the VGA colors directly in our drawing functions
         
         # Create game objects
         self.inventory = Inventory()
