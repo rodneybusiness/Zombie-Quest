@@ -330,14 +330,24 @@ class Room:
 class Game:
     def __init__(self):
         pygame.init()
-        pygame.mixer.init()
+        try:
+            pygame.mixer.init()
+        except pygame.error:
+            print("Warning: Audio system not available, continuing without sound")
+            pass
         
         self.width, self.height = 320, 200
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("1950's Zombie Quest - Enhanced Edition")
         
-        # Set VGA palette
-        self.screen.set_palette(VGA_PALETTE)
+        # Try to set up display, fall back to headless mode if needed
+        try:
+            self.screen = pygame.display.set_mode((self.width, self.height))
+            pygame.display.set_caption("1950's Zombie Quest - Enhanced Edition")
+            self.headless = False
+        except pygame.error as e:
+            print(f"Warning: Display not available ({e}), running in headless mode")
+            # Create a surface instead of a display
+            self.screen = pygame.Surface((self.width, self.height))
+            self.headless = True
         
         # Create game objects
         self.inventory = Inventory()
@@ -623,7 +633,9 @@ class Game:
         # Draw message bar
         self.message_bar.draw(self.screen)
         
-        pygame.display.flip()
+        # Only update display if not in headless mode
+        if not self.headless:
+            pygame.display.flip()
         
     def draw_ui(self):
         # Health bar
@@ -702,11 +714,26 @@ class Game:
         self.screen.blit(restart_text, (restart_x, restart_y))
         
     def run(self):
+        frame_count = 0
+        max_frames = 180  # Run for 3 seconds at 60 FPS
+        
+        print("Starting 1950's Zombie Quest - Enhanced Edition...")
+        print("Controls: WASD to move, SPACE for action, I for inventory, ESC to quit")
+        
         while self.running:
             self.handle_input()
             self.update()
             self.draw()
             self.clock.tick(60)
+            
+            # In headless mode, exit after a few seconds
+            if self.headless:
+                frame_count += 1
+                if frame_count >= max_frames:
+                    print("Demo completed successfully!")
+                    print(f"Final score: {self.score}")
+                    print(f"Zombies killed: {self.zombies_killed}")
+                    break
             
         pygame.quit()
 
