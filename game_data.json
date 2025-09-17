@@ -1,0 +1,77 @@
+{
+  "start_room": "street",
+  "items": [
+    {
+      "name": "Copper Key",
+      "description": "A tarnished key that still carries a metallic tang.",
+      "icon_color": [190, 130, 70]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "street",
+      "name": "Abandoned Street",
+      "background": "street",
+      "priority_mask": "street_priority",
+      "walkable_mask": "street_walkable",
+      "start_position": [160, 176],
+      "hotspots": [
+        {
+          "name": "Boarded Door",
+          "rect": [220, 92, 48, 70],
+          "actions": {
+            "look": {
+              "text": "The diner door is boarded shut, but the lock remains.",
+              "failure_text": "The boards look weathered but stubborn."
+            },
+            "use": {
+              "text": "The boards won't budge without some leverage.",
+              "requires_item": "Copper Key",
+              "success_text": "The copper key snaps the old padlock. You pry the door slightly ajar.",
+              "consumes_item": true
+            },
+            "talk": {
+              "text": "You whisper reassurances to the empty doorway."
+            }
+          }
+        },
+        {
+          "name": "Dumpster",
+          "rect": [40, 140, 80, 40],
+          "actions": {
+            "look": {
+              "text": "The dumpster reeks of rot and chemicals.",
+              "gives_item": "Copper Key",
+              "success_text": "You sift through the grime and retrieve a copper key."
+            },
+            "use": {
+              "text": "You've already taken what you need from the trash."
+            },
+            "talk": {
+              "text": "The dumpster gurgles ominously."
+            }
+          }
+        },
+        {
+          "name": "Street Sign",
+          "rect": [80, 96, 28, 60],
+          "actions": {
+            "look": {
+              "text": "'Welcome to Quiet Falls' now sports hastily scratched warnings.",
+              "failure_text": "The letters flicker in your flashlight beam."
+            },
+            "talk": {
+              "text": "You salute the sign. It remains stoic." 
+            }
+          }
+        }
+      ],
+      "zombies": [
+        {
+          "name": "Shambler",
+          "position": [120, 176]
+        }
+      ]
+    }
+  ]
+}

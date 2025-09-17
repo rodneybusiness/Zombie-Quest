@@ -1,0 +1,20 @@
+"""Game configuration constants for the Zombie Quest SCI-inspired engine."""
+
+WORLD_WIDTH = 320
+WORLD_HEIGHT = 200
+WORLD_SCALE = 2
+UI_BAR_HEIGHT = 72
+MESSAGE_BAR_HEIGHT = 56
+SCREEN_WIDTH = WORLD_WIDTH * WORLD_SCALE
+SCREEN_HEIGHT = UI_BAR_HEIGHT + WORLD_HEIGHT * WORLD_SCALE + MESSAGE_BAR_HEIGHT
+FPS = 60
+VERBS = ["WALK", "LOOK", "USE", "TALK"]
+
+# Scaling parameters for pseudo-3D depth
+SCALE_MIN_Y = 48
+SCALE_MAX_Y = 188
+SCALE_MIN_FACTOR = 0.55
+SCALE_MAX_FACTOR = 1.05
+
+# Pathfinding configuration
+PATH_GRID_SIZE = 8
