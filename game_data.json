@@ -1,0 +1,72 @@
+{
+  "hero": {
+    "start_room": "street",
+    "position": [160, 160]
+  },
+  "items": [
+    {
+      "name": "Key",
+      "description": "A tarnished brass key rescued from a forgotten box.",
+      "icon_color": [220, 210, 90]
+    },
+    {
+      "name": "Journal",
+      "description": "Your well-worn journal full of undead survival tips.",
+      "icon_color": [150, 100, 70]
+    }
+  ],
+  "starting_inventory": ["Journal"],
+  "rooms": [
+    {
+      "id": "street",
+      "name": "Main Street",
+      "background_label": "Deserted Street",
+      "priority_regions": [
+        {"shape": "polygon", "points": [[0, 48], [320, 48], [320, 0], [0, 0]]},
+        {"shape": "rect", "rect": [220, 60, 56, 100]}
+      ],
+      "walkable_zones": [
+        {"shape": "polygon", "points": [[12, 150], [308, 150], [308, 198], [12, 198]]},
+        {"shape": "polygon", "points": [[80, 120], [240, 120], [240, 150], [80, 150]]}
+      ],
+      "hotspots": [
+        {
+          "name": "Street Door",
+          "rect": [220, 70, 56, 90],
+          "walk_position": [240, 152],
+          "verbs": {
+            "look": "The door is made of sturdy oak, scarred by claw marks.",
+            "use": "You jiggle the handle, but it refuses to turn.",
+            "use_missing": "You will need a key if you ever hope to open this.",
+            "use_success": "The key turns with a satisfying click as the door creaks ajar.",
+            "talk": "You whisper assurances to the door. It remains stoic."
+          },
+          "required_item": "Key"
+        },
+        {
+          "name": "Newspaper Box",
+          "rect": [60, 118, 42, 64],
+          "walk_position": [82, 160],
+          "verbs": {
+            "look": "Decades of scandalous headlines are crammed inside.",
+            "use": "You rummage through the papers and discover a forgotten key!",
+            "talk": "You debate politics with the faded headlines. They disagree."
+          },
+          "give_item": "Key"
+        },
+        {
+          "name": "Rain Barrel",
+          "rect": [148, 118, 42, 60],
+          "walk_position": [168, 160],
+          "verbs": {
+            "look": "Ripples shiver across the stagnant water, reflecting neon ghosts.",
+            "talk": "You try small talk. The barrel only gurgles."
+          }
+        }
+      ],
+      "zombies": [
+        {"position": [120, 150]}
+      ]
+    }
+  ]
+}
