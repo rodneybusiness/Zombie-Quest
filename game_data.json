@@ -1,0 +1,197 @@
+{
+  "start_room": "street",
+  "rooms": {
+    "street": {
+      "name": "Old Main Street",
+      "background": "street_bg",
+      "priority_mask": "street_priority",
+      "walk_mask": "street_walk",
+      "start_position": [160, 170],
+      "entry_points": {
+        "street_door": [260, 170],
+        "alley_entry": [40, 170]
+      },
+      "hotspots": [
+        {
+          "id": "diner_door",
+          "name": "Diner Door",
+          "rect": [240, 90, 56, 80],
+          "walk_to": [262, 170],
+          "verbs": {
+            "look": "The diner's neon sign flickers like a ghost in the mist.",
+            "talk": "You consider striking up a conversation with the door, then think better of it.",
+            "use": {
+              "requires_item": "brass_key",
+              "requires_selected": true,
+              "message": "The brass key clicks in the old lock.",
+              "set_flag": "diner_unlocked",
+              "failure_message": "It's locked up tight."
+            },
+            "walk": {
+              "requires_flag": "diner_unlocked",
+              "message": "You slip quietly into the diner.",
+              "room": "diner",
+              "entry_point": "street_door",
+              "failure_message": "The door refuses to budge."
+            }
+          }
+        },
+        {
+          "id": "trashcan",
+          "name": "Trashcan",
+          "rect": [70, 130, 36, 40],
+          "walk_to": [88, 170],
+          "verbs": {
+            "look": "A dented trashcan hums with flies and bad memories.",
+            "talk": "You whisper reassurance to the trashcan. It remains stoic.",
+            "use": {
+              "requires_flag_not": "found_key",
+              "message": "Beneath the refuse you rescue a gleaming brass key.",
+              "gives_item": "brass_key",
+              "set_flag": "found_key",
+              "failure_message": "Just soggy newspaper now."
+            }
+          }
+        },
+        {
+          "id": "alley",
+          "name": "Shadowed Alley",
+          "rect": [0, 110, 26, 80],
+          "walk_to": [32, 170],
+          "verbs": {
+            "look": "The alley disappears into darkness that smells of trouble.",
+            "walk": {
+              "message": "You edge into the alleyway.",
+              "room": "alley",
+              "entry_point": "street_entry"
+            },
+            "talk": "The alley answers only with a low moan of wind."
+          }
+        }
+      ],
+      "zombies": [
+        {
+          "position": [210, 150],
+          "patrol": [[210, 150], [250, 160], [180, 165]]
+        }
+      ]
+    },
+    "diner": {
+      "name": "The Midway Diner",
+      "background": "diner_bg",
+      "priority_mask": "diner_priority",
+      "walk_mask": "diner_walk",
+      "start_position": [90, 170],
+      "entry_points": {
+        "street_door": [260, 170]
+      },
+      "hotspots": [
+        {
+          "id": "exit_street",
+          "name": "Front Door",
+          "rect": [0, 130, 40, 70],
+          "walk_to": [28, 170],
+          "verbs": {
+            "look": "Beyond the glass you glimpse the deserted street.",
+            "walk": {
+              "message": "You step back out into the night.",
+              "room": "street",
+              "entry_point": "street_door"
+            }
+          }
+        },
+        {
+          "id": "counter",
+          "name": "Counter",
+          "rect": [60, 90, 200, 60],
+          "walk_to": [160, 170],
+          "verbs": {
+            "look": "Chrome and vinyl, polished even after the fall.",
+            "use": {
+              "requires_flag_not": "found_serum",
+              "message": "You pocket a vial of experimental serum from beneath the counter.",
+              "gives_item": "strange_serum",
+              "set_flag": "found_serum",
+              "failure_message": "You've already taken anything useful."
+            },
+            "talk": "You mutter to the counter as though it might slide you a milkshake."
+          }
+        },
+        {
+          "id": "chef",
+          "name": "Chef's Shadow",
+          "rect": [220, 80, 60, 60],
+          "walk_to": [230, 170],
+          "verbs": {
+            "look": "A silhouette frozen mid-order slips across the wall.",
+            "talk": "The empty kitchen gives no reply.",
+            "use": "You decide against rummaging through the dusty utensils."
+          }
+        }
+      ],
+      "zombies": [
+        {
+          "position": [140, 150],
+          "patrol": [[140, 150], [200, 160], [100, 165]]
+        }
+      ]
+    },
+    "alley": {
+      "name": "Hidden Alley",
+      "background": "alley_bg",
+      "priority_mask": "alley_priority",
+      "walk_mask": "alley_walk",
+      "start_position": [300, 170],
+      "entry_points": {
+        "street_entry": [300, 170]
+      },
+      "hotspots": [
+        {
+          "id": "back_to_street",
+          "name": "Street",
+          "rect": [300, 120, 20, 80],
+          "walk_to": [290, 170],
+          "verbs": {
+            "walk": {
+              "message": "You return to the main street.",
+              "room": "street",
+              "entry_point": "alley_entry"
+            },
+            "look": "The streetlight glow beckons from beyond the alley."
+          }
+        },
+        {
+          "id": "basement_door",
+          "name": "Steel Door",
+          "rect": [40, 110, 40, 70],
+          "walk_to": [60, 170],
+          "verbs": {
+            "look": "A heavy steel door vibrates with distant pounding.",
+            "talk": "You hear muffled thuds from behind the metal.",
+            "use": {
+              "requires_item": "strange_serum",
+              "requires_selected": true,
+              "consume_item": true,
+              "message": "You smear the serum along the hinges; the door relaxes open.",
+              "set_flag": "serum_used",
+              "failure_message": "The hinges refuse to budge without help."
+            }
+          }
+        }
+      ],
+      "zombies": []
+    }
+  },
+  "items": {
+    "brass_key": {
+      "name": "Brass Key",
+      "description": "It smells faintly of coffee and grease.",
+      "icon_color": [200, 180, 60]
+    },
+    "strange_serum": {
+      "name": "Strange Serum",
+      "description": "A shimmering liquid with a hopeful glow.",
+      "icon_color": [120, 220, 220]
+    }
+  }
+}
