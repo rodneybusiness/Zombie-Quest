@@ -1,0 +1,216 @@
+{
+  "start_room": "street",
+  "items": [
+    {
+      "name": "Copper Key",
+      "description": "A tarnished key that still carries a metallic tang.",
+      "icon_color": [190, 130, 70]
+    },
+    {
+      "name": "Strange Coin",
+      "description": "The coin hums softly, etched with a crescent diner logo.",
+      "icon_color": [160, 200, 220]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "street",
+      "name": "Abandoned Street",
+      "background": "street",
+      "priority_mask": "street_priority",
+      "walkable_mask": "street_walkable",
+      "start_position": [160, 176],
+      "ambient_effects": [
+        {
+          "type": "rain",
+          "speed": 120,
+          "density": 0.8
+        },
+        {
+          "type": "neon",
+          "rect": [214, 134, 96, 32],
+          "label": "DINER",
+          "speed": 0.4,
+          "palette": [
+            [200, 68, 128],
+            [244, 200, 160],
+            [140, 210, 220]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Boarded Door",
+          "rect": [220, 92, 48, 70],
+          "approach_points": [[236, 170], [208, 168]],
+          "actions": {
+            "look": {
+              "text": "The diner door is boarded shut, but the lock remains.",
+              "messages": [
+                "Rain streaks through the slats, carrying the scent of stale grease.",
+                "Someone kept this place alive for a long while after the fall."
+              ],
+              "failure_text": "The boards look weathered but stubborn."
+            },
+            "use": {
+              "text": "The boards won't budge without some leverage.",
+              "requires_item": "Copper Key",
+              "success_text": "The copper key snaps the old padlock. You pry the door slightly ajar.",
+              "consumes_item": true,
+              "change_room": "diner_interior",
+              "arrival_position": [112, 174],
+              "messages": [
+                "The diner's warmth spills out to meet you.",
+                "A synth line crackles to life inside."
+              ],
+              "set_state": {"opened": true},
+              "once": true
+            },
+            "talk": {
+              "text": "You whisper reassurances to the empty doorway."
+            }
+          }
+        },
+        {
+          "name": "Dumpster",
+          "rect": [40, 140, 80, 40],
+          "approach_points": [[92, 178], [68, 170]],
+          "actions": {
+            "look": {
+              "text": "The dumpster reeks of rot and chemicals.",
+              "gives_item": "Copper Key",
+              "success_text": "You sift through the grime and retrieve a copper key.",
+              "set_state": {"item_taken": true},
+              "once": true
+            },
+            "use": {
+              "text": "You've already taken what you need from the trash."
+            },
+            "talk": {
+              "text": "The dumpster gurgles ominously."
+            }
+          }
+        },
+        {
+          "name": "Street Sign",
+          "rect": [80, 96, 28, 60],
+          "approach_points": [[96, 164]],
+          "actions": {
+            "look": {
+              "text": "'Welcome to Quiet Falls' now sports hastily scratched warnings.",
+              "failure_text": "The letters flicker in your flashlight beam.",
+              "messages": [
+                "Someone scrawled 'DON'T LISTEN' over the welcome script.",
+                "The paint is still tacky despite the storm."
+              ]
+            },
+            "talk": {
+              "text": "You salute the sign. It remains stoic."
+            }
+          }
+        }
+      ],
+      "zombies": [
+        {
+          "name": "Shambler",
+          "position": [120, 176]
+        }
+      ]
+    },
+    {
+      "id": "diner_interior",
+      "name": "Quiet Falls Diner",
+      "background": "diner_interior",
+      "priority_mask": "diner_priority",
+      "walkable_mask": "diner_walkable",
+      "start_position": [112, 174],
+      "ambient_effects": [
+        {
+          "type": "neon",
+          "rect": [200, 68, 84, 24],
+          "label": "OPEN",
+          "speed": 0.5,
+          "palette": [
+            [240, 96, 180],
+            [220, 200, 160],
+            [140, 200, 240]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Front Door",
+          "rect": [72, 108, 84, 72],
+          "approach_points": [[112, 174], [134, 170]],
+          "actions": {
+            "look": "Beyond the door the storm rages purple.",
+            "use": {
+              "text": "You brace against the wind.",
+              "success_text": "You step back into the neon drizzle.",
+              "change_room": "street",
+              "arrival_position": [208, 172]
+            }
+          }
+        },
+        {
+          "name": "Counter",
+          "rect": [24, 148, 104, 40],
+          "approach_points": [[48, 172]],
+          "actions": {
+            "look": {
+              "text": "Dusty menus list pies no one bakes anymore.",
+              "messages": [
+                "A jukebox still glows, reflecting in sticky syrup.",
+                "Someone carved a map into the laminate."
+              ]
+            },
+            "use": "You drum your fingers, coaxing a lonely rhythm."
+          }
+        },
+        {
+          "name": "Coffee Machine",
+          "rect": [214, 126, 72, 52],
+          "approach_points": [[236, 170]],
+          "actions": {
+            "look": {
+              "text": "The machine burbles to itself, still hot.",
+              "messages": [
+                "Steam wreathes a small object on the drip tray."
+              ]
+            },
+            "use": {
+              "text": "You claim the abandoned brew.",
+              "gives_item": "Strange Coin",
+              "success_text": "A strange coin tumbles free from under the mug.",
+              "set_state": {"coin_taken": true},
+              "once": true
+            }
+          }
+        },
+        {
+          "name": "Booth",
+          "rect": [204, 148, 88, 52],
+          "approach_points": [[188, 174]],
+          "actions": {
+            "look": {
+              "text": "Half-eaten fries glisten with crystallized salt.",
+              "messages": [
+                "A melted holo-photo flickers between two laughing strangers.",
+                "It fades when you blink."
+              ]
+            },
+            "talk": {
+              "text": "You promise the ghosts you'll keep the lights on a little longer."
+            }
+          }
+        }
+      ],
+      "zombies": [
+        {
+          "name": "Short-order Cook",
+          "position": [192, 168]
+        }
+      ]
+    }
+  ]
+}
