@@ -1,5 +1,5 @@
 import pygame
-from typing import List, Tuple, Dict
+from typing import Dict, List, Optional, Tuple
 
 Color = Tuple[int, int, int]
 
@@ -63,24 +63,76 @@ def create_directional_animation(
     return animations
 
 
+def _normalize_color(color: Tuple[int, int, int]) -> Color:
+    return tuple(max(0, min(255, int(component))) for component in color)
+
+
+def _draw_gradient(surface: pygame.Surface, colors: List[Color]) -> None:
+    width, height = surface.get_size()
+    steps = len(colors) - 1
+    if steps <= 0:
+        surface.fill(colors[0] if colors else DEFAULT_BG_COLOR)
+        return
+    for y in range(height):
+        ratio = y / max(1, height - 1)
+        segment = min(int(ratio * steps), steps - 1)
+        local_ratio = ratio * steps - segment
+        start = colors[segment]
+        end = colors[segment + 1]
+        color = (
+            int(start[0] + (end[0] - start[0]) * local_ratio),
+            int(start[1] + (end[1] - start[1]) * local_ratio),
+            int(start[2] + (end[2] - start[2]) * local_ratio),
+        )
+        pygame.draw.line(surface, color, (0, y), (width, y))
+
+
 def create_placeholder_background(
     label: str,
     size: Tuple[int, int] = (320, 200),
     base_color: Color = DEFAULT_BG_COLOR,
+    gradient: Optional[List[Color]] = None,
+    accent_lines: Optional[List[Dict[str, object]]] = None,
+    overlay_shapes: Optional[List[Dict]] = None,
+    label_color: Color = (240, 240, 210),
 ) -> pygame.Surface:
     surface = pygame.Surface(size)
     width, height = size
-    for y in range(height):
-        ratio = y / max(1, height - 1)
-        color = (
-            int(base_color[0] * (0.7 + 0.3 * ratio)),
-            int(base_color[1] * (0.7 + 0.3 * ratio)),
-            int(base_color[2] * (0.7 + 0.3 * ratio)),
-        )
-        pygame.draw.line(surface, color, (0, y), (width, y))
+    if gradient:
+        normalized = [_normalize_color(color) for color in gradient]
+        _draw_gradient(surface, normalized)
+    else:
+        default_gradient = [
+            _normalize_color(tuple(component * 0.7 for component in base_color)),
+            _normalize_color(base_color),
+        ]
+        _draw_gradient(surface, default_gradient)
+    if accent_lines:
+        for line in accent_lines:
+            y = int(line.get("y", 0))
+            line_height = max(1, int(line.get("height", 1)))
+            color = _normalize_color(tuple(line.get("color", (255, 255, 255))))
+            rect = pygame.Rect(0, max(0, y), width, line_height)
+            surface.fill(color, rect)
+    if overlay_shapes:
+        for shape in overlay_shapes:
+            color = _normalize_color(tuple(shape.get("color", (255, 255, 255))))
+            if shape.get("shape") == "rect":
+                rect = pygame.Rect(shape.get("rect", [0, 0, width, height]))
+                pygame.draw.rect(surface, color, rect)
+            elif shape.get("shape") == "polygon":
+                points = [tuple(point) for point in shape.get("points", [])]
+                if len(points) >= 3:
+                    pygame.draw.polygon(surface, color, points)
+            elif shape.get("shape") == "circle":
+                center = tuple(shape.get("center", (0, 0)))
+                radius = int(shape.get("radius", 0))
+                pygame.draw.circle(surface, color, center, radius)
     font = load_serif_font(20)
-    text_surface = font.render(label, True, (240, 240, 210))
+    text_surface = font.render(label, True, label_color)
     text_rect = text_surface.get_rect(center=(width // 2, 24))
+    shadow_surface = font.render(label, True, (0, 0, 0))
+    surface.blit(shadow_surface, text_rect.move(2, 2))
     surface.blit(text_surface, text_rect)
     return surface
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import pygame
 
@@ -20,7 +20,7 @@ class GameEngine:
     def __init__(self, base_path: str) -> None:
         pygame.init()
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
-        pygame.display.set_caption("Zombie Quest - SCI Edition")
+        pygame.display.set_caption("Neon Dead Quest: Minneapolis '82")
         self.clock = pygame.time.Clock()
 
         data = load_game_data(base_path)
@@ -51,6 +51,9 @@ class GameEngine:
 
         self.pending_interaction: Optional[Tuple[Hotspot, Verb]] = None
         self.running = True
+        initial_message = self.current_room.entry_message or "The Minneapolis night hums with feedback."
+        if initial_message:
+            self.message_box.show(initial_message)
 
     def run(self) -> None:  # pragma: no cover - interactive loop
         while self.running:
@@ -98,7 +101,7 @@ class GameEngine:
         verb = self.verb_bar.selected_verb
         if verb == Verb.WALK:
             self.hero.set_destination(room_pos, self.current_room.pathfinder)
-            self.message_box.show("You stride purposefully across the scene.")
+            self.message_box.show("You weave through the neon throng.")
             self.pending_interaction = None
             return
         hotspot = self.current_room.find_hotspot((int(room_pos[0]), int(room_pos[1])))
@@ -130,30 +133,68 @@ class GameEngine:
 
     def perform_hotspot_action(self, hotspot: Hotspot, verb: Verb) -> None:
         selected_item = self.inventory.selected_item
+        interaction_outcome = "default"
         if verb == Verb.LOOK:
-            message = hotspot.message_for("look")
+            message = hotspot.message_for("look", interaction_outcome)
         elif verb == Verb.TALK:
-            message = hotspot.message_for("talk")
+            message = hotspot.message_for("talk", interaction_outcome)
         elif verb == Verb.USE:
             if hotspot.required_item:
                 if selected_item and selected_item.name == hotspot.required_item:
-                    message = hotspot.message_for("use_success")
-                    if hotspot.remove_item:
+                    interaction_outcome = "success"
+                    message = hotspot.message_for("use", interaction_outcome)
+                    if hotspot.remove_item and verb.value in hotspot.remove_item_triggers:
                         self.inventory.remove_item(hotspot.remove_item)
-                    if hotspot.give_item:
+                    if hotspot.give_item and verb.value in hotspot.give_item_triggers:
                         self.give_item_to_inventory(hotspot.give_item)
                         hotspot.give_item = None
                     if selected_item:
                         self.inventory.select_item(None)
                 else:
-                    message = hotspot.message_for("use_missing")
+                    interaction_outcome = "missing"
+                    message = hotspot.message_for("use", interaction_outcome)
             else:
-                message = hotspot.message_for("use")
-                if hotspot.give_item:
+                interaction_outcome = "success"
+                message = hotspot.message_for("use", interaction_outcome)
+                if hotspot.give_item and verb.value in hotspot.give_item_triggers:
                     self.give_item_to_inventory(hotspot.give_item)
                     hotspot.give_item = None
         else:
-            message = hotspot.message_for(verb.value)
+            message = hotspot.message_for(verb.value, interaction_outcome)
+        if hotspot.give_item and verb.value in hotspot.give_item_triggers and interaction_outcome != "missing":
+            self.give_item_to_inventory(hotspot.give_item)
+            hotspot.give_item = None
+        if hotspot.remove_item and verb.value in hotspot.remove_item_triggers and interaction_outcome == "success":
+            self.inventory.remove_item(hotspot.remove_item)
+        should_transition = False
+        if hotspot.target_room and hotspot.transition_verb == verb.value:
+            if hotspot.requires_success_for_transition:
+                should_transition = interaction_outcome == "success"
+            else:
+                should_transition = interaction_outcome != "missing"
+        transition_performed = False
+        if should_transition:
+            combined_message_parts: List[str] = []
+            if message:
+                combined_message_parts.append(message)
+            transition_text = hotspot.transition_message
+            if transition_text:
+                combined_message_parts.append(transition_text)
+            self.change_room(
+                hotspot.target_room,
+                hotspot.target_position,
+                message=None,
+                announce=False,
+            )
+            if not combined_message_parts:
+                combined_message = self.current_room.entry_message or f"You arrive at {self.current_room.name}."
+            else:
+                combined_message = " ".join(combined_message_parts)
+            if combined_message:
+                self.message_box.show(combined_message)
+            transition_performed = True
+        if transition_performed:
+            return
         if not message:
             message = "Nothing happens."
         self.message_box.show(message)
@@ -162,7 +203,28 @@ class GameEngine:
         item = self.items_catalog.get(item_name)
         if item and not self.inventory.has_item(item.name):
             self.inventory.add_item(item)
-            self.message_box.show(f"You obtain the {item.name}.")
+            self.message_box.show(f"You stash the {item.name} in your flight case.")
+
+    def change_room(
+        self,
+        room_id: str,
+        position: Optional[Tuple[int, int]] = None,
+        message: Optional[str] = None,
+        announce: bool = True,
+    ) -> None:
+        room = self.rooms.get(room_id)
+        if not room:
+            return
+        self.current_room = room
+        destination = position or room.default_entry
+        self.hero.position.update(destination)
+        self.hero.path = []
+        self.hero.current_target = None
+        self.pending_interaction = None
+        if announce:
+            entry_message = message or room.entry_message or f"You arrive at {room.name}."
+            if entry_message:
+                self.message_box.show(entry_message)
 
     def draw(self) -> None:
         self.screen.fill((0, 0, 0))

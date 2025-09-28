@@ -85,8 +85,8 @@ class Character:
 
 class Hero(Character):
     def __init__(self, position: WorldPos) -> None:
-        animations = create_directional_animation("Hero", (70, 110, 200), (42, 70))
-        super().__init__("Hero", position, animations, speed=70.0)
+        animations = create_directional_animation("Frontperson", (200, 80, 200), (42, 70))
+        super().__init__("Frontperson", position, animations, speed=75.0)
         self.path: List[pygame.Vector2] = []
         self.current_target: Optional[pygame.Vector2] = None
         self.arrival_tolerance: float = 2.0
@@ -129,8 +129,8 @@ class Hero(Character):
 
 class Zombie(Character):
     def __init__(self, position: WorldPos) -> None:
-        animations = create_directional_animation("Zombie", (120, 180, 120), (40, 64))
-        super().__init__("Zombie", position, animations, speed=40.0)
+        animations = create_directional_animation("Scene Zombie", (140, 210, 140), (40, 64))
+        super().__init__("Scene Zombie", position, animations, speed=42.0)
         self.wander_timer: float = 0.0
         self.wander_direction = pygame.Vector2(0, 0)
 
