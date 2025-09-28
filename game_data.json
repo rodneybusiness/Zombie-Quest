@@ -1,71 +1,342 @@
 {
   "hero": {
-    "start_room": "street",
-    "position": [160, 160]
+    "start_room": "hennepin_outside",
+    "position": [72, 172]
   },
   "items": [
     {
-      "name": "Key",
-      "description": "A tarnished brass key rescued from a forgotten box.",
-      "icon_color": [220, 210, 90]
+      "name": "Gig Flyer",
+      "description": "A neon flyer for tonight's alternative showcase, proof that you're part of the scene.",
+      "icon_color": [250, 180, 60]
     },
     {
-      "name": "Journal",
-      "description": "Your well-worn journal full of undead survival tips.",
-      "icon_color": [150, 100, 70]
+      "name": "Demo Tape",
+      "description": "An unlabeled cassette buzzing with basement energy and tape hiss.",
+      "icon_color": [140, 120, 220]
+    },
+    {
+      "name": "Backstage Pass",
+      "description": "A laminated pass stamped with First Avenue's star. The undead bouncers respect it.",
+      "icon_color": [220, 80, 200]
+    },
+    {
+      "name": "Setlist",
+      "description": "Tonight's scrawled setlist, complete with notes about where the zombie choir joins in.",
+      "icon_color": [210, 210, 210]
     }
   ],
-  "starting_inventory": ["Journal"],
+  "starting_inventory": [],
   "rooms": [
     {
-      "id": "street",
-      "name": "Main Street",
-      "background_label": "Deserted Street",
+      "id": "hennepin_outside",
+      "name": "Hennepin Avenue, 1982",
+      "entry_message": "Purple neon hums over First Avenue as the undead crash the scene.",
+      "default_entry": [72, 172],
+      "background": {
+        "label": "First Avenue Exterior",
+        "gradient": [[30, 10, 60], [70, 40, 140], [10, 10, 20]],
+        "accent_lines": [
+          {"y": 136, "height": 6, "color": [200, 80, 180]},
+          {"y": 156, "height": 4, "color": [120, 200, 220]}
+        ],
+        "shapes": [
+          {"shape": "rect", "rect": [0, 132, 320, 68], "color": [26, 26, 46]},
+          {"shape": "rect", "rect": [24, 84, 84, 50], "color": [80, 80, 110]},
+          {"shape": "rect", "rect": [176, 76, 70, 60], "color": [70, 70, 100]}
+        ],
+        "label_color": [250, 230, 210]
+      },
       "priority_regions": [
-        {"shape": "polygon", "points": [[0, 48], [320, 48], [320, 0], [0, 0]]},
-        {"shape": "rect", "rect": [220, 60, 56, 100]}
+        {"shape": "rect", "rect": [0, 90, 320, 40]}
       ],
       "walkable_zones": [
-        {"shape": "polygon", "points": [[12, 150], [308, 150], [308, 198], [12, 198]]},
-        {"shape": "polygon", "points": [[80, 120], [240, 120], [240, 150], [80, 150]]}
+        {"shape": "polygon", "points": [[12, 190], [308, 190], [308, 198], [12, 198]]},
+        {"shape": "polygon", "points": [[32, 150], [288, 150], [288, 190], [32, 190]]}
       ],
       "hotspots": [
         {
-          "name": "Street Door",
-          "rect": [220, 70, 56, 90],
-          "walk_position": [240, 152],
+          "name": "Poster Kiosk",
+          "rect": [20, 110, 54, 70],
+          "walk_position": [44, 174],
           "verbs": {
-            "look": "The door is made of sturdy oak, scarred by claw marks.",
-            "use": "You jiggle the handle, but it refuses to turn.",
-            "use_missing": "You will need a key if you ever hope to open this.",
-            "use_success": "The key turns with a satisfying click as the door creaks ajar.",
-            "talk": "You whisper assurances to the door. It remains stoic."
+            "look": "Flyers for Hüsker Dü and The Suburbs flutter in the warm night.",
+            "talk": "The paper rustles like a synth pad in the wind.",
+            "use": "You peel back a fresh gig flyer from the stack." 
           },
-          "required_item": "Key"
+          "give_item": "Gig Flyer",
+          "give_item_triggers": ["use"]
         },
         {
-          "name": "Newspaper Box",
-          "rect": [60, 118, 42, 64],
-          "walk_position": [82, 160],
+          "name": "Record Store Door",
+          "rect": [116, 90, 60, 92],
+          "walk_position": [148, 174],
           "verbs": {
-            "look": "Decades of scandalous headlines are crammed inside.",
-            "use": "You rummage through the papers and discover a forgotten key!",
-            "talk": "You debate politics with the faded headlines. They disagree."
+            "look": "Let It Be Records glows behind the glass with a violet OPEN sign.",
+            "use": "You slip through the door into the record stacks.",
+            "talk": "Through the glass you hear a drum machine rehearsing paradiddles."
           },
-          "give_item": "Key"
+          "target_room": "record_store",
+          "target_position": [64, 174],
+          "transition_verb": "use",
+          "transition_message": "The scent of vinyl and ozone wraps around you as you enter."
         },
         {
-          "name": "Rain Barrel",
-          "rect": [148, 118, 42, 60],
-          "walk_position": [168, 160],
+          "name": "Alley to KJRR",
+          "rect": [246, 102, 60, 86],
+          "walk_position": [270, 174],
           "verbs": {
-            "look": "Ripples shiver across the stagnant water, reflecting neon ghosts.",
-            "talk": "You try small talk. The barrel only gurgles."
+            "look": "Graffiti arrows point toward KJRR's basement studio.",
+            "use": "You jog down the alley toward the college radio bunker.",
+            "talk": "Echoes answer from the brickwork in offbeat rhythms."
+          },
+          "target_room": "college_station",
+          "target_position": [60, 172],
+          "transition_verb": "use",
+          "transition_message": "The hum of a basement transmitter fills your ears."
+        },
+        {
+          "name": "First Avenue Door",
+          "rect": [184, 82, 58, 98],
+          "walk_position": [208, 174],
+          "verbs": {
+            "look": "A black doorway marked with a star labeled 'Artists'.",
+            "talk": "\"No pass, no stage,\" the bouncer groans melodically.",
+            "use": "You press your palm against the cold steel door.",
+            "use_success": "You flash the backstage pass; the zombie nods and shambles aside.",
+            "use_missing": "The security zombie folds its arms. No pass, no entry."
+          },
+          "required_item": "Backstage Pass",
+          "target_room": "backstage_stage",
+          "target_position": [72, 172],
+          "transition_verb": "use",
+          "requires_success_for_transition": true,
+          "transition_message": "Feedback and fog machines spill across the backstage."
+        },
+        {
+          "name": "Marquee",
+          "rect": [20, 42, 280, 36],
+          "walk_position": [122, 150],
+          "verbs": {
+            "look": "Tonight: The Neon Dead with special guest Soul Asylum (undead mix).",
+            "talk": "You pitch your own band name. The marquee winks in approval."
           }
         }
       ],
       "zombies": [
-        {"position": [120, 150]}
+        {"position": [100, 164]},
+        {"position": [222, 160]}
+      ]
+    },
+    {
+      "id": "record_store",
+      "name": "Let It Be Records",
+      "entry_message": "Stacks of vinyl and undead crate-diggers nod along to unheard drum machines.",
+      "default_entry": [64, 174],
+      "background": {
+        "label": "Record Store",
+        "gradient": [[40, 20, 70], [90, 60, 150], [30, 10, 50]],
+        "accent_lines": [
+          {"y": 120, "height": 6, "color": [255, 140, 90]},
+          {"y": 148, "height": 4, "color": [120, 220, 180]}
+        ],
+        "shapes": [
+          {"shape": "rect", "rect": [18, 84, 100, 56], "color": [70, 70, 90]},
+          {"shape": "rect", "rect": [220, 78, 80, 64], "color": [60, 60, 82]}
+        ],
+        "label_color": [250, 240, 220]
+      },
+      "priority_regions": [
+        {"shape": "rect", "rect": [0, 100, 320, 44]}
+      ],
+      "walkable_zones": [
+        {"shape": "polygon", "points": [[18, 188], [302, 188], [302, 198], [18, 198]]},
+        {"shape": "polygon", "points": [[32, 150], [288, 150], [288, 188], [32, 188]]}
+      ],
+      "hotspots": [
+        {
+          "name": "Street Door",
+          "rect": [0, 92, 36, 92],
+          "walk_position": [20, 174],
+          "verbs": {
+            "look": "The avenue beckons beyond the glass.",
+            "use": "You push back out to Hennepin Avenue.",
+            "talk": "Outside, the muffled kick drum of the club keeps time."
+          },
+          "target_room": "hennepin_outside",
+          "target_position": [150, 174],
+          "transition_verb": "use",
+          "transition_message": "The club's neon bleeds into the Minneapolis night."
+        },
+        {
+          "name": "Listening Booth",
+          "rect": [44, 96, 80, 76],
+          "walk_position": [66, 174],
+          "verbs": {
+            "look": "A coffin-shaped listening booth thrums with low frequencies.",
+            "talk": "The booth replies with a bone-rattling bass drop.",
+            "use": "You imagine your own track blasting through these speakers."
+          }
+        },
+        {
+          "name": "Clerk Counter",
+          "rect": [222, 86, 76, 96],
+          "walk_position": [242, 174],
+          "verbs": {
+            "look": "A clerk polishes seven-inches with ritual precision.",
+            "talk": "\"Scene kids only,\" the clerk grins. \"What have you got?\"",
+            "use": "You slide the gig flyer across the counter.",
+            "use_success": "\"Alright, you're legit.\" The clerk palms you an unlabeled demo tape.",
+            "use_missing": "\"Show me your flyer if you want in on the secret stash.\""
+          },
+          "required_item": "Gig Flyer",
+          "give_item": "Demo Tape",
+          "give_item_triggers": ["use"],
+          "remove_item": "Gig Flyer",
+          "remove_item_triggers": ["use"]
+        }
+      ],
+      "zombies": [
+        {"position": [152, 162]}
+      ]
+    },
+    {
+      "id": "college_station",
+      "name": "KJRR Basement Studio",
+      "entry_message": "Posters peel from cinderblock walls as the ON AIR light flickers green.",
+      "default_entry": [60, 172],
+      "background": {
+        "label": "College Radio",
+        "gradient": [[20, 40, 60], [50, 120, 160], [16, 30, 44]],
+        "accent_lines": [
+          {"y": 130, "height": 5, "color": [140, 240, 160]},
+          {"y": 150, "height": 3, "color": [255, 90, 140]}
+        ],
+        "shapes": [
+          {"shape": "rect", "rect": [28, 88, 92, 54], "color": [60, 70, 90]},
+          {"shape": "rect", "rect": [208, 80, 92, 68], "color": [70, 90, 110]}
+        ],
+        "label_color": [230, 250, 240]
+      },
+      "priority_regions": [
+        {"shape": "rect", "rect": [0, 104, 320, 44]}
+      ],
+      "walkable_zones": [
+        {"shape": "polygon", "points": [[18, 188], [302, 188], [302, 198], [18, 198]]},
+        {"shape": "polygon", "points": [[32, 148], [288, 148], [288, 188], [32, 188]]}
+      ],
+      "hotspots": [
+        {
+          "name": "Alley Door",
+          "rect": [0, 92, 34, 92],
+          "walk_position": [20, 172],
+          "verbs": {
+            "look": "The alley back to First Avenue waits outside.",
+            "use": "You head back toward the club.",
+            "talk": "Someone carved band names into the door with a broken drumstick."
+          },
+          "target_room": "hennepin_outside",
+          "target_position": [262, 172],
+          "transition_verb": "use",
+          "transition_message": "The throb of the main stage grows louder as you emerge."
+        },
+        {
+          "name": "On-Air Light",
+          "rect": [108, 86, 70, 60],
+          "walk_position": [124, 170],
+          "verbs": {
+            "look": "A flickering ON AIR sign barely holds back the darkness.",
+            "talk": "It buzzes in Morse code for 'play loud music'.",
+            "use": "You tap the glass; it brightens to a toxic glow."
+          }
+        },
+        {
+          "name": "DJ Booth",
+          "rect": [214, 84, 90, 100],
+          "walk_position": [236, 172],
+          "verbs": {
+            "look": "Stacks of cassettes teeter beside a flickering console.",
+            "talk": "\"Got anything raw for the airwaves?\" the DJ rasps.",
+            "use": "You offer up the demo tape.",
+            "use_success": "The DJ slaps the tape into rotation and hands you a backstage pass.",
+            "use_missing": "\"Come back with something fresh,\" the DJ moans."
+          },
+          "required_item": "Demo Tape",
+          "give_item": "Backstage Pass",
+          "give_item_triggers": ["use"],
+          "remove_item": "Demo Tape",
+          "remove_item_triggers": ["use"]
+        }
+      ],
+      "zombies": [
+        {"position": [120, 160]}
+      ]
+    },
+    {
+      "id": "backstage_stage",
+      "name": "First Avenue Backstage",
+      "entry_message": "Makeup mirrors blaze as The Neon Dead prep their instruments.",
+      "default_entry": [72, 172],
+      "background": {
+        "label": "Backstage",
+        "gradient": [[30, 16, 60], [90, 60, 150], [40, 20, 70]],
+        "accent_lines": [
+          {"y": 118, "height": 5, "color": [255, 200, 120]},
+          {"y": 146, "height": 4, "color": [160, 220, 255]}
+        ],
+        "shapes": [
+          {"shape": "rect", "rect": [32, 82, 90, 58], "color": [80, 70, 90]},
+          {"shape": "rect", "rect": [190, 80, 110, 74], "color": [70, 60, 86]}
+        ],
+        "label_color": [250, 240, 215]
+      },
+      "priority_regions": [
+        {"shape": "rect", "rect": [0, 96, 320, 48]}
+      ],
+      "walkable_zones": [
+        {"shape": "polygon", "points": [[18, 188], [302, 188], [302, 198], [18, 198]]},
+        {"shape": "polygon", "points": [[40, 150], [288, 150], [288, 188], [40, 188]]}
+      ],
+      "hotspots": [
+        {
+          "name": "Setlist Crate",
+          "rect": [40, 116, 60, 64],
+          "walk_position": [64, 174],
+          "verbs": {
+            "look": "A crate of scribbled setlists sits beside the stage monitors.",
+            "talk": "The papers flutter like a restless crowd.",
+            "use": "You snag tonight's setlist as a souvenir."
+          },
+          "give_item": "Setlist",
+          "give_item_triggers": ["use"]
+        },
+        {
+          "name": "Monitor Mix",
+          "rect": [124, 98, 74, 74],
+          "walk_position": [156, 174],
+          "verbs": {
+            "look": "An engineer zombie dials in the perfect wash of chorus and delay.",
+            "talk": "The engineer hums a harmony only the undead can hear.",
+            "use": "You tweak a knob and bathe the room in shimmering reverb."
+          }
+        },
+        {
+          "name": "Stage Door",
+          "rect": [284, 88, 36, 96],
+          "walk_position": [296, 174],
+          "verbs": {
+            "look": "The door leads back to the alley.",
+            "use": "You slip out toward the alley, ready to hype the scene.",
+            "talk": "Distant cheers seep through the cracks."
+          },
+          "target_room": "hennepin_outside",
+          "target_position": [206, 174],
+          "transition_verb": "use",
+          "transition_message": "You emerge into the Minnesota night, setlist in hand."
+        }
+      ],
+      "zombies": [
+        {"position": [98, 156]},
+        {"position": [210, 162]}
       ]
     }
   ]

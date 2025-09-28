@@ -81,9 +81,9 @@ class MessageBox:
     def draw(self, surface: pygame.Surface) -> None:
         if not self.message:
             return
-        pygame.draw.rect(surface, (20, 20, 40), self.rect)
-        pygame.draw.rect(surface, (200, 200, 220), self.rect, 2)
-        text_surface = self.font.render(self.message, True, (230, 230, 240))
+        pygame.draw.rect(surface, (28, 8, 52), self.rect)
+        pygame.draw.rect(surface, (220, 140, 240), self.rect, 2)
+        text_surface = self.font.render(self.message, True, (240, 230, 250))
         text_rect = text_surface.get_rect(center=self.rect.center)
         surface.blit(text_surface, text_rect)
 
@@ -114,9 +114,9 @@ class VerbBar:
         for y in range(self.rect.height):
             ratio = y / max(1, self.rect.height - 1)
             color = (
-                int(25 + 40 * ratio),
-                int(35 + 60 * ratio),
-                int(60 + 80 * ratio),
+                int(40 + 120 * (1 - ratio)),
+                int(20 + 50 * ratio),
+                int(70 + 100 * ratio),
             )
             pygame.draw.line(gradient, color, (0, y), (self.rect.width, y))
         surface.blit(gradient, self.rect)

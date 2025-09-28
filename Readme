@@ -1,119 +1,54 @@
-# 1950's Zombie Quest - Enhanced Edition
+# Neon Dead Quest: Minneapolis '82
 
-A retro-style point-and-click adventure game built with Pygame, featuring zombies, inventory management, and a compelling story.
+A retro point-and-click adventure built with Pygame that remixes Sierra-style exploration with the alternative rock explosion of Minneapolis in 1982. Trade tapes, dodge scene zombies, and earn your way backstage at First Avenue before the undead crowd steals the spotlight.
 
 ## Features
 
-### 🧟‍♂️ Zombie Theme
-- **Living zombies** that chase the player
-- **Health system** with damage from zombie attacks
-- **Zombie AI** with pathfinding towards the player
-- **Animated zombies** with shambling movement
+### 🎸 Alt-Rock Adventure
+- Explore a four-scene slice of downtown Minneapolis: Hennepin Avenue, Let It Be Records, the KJRR college radio bunker, and First Avenue's backstage.
+- Converse with scene denizens (living and undead) using classic WALK / LOOK / USE / TALK verbs.
+- Snag era-authentic items like gig flyers, demo tapes, and coveted backstage passes.
 
-### 🎒 Inventory System
-- **Collectible items**: Medicine, Weapon, Key, Flashlight
-- **Item requirements** for certain actions
-- **Inventory management** with visual display
-- **Item descriptions** and use actions
+### 🧟‍♀️ Scene Zombies
+- Animated "scene zombie" NPCs wander each room, giving the world a living (unliving?) pulse.
+- Retro priority masks let characters disappear behind scenery just like a King's Quest vignette.
 
-### 🏠 Multiple Rooms
-- **Street**: Main area with buildings and zombies
-- **Diner**: 1950s-style diner with counter and stools
-- **Hospital**: Medical facility with experimental medicine
-- **Basement**: Dark workshop with tools and supplies
+### 🎛️ Inventory & Hotspot System
+- Drag-and-drop inspired inventory that lets you select items before using them on hotspots.
+- Contextual feedback for success, failure, and flavor interactions to encourage experimentation.
+- Data-driven JSON layout so rooms, hotspots, and items can be remixed without touching code.
 
-### 🎮 Gameplay Features
-- **Point-and-click movement** with WASD support
-- **Hotspot interactions** with descriptive text
-- **Story progression** with multiple objectives
-- **Save/Load system** with JSON persistence
-- **Victory/Game Over conditions**
-
-### 🎨 Visual Improvements
-- **VGA color palette** for authentic retro look
-- **Animated characters** with walking cycles
-- **Health bar** with color-coded status
-- **UI elements** with score and room display
-- **Message system** for game feedback
-
-### 🎯 Objectives
-1. Find a weapon to defend yourself
-2. Locate experimental medicine
-3. Survive zombie encounters
-4. Complete the quest to win
+### 🌈 Synthwave Visual Toolkit
+- Procedural neon gradients, skyline silhouettes, and signage accents crafted entirely from code.
+- Directional placeholder animations labeled with the character's facing direction for easy debugging.
+- Message box and verb bar tuned to evoke CRT glow and Minneapolis nightlife.
 
 ## Controls
 
-- **WASD** or **Arrow Keys**: Move character
-- **Mouse Click**: Move to location or interact
-- **SPACE**: Interact with nearby objects
-- **I**: View inventory
-- **S**: Save game
-- **L**: Load game
-- **ESC**: Quit game
+| Action | Input |
+| ------ | ----- |
+| Select verb | Click the icon in the verb bar or right-click to cycle |
+| Move | Choose WALK and click a walkable area |
+| Interact | Choose LOOK, USE, or TALK and click a hotspot |
+| Inventory | Click the INVENTORY button and then choose an item |
+| Exit game | Press `Esc` |
 
-## Installation
+## Running the Game
 
-1. Install Python 3.7 or higher
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Run the game:
-   ```bash
-   python zombie_quest.py
-   ```
+```bash
+pip install -r requirements.txt
+python main.py
+```
 
-## Game Mechanics
+Use `python main.py --headless` to run a brief validation loop without opening a window (helpful for automated checks).
 
-### Health System
-- Start with 100 health
-- Zombies deal 10 damage per attack
-- Health bar changes color based on remaining health
-- Game over when health reaches 0
+## File Structure Highlights
 
-### Inventory System
-- Maximum 8 items
-- Items have specific uses and requirements
-- Some hotspots require specific items to interact
+- `game_data.json` – defines rooms, hotspots, and items in the Minneapolis alt-rock storyline.
+- `zombie_quest/engine.py` – Pygame loop, input handling, and new room transition logic.
+- `zombie_quest/resources.py` – procedural neon art generator for backgrounds, sprites, and UI.
+- `zombie_quest/rooms.py` – room, hotspot, and pathfinding primitives with new transition metadata.
 
-### Zombie AI
-- Zombies move towards the player
-- Different movement speeds and patterns
-- Collision detection for damage
+## Credits & Inspiration
 
-### Story Progression
-- Multiple story flags track progress
-- Victory requires finding key items
-- Different endings based on performance
-
-## Technical Details
-
-- **Engine**: Pygame
-- **Resolution**: 320x200 (VGA)
-- **Color Palette**: 256-color VGA
-- **Save Format**: JSON
-- **Target FPS**: 60
-
-## Development
-
-The game is built with a modular architecture:
-- `Game`: Main game loop and state management
-- `Hero`: Player character with movement and health
-- `Zombie`: Enemy AI and behavior
-- `Room`: Level design and background generation
-- `Inventory`: Item management system
-- `MessageBar`: UI feedback system
-
-## Future Enhancements
-
-- Sound effects and music
-- More detailed graphics and sprites
-- Additional rooms and story content
-- Combat mechanics
-- Multiple difficulty levels
-- Achievement system
-
-## Credits
-
-Built with Pygame and inspired by classic Sierra adventure games.
+Designed as a loving riff on Sierra's SCI-era adventures, Minneapolis' alternative rock history, and every basement demo tape that ever warped in a backpack.
