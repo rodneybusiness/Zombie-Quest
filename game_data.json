@@ -1,38 +1,65 @@
 {
   "hero": {
     "start_room": "hennepin_outside",
-    "position": [72, 172]
+    "position": [
+      72,
+      172
+    ]
   },
   "items": [
     {
       "name": "Gig Flyer",
       "description": "A neon flyer for tonight's alternative showcase, proof that you're part of the scene.",
-      "icon_color": [250, 180, 60]
+      "icon_color": [
+        250,
+        180,
+        60
+      ]
     },
     {
       "name": "Demo Tape",
       "description": "An unlabeled cassette buzzing with basement energy and tape hiss.",
-      "icon_color": [140, 120, 220]
+      "icon_color": [
+        140,
+        120,
+        220
+      ]
     },
     {
       "name": "Backstage Pass",
       "description": "A laminated pass stamped with First Avenue's star. The undead bouncers respect it.",
-      "icon_color": [220, 80, 200]
+      "icon_color": [
+        220,
+        80,
+        200
+      ]
     },
     {
       "name": "Setlist",
       "description": "Tonight's scrawled setlist, complete with notes about where the zombie choir joins in.",
-      "icon_color": [210, 210, 210]
+      "icon_color": [
+        210,
+        210,
+        210
+      ]
     },
     {
       "name": "Guitar Pick",
       "description": "A worn neon pick that once shredded through a legendary solo.",
-      "icon_color": [0, 255, 200]
+      "icon_color": [
+        0,
+        255,
+        200
+      ]
     },
     {
       "name": "Vinyl Record",
       "description": "A rare pressing of 'Zombie Minneapolis' by The Neon Dead.",
-      "icon_color": [20, 20, 20]
+      "icon_color": [
+        20,
+        20,
+        20
+      ]
     }
   ],
   "starting_inventory": [],
@@ -41,73 +68,239 @@
       "id": "hennepin_outside",
       "name": "Hennepin Avenue, 1982",
       "entry_message": "Purple neon hums over First Avenue as the undead crash the scene.",
-      "default_entry": [72, 172],
+      "default_entry": [
+        72,
+        172
+      ],
       "background": {
         "label": "First Avenue Exterior",
-        "gradient": [[30, 10, 60], [70, 40, 140], [10, 10, 20]],
+        "gradient": [
+          [
+            30,
+            10,
+            60
+          ],
+          [
+            70,
+            40,
+            140
+          ],
+          [
+            10,
+            10,
+            20
+          ]
+        ],
         "accent_lines": [
-          {"y": 136, "height": 6, "color": [200, 80, 180]},
-          {"y": 156, "height": 4, "color": [120, 200, 220]}
+          {
+            "y": 136,
+            "height": 6,
+            "color": [
+              200,
+              80,
+              180
+            ]
+          },
+          {
+            "y": 156,
+            "height": 4,
+            "color": [
+              120,
+              200,
+              220
+            ]
+          }
         ],
         "shapes": [
-          {"shape": "rect", "rect": [0, 132, 320, 68], "color": [26, 26, 46]},
-          {"shape": "rect", "rect": [24, 84, 84, 50], "color": [80, 80, 110]},
-          {"shape": "rect", "rect": [176, 76, 70, 60], "color": [70, 70, 100]}
+          {
+            "shape": "rect",
+            "rect": [
+              0,
+              132,
+              320,
+              68
+            ],
+            "color": [
+              26,
+              26,
+              46
+            ]
+          },
+          {
+            "shape": "rect",
+            "rect": [
+              24,
+              84,
+              84,
+              50
+            ],
+            "color": [
+              80,
+              80,
+              110
+            ]
+          },
+          {
+            "shape": "rect",
+            "rect": [
+              176,
+              76,
+              70,
+              60
+            ],
+            "color": [
+              70,
+              70,
+              100
+            ]
+          }
         ],
-        "label_color": [250, 230, 210]
+        "label_color": [
+          250,
+          230,
+          210
+        ]
       },
       "priority_regions": [
-        {"shape": "rect", "rect": [0, 90, 320, 40]}
+        {
+          "shape": "rect",
+          "rect": [
+            0,
+            90,
+            320,
+            40
+          ]
+        }
       ],
       "walkable_zones": [
-        {"shape": "polygon", "points": [[12, 190], [308, 190], [308, 198], [12, 198]]},
-        {"shape": "polygon", "points": [[32, 150], [288, 150], [288, 190], [32, 190]]}
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              12,
+              190
+            ],
+            [
+              308,
+              190
+            ],
+            [
+              308,
+              198
+            ],
+            [
+              12,
+              198
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              32,
+              150
+            ],
+            [
+              288,
+              150
+            ],
+            [
+              288,
+              190
+            ],
+            [
+              32,
+              190
+            ]
+          ]
+        }
       ],
       "hotspots": [
         {
           "name": "Poster Kiosk",
-          "rect": [20, 110, 54, 70],
-          "walk_position": [44, 174],
+          "rect": [
+            20,
+            110,
+            54,
+            70
+          ],
+          "walk_position": [
+            44,
+            174
+          ],
           "verbs": {
             "look": "Flyers for Husker Du and The Suburbs flutter in the warm night.",
             "talk": "The paper rustles like a synth pad in the wind.",
             "use": "You peel back a fresh gig flyer from the stack."
           },
           "give_item": "Gig Flyer",
-          "give_item_triggers": ["use"]
+          "give_item_triggers": [
+            "use"
+          ]
         },
         {
           "name": "Record Store Door",
-          "rect": [116, 90, 60, 92],
-          "walk_position": [148, 174],
+          "rect": [
+            116,
+            90,
+            60,
+            92
+          ],
+          "walk_position": [
+            148,
+            174
+          ],
           "verbs": {
             "look": "Let It Be Records glows behind the glass with a violet OPEN sign.",
             "use": "You slip through the door into the record stacks.",
             "talk": "Through the glass you hear a drum machine rehearsing paradiddles."
           },
           "target_room": "record_store",
-          "target_position": [64, 174],
+          "target_position": [
+            64,
+            174
+          ],
           "transition_verb": "use",
           "transition_message": "The scent of vinyl and ozone wraps around you as you enter."
         },
         {
           "name": "Alley to KJRR",
-          "rect": [246, 102, 60, 86],
-          "walk_position": [270, 174],
+          "rect": [
+            246,
+            102,
+            60,
+            86
+          ],
+          "walk_position": [
+            270,
+            174
+          ],
           "verbs": {
             "look": "Graffiti arrows point toward KJRR's basement studio.",
             "use": "You jog down the alley toward the college radio bunker.",
             "talk": "Echoes answer from the brickwork in offbeat rhythms."
           },
           "target_room": "college_station",
-          "target_position": [60, 172],
+          "target_position": [
+            60,
+            172
+          ],
           "transition_verb": "use",
           "transition_message": "The hum of a basement transmitter fills your ears."
         },
         {
           "name": "First Avenue Door",
-          "rect": [184, 82, 58, 98],
-          "walk_position": [208, 174],
+          "rect": [
+            184,
+            82,
+            58,
+            98
+          ],
+          "walk_position": [
+            208,
+            174
+          ],
           "verbs": {
             "look": "A black doorway marked with a star labeled 'Artists'.",
             "talk": "\"No pass, no stage,\" the bouncer groans melodically.",
@@ -117,15 +310,26 @@
           },
           "required_item": "Backstage Pass",
           "target_room": "backstage_stage",
-          "target_position": [72, 172],
+          "target_position": [
+            72,
+            172
+          ],
           "transition_verb": "use",
           "requires_success_for_transition": true,
           "transition_message": "Feedback and fog machines spill across the backstage."
         },
         {
           "name": "Marquee",
-          "rect": [20, 42, 280, 36],
-          "walk_position": [122, 150],
+          "rect": [
+            20,
+            42,
+            280,
+            36
+          ],
+          "walk_position": [
+            122,
+            150
+          ],
           "verbs": {
             "look": "Tonight: The Neon Dead with special guest Soul Asylum (undead mix).",
             "talk": "You pitch your own band name. The marquee winks in approval."
@@ -133,8 +337,16 @@
         },
         {
           "name": "Street Light",
-          "rect": [8, 40, 20, 150],
-          "walk_position": [30, 170],
+          "rect": [
+            8,
+            40,
+            20,
+            150
+          ],
+          "walk_position": [
+            30,
+            170
+          ],
           "verbs": {
             "look": "A flickering sodium lamp casts orange shadows on the sidewalk.",
             "talk": "The light hums an electronic drone in E minor.",
@@ -143,54 +355,198 @@
         }
       ],
       "zombies": [
-        {"position": [100, 164], "type": "bouncer"},
-        {"position": [222, 160], "type": "scene"}
+        {
+          "position": [
+            100,
+            164
+          ],
+          "type": "bouncer"
+        },
+        {
+          "position": [
+            222,
+            160
+          ],
+          "type": "scene"
+        }
       ]
     },
     {
       "id": "record_store",
       "name": "Let It Be Records",
       "entry_message": "Stacks of vinyl and undead crate-diggers nod along to unheard drum machines.",
-      "default_entry": [64, 174],
+      "default_entry": [
+        64,
+        174
+      ],
       "background": {
         "label": "Record Store",
-        "gradient": [[40, 20, 70], [90, 60, 150], [30, 10, 50]],
+        "gradient": [
+          [
+            40,
+            20,
+            70
+          ],
+          [
+            90,
+            60,
+            150
+          ],
+          [
+            30,
+            10,
+            50
+          ]
+        ],
         "accent_lines": [
-          {"y": 120, "height": 6, "color": [255, 140, 90]},
-          {"y": 148, "height": 4, "color": [120, 220, 180]}
+          {
+            "y": 120,
+            "height": 6,
+            "color": [
+              255,
+              140,
+              90
+            ]
+          },
+          {
+            "y": 148,
+            "height": 4,
+            "color": [
+              120,
+              220,
+              180
+            ]
+          }
         ],
         "shapes": [
-          {"shape": "rect", "rect": [18, 84, 100, 56], "color": [70, 70, 90]},
-          {"shape": "rect", "rect": [220, 78, 80, 64], "color": [60, 60, 82]}
+          {
+            "shape": "rect",
+            "rect": [
+              18,
+              84,
+              100,
+              56
+            ],
+            "color": [
+              70,
+              70,
+              90
+            ]
+          },
+          {
+            "shape": "rect",
+            "rect": [
+              220,
+              78,
+              80,
+              64
+            ],
+            "color": [
+              60,
+              60,
+              82
+            ]
+          }
         ],
-        "label_color": [250, 240, 220]
+        "label_color": [
+          250,
+          240,
+          220
+        ]
       },
       "priority_regions": [
-        {"shape": "rect", "rect": [0, 100, 320, 44]}
+        {
+          "shape": "rect",
+          "rect": [
+            0,
+            100,
+            320,
+            44
+          ]
+        }
       ],
       "walkable_zones": [
-        {"shape": "polygon", "points": [[18, 188], [302, 188], [302, 198], [18, 198]]},
-        {"shape": "polygon", "points": [[32, 150], [288, 150], [288, 188], [32, 188]]}
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              18,
+              188
+            ],
+            [
+              302,
+              188
+            ],
+            [
+              302,
+              198
+            ],
+            [
+              18,
+              198
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              32,
+              150
+            ],
+            [
+              288,
+              150
+            ],
+            [
+              288,
+              188
+            ],
+            [
+              32,
+              188
+            ]
+          ]
+        }
       ],
       "hotspots": [
         {
           "name": "Street Door",
-          "rect": [0, 92, 36, 92],
-          "walk_position": [20, 174],
+          "rect": [
+            0,
+            92,
+            36,
+            92
+          ],
+          "walk_position": [
+            20,
+            174
+          ],
           "verbs": {
             "look": "The avenue beckons beyond the glass.",
             "use": "You push back out to Hennepin Avenue.",
             "talk": "Outside, the muffled kick drum of the club keeps time."
           },
           "target_room": "hennepin_outside",
-          "target_position": [150, 174],
+          "target_position": [
+            150,
+            174
+          ],
           "transition_verb": "use",
           "transition_message": "The club's neon bleeds into the Minneapolis night."
         },
         {
           "name": "Listening Booth",
-          "rect": [44, 96, 80, 76],
-          "walk_position": [66, 174],
+          "rect": [
+            44,
+            96,
+            80,
+            76
+          ],
+          "walk_position": [
+            66,
+            174
+          ],
           "verbs": {
             "look": "A coffin-shaped listening booth thrums with low frequencies.",
             "talk": "The booth replies with a bone-rattling bass drop.",
@@ -199,8 +555,16 @@
         },
         {
           "name": "Record Clerk",
-          "rect": [222, 86, 76, 96],
-          "walk_position": [242, 174],
+          "rect": [
+            222,
+            86,
+            76,
+            96
+          ],
+          "walk_position": [
+            242,
+            174
+          ],
           "talk_target": "clerk",
           "verbs": {
             "look": "A clerk polishes seven-inches with ritual precision.",
@@ -211,14 +575,26 @@
           },
           "required_item": "Gig Flyer",
           "give_item": "Demo Tape",
-          "give_item_triggers": ["use"],
+          "give_item_triggers": [
+            "use"
+          ],
           "remove_item": "Gig Flyer",
-          "remove_item_triggers": ["use"]
+          "remove_item_triggers": [
+            "use"
+          ]
         },
         {
           "name": "New Arrivals Bin",
-          "rect": [140, 130, 60, 50],
-          "walk_position": [170, 175],
+          "rect": [
+            140,
+            130,
+            60,
+            50
+          ],
+          "walk_position": [
+            170,
+            175
+          ],
           "verbs": {
             "look": "Fresh pressings gleam under the black light: Replacements, Prince, Suburbs.",
             "talk": "The records whisper track listings in your ear.",
@@ -227,8 +603,16 @@
         },
         {
           "name": "Rare Vinyl Section",
-          "rect": [140, 86, 60, 40],
-          "walk_position": [170, 170],
+          "rect": [
+            140,
+            86,
+            60,
+            40
+          ],
+          "walk_position": [
+            170,
+            170
+          ],
           "verbs": {
             "look": "Behind glass: bootlegs, test pressings, and a rumored Prince demo.",
             "talk": "Legends murmur from these grooves.",
@@ -237,54 +621,198 @@
         }
       ],
       "zombies": [
-        {"position": [152, 162], "type": "scene"},
-        {"position": [90, 168], "type": "rocker"}
+        {
+          "position": [
+            152,
+            162
+          ],
+          "type": "scene"
+        },
+        {
+          "position": [
+            90,
+            168
+          ],
+          "type": "rocker"
+        }
       ]
     },
     {
       "id": "college_station",
       "name": "KJRR Basement Studio",
       "entry_message": "Posters peel from cinderblock walls as the ON AIR light flickers green.",
-      "default_entry": [60, 172],
+      "default_entry": [
+        60,
+        172
+      ],
       "background": {
         "label": "College Radio",
-        "gradient": [[20, 40, 60], [50, 120, 160], [16, 30, 44]],
+        "gradient": [
+          [
+            20,
+            40,
+            60
+          ],
+          [
+            50,
+            120,
+            160
+          ],
+          [
+            16,
+            30,
+            44
+          ]
+        ],
         "accent_lines": [
-          {"y": 130, "height": 5, "color": [140, 240, 160]},
-          {"y": 150, "height": 3, "color": [255, 90, 140]}
+          {
+            "y": 130,
+            "height": 5,
+            "color": [
+              140,
+              240,
+              160
+            ]
+          },
+          {
+            "y": 150,
+            "height": 3,
+            "color": [
+              255,
+              90,
+              140
+            ]
+          }
         ],
         "shapes": [
-          {"shape": "rect", "rect": [28, 88, 92, 54], "color": [60, 70, 90]},
-          {"shape": "rect", "rect": [208, 80, 92, 68], "color": [70, 90, 110]}
+          {
+            "shape": "rect",
+            "rect": [
+              28,
+              88,
+              92,
+              54
+            ],
+            "color": [
+              60,
+              70,
+              90
+            ]
+          },
+          {
+            "shape": "rect",
+            "rect": [
+              208,
+              80,
+              92,
+              68
+            ],
+            "color": [
+              70,
+              90,
+              110
+            ]
+          }
         ],
-        "label_color": [230, 250, 240]
+        "label_color": [
+          230,
+          250,
+          240
+        ]
       },
       "priority_regions": [
-        {"shape": "rect", "rect": [0, 104, 320, 44]}
+        {
+          "shape": "rect",
+          "rect": [
+            0,
+            104,
+            320,
+            44
+          ]
+        }
       ],
       "walkable_zones": [
-        {"shape": "polygon", "points": [[18, 188], [302, 188], [302, 198], [18, 198]]},
-        {"shape": "polygon", "points": [[32, 148], [288, 148], [288, 188], [32, 188]]}
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              18,
+              188
+            ],
+            [
+              302,
+              188
+            ],
+            [
+              302,
+              198
+            ],
+            [
+              18,
+              198
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              32,
+              148
+            ],
+            [
+              288,
+              148
+            ],
+            [
+              288,
+              188
+            ],
+            [
+              32,
+              188
+            ]
+          ]
+        }
       ],
       "hotspots": [
         {
           "name": "Alley Door",
-          "rect": [0, 92, 34, 92],
-          "walk_position": [20, 172],
+          "rect": [
+            0,
+            92,
+            34,
+            92
+          ],
+          "walk_position": [
+            20,
+            172
+          ],
           "verbs": {
             "look": "The alley back to First Avenue waits outside.",
             "use": "You head back toward the club.",
             "talk": "Someone carved band names into the door with a broken drumstick."
           },
           "target_room": "hennepin_outside",
-          "target_position": [262, 172],
+          "target_position": [
+            262,
+            172
+          ],
           "transition_verb": "use",
           "transition_message": "The throb of the main stage grows louder as you emerge."
         },
         {
           "name": "On-Air Light",
-          "rect": [108, 86, 70, 60],
-          "walk_position": [124, 170],
+          "rect": [
+            108,
+            86,
+            70,
+            60
+          ],
+          "walk_position": [
+            124,
+            170
+          ],
           "verbs": {
             "look": "A flickering ON AIR sign barely holds back the darkness.",
             "talk": "It buzzes in Morse code for 'play loud music'.",
@@ -293,8 +821,16 @@
         },
         {
           "name": "DJ Rotten",
-          "rect": [214, 84, 90, 100],
-          "walk_position": [236, 172],
+          "rect": [
+            214,
+            84,
+            90,
+            100
+          ],
+          "walk_position": [
+            236,
+            172
+          ],
           "talk_target": "dj",
           "verbs": {
             "look": "Stacks of cassettes teeter beside a flickering console.",
@@ -305,14 +841,26 @@
           },
           "required_item": "Demo Tape",
           "give_item": "Backstage Pass",
-          "give_item_triggers": ["use"],
+          "give_item_triggers": [
+            "use"
+          ],
           "remove_item": "Demo Tape",
-          "remove_item_triggers": ["use"]
+          "remove_item_triggers": [
+            "use"
+          ]
         },
         {
           "name": "Request Line Phone",
-          "rect": [130, 140, 40, 40],
-          "walk_position": [150, 175],
+          "rect": [
+            130,
+            140,
+            40,
+            40
+          ],
+          "walk_position": [
+            150,
+            175
+          ],
           "verbs": {
             "look": "A rotary phone covered in stickers. The receiver dangles off the hook.",
             "talk": "You hear static and distant moaning. Someone's requesting 'Brains in the Night'.",
@@ -321,8 +869,16 @@
         },
         {
           "name": "Poster Wall",
-          "rect": [50, 88, 50, 50],
-          "walk_position": [75, 168],
+          "rect": [
+            50,
+            88,
+            50,
+            50
+          ],
+          "walk_position": [
+            75,
+            168
+          ],
           "verbs": {
             "look": "Gig posters layer the wall: Husker Du, The Replacements, Prince.",
             "talk": "The posters rustle as if responding to your presence.",
@@ -331,52 +887,195 @@
         }
       ],
       "zombies": [
-        {"position": [120, 160], "type": "dj"},
-        {"position": [180, 165], "type": "scene"}
+        {
+          "position": [
+            120,
+            160
+          ],
+          "type": "dj"
+        },
+        {
+          "position": [
+            180,
+            165
+          ],
+          "type": "scene"
+        }
       ]
     },
     {
       "id": "backstage_stage",
       "name": "First Avenue Backstage",
       "entry_message": "Makeup mirrors blaze as The Neon Dead prep their instruments.",
-      "default_entry": [72, 172],
+      "default_entry": [
+        72,
+        172
+      ],
       "background": {
         "label": "Backstage",
-        "gradient": [[30, 16, 60], [90, 60, 150], [40, 20, 70]],
+        "gradient": [
+          [
+            30,
+            16,
+            60
+          ],
+          [
+            90,
+            60,
+            150
+          ],
+          [
+            40,
+            20,
+            70
+          ]
+        ],
         "accent_lines": [
-          {"y": 118, "height": 5, "color": [255, 200, 120]},
-          {"y": 146, "height": 4, "color": [160, 220, 255]}
+          {
+            "y": 118,
+            "height": 5,
+            "color": [
+              255,
+              200,
+              120
+            ]
+          },
+          {
+            "y": 146,
+            "height": 4,
+            "color": [
+              160,
+              220,
+              255
+            ]
+          }
         ],
         "shapes": [
-          {"shape": "rect", "rect": [32, 82, 90, 58], "color": [80, 70, 90]},
-          {"shape": "rect", "rect": [190, 80, 110, 74], "color": [70, 60, 86]}
+          {
+            "shape": "rect",
+            "rect": [
+              32,
+              82,
+              90,
+              58
+            ],
+            "color": [
+              80,
+              70,
+              90
+            ]
+          },
+          {
+            "shape": "rect",
+            "rect": [
+              190,
+              80,
+              110,
+              74
+            ],
+            "color": [
+              70,
+              60,
+              86
+            ]
+          }
         ],
-        "label_color": [250, 240, 215]
+        "label_color": [
+          250,
+          240,
+          215
+        ]
       },
       "priority_regions": [
-        {"shape": "rect", "rect": [0, 96, 320, 48]}
+        {
+          "shape": "rect",
+          "rect": [
+            0,
+            96,
+            320,
+            48
+          ]
+        }
       ],
       "walkable_zones": [
-        {"shape": "polygon", "points": [[18, 188], [302, 188], [302, 198], [18, 198]]},
-        {"shape": "polygon", "points": [[40, 150], [288, 150], [288, 188], [40, 188]]}
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              18,
+              188
+            ],
+            [
+              302,
+              188
+            ],
+            [
+              302,
+              198
+            ],
+            [
+              18,
+              198
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              40,
+              150
+            ],
+            [
+              288,
+              150
+            ],
+            [
+              288,
+              188
+            ],
+            [
+              40,
+              188
+            ]
+          ]
+        }
       ],
       "hotspots": [
         {
           "name": "Setlist Crate",
-          "rect": [40, 116, 60, 64],
-          "walk_position": [64, 174],
+          "rect": [
+            40,
+            116,
+            60,
+            64
+          ],
+          "walk_position": [
+            64,
+            174
+          ],
           "verbs": {
             "look": "A crate of scribbled setlists sits beside the stage monitors.",
             "talk": "The papers flutter like a restless crowd.",
             "use": "You snag tonight's setlist as a souvenir."
           },
           "give_item": "Setlist",
-          "give_item_triggers": ["use"]
+          "give_item_triggers": [
+            "use"
+          ]
         },
         {
           "name": "Monitor Mix",
-          "rect": [124, 98, 74, 74],
-          "walk_position": [156, 174],
+          "rect": [
+            124,
+            98,
+            74,
+            74
+          ],
+          "walk_position": [
+            156,
+            174
+          ],
           "verbs": {
             "look": "An engineer zombie dials in the perfect wash of chorus and delay.",
             "talk": "The engineer hums a harmony only the undead can hear.",
@@ -385,22 +1084,41 @@
         },
         {
           "name": "Stage Door",
-          "rect": [284, 88, 36, 96],
-          "walk_position": [296, 174],
+          "rect": [
+            284,
+            88,
+            36,
+            96
+          ],
+          "walk_position": [
+            296,
+            174
+          ],
           "verbs": {
             "look": "The door leads back to the alley.",
             "use": "You slip out toward the alley, ready to hype the scene.",
             "talk": "Distant cheers seep through the cracks."
           },
           "target_room": "hennepin_outside",
-          "target_position": [206, 174],
+          "target_position": [
+            206,
+            174
+          ],
           "transition_verb": "use",
           "transition_message": "You emerge into the Minnesota night, setlist in hand."
         },
         {
           "name": "Makeup Mirrors",
-          "rect": [200, 86, 70, 50],
-          "walk_position": [235, 172],
+          "rect": [
+            200,
+            86,
+            70,
+            50
+          ],
+          "walk_position": [
+            235,
+            172
+          ],
           "verbs": {
             "look": "Bulbs blaze around mirrors reflecting pale faces and heavy eyeliner.",
             "talk": "Your reflection mouths 'Rock on' silently.",
@@ -409,80 +1127,245 @@
         },
         {
           "name": "Flight Cases",
-          "rect": [140, 150, 40, 30],
-          "walk_position": [160, 178],
+          "rect": [
+            140,
+            150,
+            40,
+            30
+          ],
+          "walk_position": [
+            160,
+            178
+          ],
           "verbs": {
             "look": "Battered cases stenciled with band names and tour dates.",
             "talk": "They creak with stories of a hundred venues.",
             "use": "You check for loose picks. You find one glowing neon green."
           },
           "give_item": "Guitar Pick",
-          "give_item_triggers": ["use"]
+          "give_item_triggers": [
+            "use"
+          ]
         },
         {
           "name": "Green Room Door",
-          "rect": [0, 100, 30, 80],
-          "walk_position": [35, 172],
+          "rect": [
+            0,
+            100,
+            30,
+            80
+          ],
+          "walk_position": [
+            35,
+            172
+          ],
           "verbs": {
             "look": "A door marked 'Green Room - Band Only'.",
             "use": "You push through into the green room.",
             "talk": "You hear muffled vocal warmups from inside."
           },
           "target_room": "green_room",
-          "target_position": [280, 170],
+          "target_position": [
+            280,
+            170
+          ],
           "transition_verb": "use",
           "transition_message": "The smell of cigarettes and hairspray fills your nostrils."
         }
       ],
       "zombies": [
-        {"position": [98, 156], "type": "rocker"},
-        {"position": [210, 162], "type": "bouncer"}
+        {
+          "position": [
+            98,
+            156
+          ],
+          "type": "rocker"
+        },
+        {
+          "position": [
+            210,
+            162
+          ],
+          "type": "bouncer"
+        }
       ]
     },
     {
       "id": "green_room",
       "name": "The Green Room",
       "entry_message": "Band members tune up while roadies carry cables and coffee.",
-      "default_entry": [280, 170],
+      "default_entry": [
+        280,
+        170
+      ],
       "background": {
         "label": "Green Room",
-        "gradient": [[20, 50, 35], [60, 120, 80], [15, 35, 25]],
+        "gradient": [
+          [
+            20,
+            50,
+            35
+          ],
+          [
+            60,
+            120,
+            80
+          ],
+          [
+            15,
+            35,
+            25
+          ]
+        ],
         "accent_lines": [
-          {"y": 110, "height": 4, "color": [200, 255, 180]},
-          {"y": 140, "height": 3, "color": [255, 200, 150]}
+          {
+            "y": 110,
+            "height": 4,
+            "color": [
+              200,
+              255,
+              180
+            ]
+          },
+          {
+            "y": 140,
+            "height": 3,
+            "color": [
+              255,
+              200,
+              150
+            ]
+          }
         ],
         "shapes": [
-          {"shape": "rect", "rect": [20, 80, 100, 60], "color": [50, 80, 60]},
-          {"shape": "rect", "rect": [200, 85, 100, 55], "color": [45, 75, 55]}
+          {
+            "shape": "rect",
+            "rect": [
+              20,
+              80,
+              100,
+              60
+            ],
+            "color": [
+              50,
+              80,
+              60
+            ]
+          },
+          {
+            "shape": "rect",
+            "rect": [
+              200,
+              85,
+              100,
+              55
+            ],
+            "color": [
+              45,
+              75,
+              55
+            ]
+          }
         ],
-        "label_color": [220, 255, 230]
+        "label_color": [
+          220,
+          255,
+          230
+        ]
       },
       "priority_regions": [
-        {"shape": "rect", "rect": [0, 100, 320, 40]}
+        {
+          "shape": "rect",
+          "rect": [
+            0,
+            100,
+            320,
+            40
+          ]
+        }
       ],
       "walkable_zones": [
-        {"shape": "polygon", "points": [[20, 185], [300, 185], [300, 195], [20, 195]]},
-        {"shape": "polygon", "points": [[40, 150], [280, 150], [280, 185], [40, 185]]}
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              20,
+              185
+            ],
+            [
+              300,
+              185
+            ],
+            [
+              300,
+              195
+            ],
+            [
+              20,
+              195
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              40,
+              150
+            ],
+            [
+              280,
+              150
+            ],
+            [
+              280,
+              185
+            ],
+            [
+              40,
+              185
+            ]
+          ]
+        }
       ],
       "hotspots": [
         {
           "name": "Backstage Door",
-          "rect": [285, 95, 35, 90],
-          "walk_position": [280, 172],
+          "rect": [
+            285,
+            95,
+            35,
+            90
+          ],
+          "walk_position": [
+            280,
+            172
+          ],
           "verbs": {
             "look": "The door back to the main backstage area.",
             "use": "You head back to the backstage.",
             "talk": "Stage sounds leak through the crack."
           },
           "target_room": "backstage_stage",
-          "target_position": [35, 172],
+          "target_position": [
+            35,
+            172
+          ],
           "transition_verb": "use",
           "transition_message": "You return to the bustling backstage area."
         },
         {
           "name": "Vintage Couch",
-          "rect": [30, 90, 80, 50],
-          "walk_position": [70, 168],
+          "rect": [
+            30,
+            90,
+            80,
+            50
+          ],
+          "walk_position": [
+            70,
+            168
+          ],
           "verbs": {
             "look": "A worn leather couch that's seen countless pre-show jitters.",
             "talk": "The cushions wheeze with decades of rock history.",
@@ -491,8 +1374,16 @@
         },
         {
           "name": "Deli Tray",
-          "rect": [130, 100, 50, 35],
-          "walk_position": [155, 165],
+          "rect": [
+            130,
+            100,
+            50,
+            35
+          ],
+          "walk_position": [
+            155,
+            165
+          ],
           "verbs": {
             "look": "Cold cuts and cheese. The rider demands have been met.",
             "talk": "The bologna whispers secrets of contract negotiations.",
@@ -501,8 +1392,16 @@
         },
         {
           "name": "Band Poster Wall",
-          "rect": [210, 88, 70, 50],
-          "walk_position": [245, 168],
+          "rect": [
+            210,
+            88,
+            70,
+            50
+          ],
+          "walk_position": [
+            245,
+            168
+          ],
           "verbs": {
             "look": "Signed posters from every act that's graced this stage.",
             "talk": "Each signature tells a story of rock and roll survival.",
@@ -511,8 +1410,16 @@
         },
         {
           "name": "Guitar Rack",
-          "rect": [50, 145, 40, 35],
-          "walk_position": [70, 175],
+          "rect": [
+            50,
+            145,
+            40,
+            35
+          ],
+          "walk_position": [
+            70,
+            175
+          ],
           "verbs": {
             "look": "Guitars gleam under the dim lights: a Les Paul, a Rickenbacker, a custom Flying V.",
             "talk": "They hum with potential energy, ready to scream.",
@@ -521,20 +1428,1000 @@
         },
         {
           "name": "Record Collection",
-          "rect": [180, 145, 50, 35],
-          "walk_position": [205, 175],
+          "rect": [
+            180,
+            145,
+            50,
+            35
+          ],
+          "walk_position": [
+            205,
+            175
+          ],
           "verbs": {
             "look": "A crate of vinyl, mostly local bands and rare imports.",
             "talk": "The records spin tales of Minneapolis music history.",
             "use": "You flip through and find a pristine copy of 'Zombie Minneapolis'."
           },
           "give_item": "Vinyl Record",
-          "give_item_triggers": ["use"]
+          "give_item_triggers": [
+            "use"
+          ]
         }
       ],
       "zombies": [
-        {"position": [120, 158], "type": "rocker"},
-        {"position": [200, 160], "type": "scene"}
+        {
+          "position": [
+            120,
+            158
+          ],
+          "type": "rocker"
+        },
+        {
+          "position": [
+            200,
+            160
+          ],
+          "type": "scene"
+        }
+      ]
+    },
+    {
+      "id": "practice_space",
+      "name": "The Practice Space",
+      "entry_message": "Foam walls muffle the echo of a hundred forgotten rehearsals.",
+      "default_entry": [
+        30,
+        172
+      ],
+      "walkable_zones": [
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              20,
+              185
+            ],
+            [
+              300,
+              185
+            ],
+            [
+              300,
+              195
+            ],
+            [
+              20,
+              195
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              35,
+              150
+            ],
+            [
+              285,
+              150
+            ],
+            [
+              285,
+              185
+            ],
+            [
+              35,
+              185
+            ]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Drum Kit",
+          "rect": [
+            55,
+            95,
+            80,
+            75
+          ],
+          "walk_position": [
+            95,
+            172
+          ],
+          "verbs": {
+            "look": "A weathered drum set surrounded by cymbal stands and cigarette burns.",
+            "talk": "The drums whisper stories of late-night jams and broken sticks.",
+            "use": "You tap out a rhythm. The kit still has it."
+          }
+        },
+        {
+          "name": "Guitar Amps",
+          "rect": [
+            185,
+            85,
+            70,
+            85
+          ],
+          "walk_position": [
+            220,
+            172
+          ],
+          "verbs": {
+            "look": "A Marshall stack towers over a bass amp, knobs set to 11.",
+            "talk": "The amps hum with potential energy, hungry for power chords.",
+            "use": "You crank the gain. Feedback screams through the foam walls."
+          }
+        },
+        {
+          "name": "Beat-Up Couch",
+          "rect": [
+            230,
+            115,
+            70,
+            35
+          ],
+          "walk_position": [
+            265,
+            170
+          ],
+          "verbs": {
+            "look": "A sagging couch leaking stuffing, veteran of countless band arguments.",
+            "talk": "The cushions remember every creative breakthrough and breakup.",
+            "use": "You sink into the worn leather. Feels like home."
+          }
+        },
+        {
+          "name": "Setlist on Wall",
+          "rect": [
+            65,
+            35,
+            25,
+            30
+          ],
+          "walk_position": [
+            77,
+            165
+          ],
+          "verbs": {
+            "look": "A handwritten setlist taped to the egg crate foam: your old band's songs.",
+            "talk": "The setlist reads like a diary of dreams you used to have.",
+            "use": "You trace the song titles with your finger. Almost makes you want to play again."
+          }
+        },
+        {
+          "name": "Microphone Stands",
+          "rect": [
+            110,
+            60,
+            70,
+            110
+          ],
+          "walk_position": [
+            145,
+            172
+          ],
+          "verbs": {
+            "look": "Two boom stands with mics positioned for harmonies that never quite happened.",
+            "talk": "The mics wait patiently for voices that moved on long ago.",
+            "use": "You test the mic. 'Check, check.' Still works."
+          }
+        },
+        {
+          "name": "Warehouse Door",
+          "rect": [
+            0,
+            90,
+            28,
+            80
+          ],
+          "walk_position": [
+            30,
+            172
+          ],
+          "verbs": {
+            "look": "A dented metal door leading back to the venue.",
+            "use": "You step through, leaving the practice space silent once more.",
+            "talk": "The door has absorbed a thousand slams from frustrated musicians."
+          },
+          "target_room": "backstage_stage",
+          "target_position": [
+            72,
+            172
+          ],
+          "transition_verb": "use",
+          "transition_message": "The echo of your footsteps fades behind you."
+        }
+      ],
+      "zombies": [
+        {
+          "position": [
+            180,
+            160
+          ],
+          "type": "rocker"
+        }
+      ]
+    },
+    {
+      "id": "club_bathroom",
+      "name": "The Club Bathroom",
+      "entry_message": "Flickering fluorescents illuminate graffiti confessions and cracked mirrors.",
+      "default_entry": [
+        35,
+        172
+      ],
+      "walkable_zones": [
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              25,
+              185
+            ],
+            [
+              175,
+              185
+            ],
+            [
+              175,
+              195
+            ],
+            [
+              25,
+              195
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              35,
+              145
+            ],
+            [
+              165,
+              145
+            ],
+            [
+              165,
+              185
+            ],
+            [
+              35,
+              185
+            ]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Cracked Mirror",
+          "rect": [
+            35,
+            50,
+            65,
+            50
+          ],
+          "walk_position": [
+            67,
+            170
+          ],
+          "verbs": {
+            "look": "Your reflection fractures across spider-web cracks. Still you.",
+            "talk": "The mirror shows you truth: bruised, brilliant, and unbreakable.",
+            "use": "You fix your hair. Stage-ready, even in apocalypse."
+          }
+        },
+        {
+          "name": "Bathroom Stalls",
+          "rect": [
+            180,
+            45,
+            140,
+            100
+          ],
+          "walk_position": [
+            250,
+            172
+          ],
+          "verbs": {
+            "look": "Metal stall doors covered in layer upon layer of punk rock wisdom.",
+            "talk": "The graffiti reads like a history of the Minneapolis scene.",
+            "use": "You read the messages. Someone wrote your band name here once."
+          }
+        },
+        {
+          "name": "Maya Graffiti",
+          "rect": [
+            185,
+            70,
+            90,
+            30
+          ],
+          "walk_position": [
+            230,
+            170
+          ],
+          "verbs": {
+            "look": "Fresh spray paint declares: 'MAYA WAS HERE' in electric pink.",
+            "talk": "Maya's tag glows with neon defiance. She's alive somewhere in this chaos.",
+            "use": "You trace the letters. Your bandmate left you a sign."
+          },
+          "give_item": "Setlist",
+          "give_item_triggers": [
+            "use"
+          ]
+        },
+        {
+          "name": "Sink",
+          "rect": [
+            40,
+            95,
+            55,
+            50
+          ],
+          "walk_position": [
+            67,
+            168
+          ],
+          "verbs": {
+            "look": "A grimy sink with rust stains trailing from the faucet like tears.",
+            "talk": "The pipes groan with Minneapolis water pressure and decades of use.",
+            "use": "You splash cold water on your face. Wake up. This is real."
+          }
+        },
+        {
+          "name": "Paper Towel Dispenser",
+          "rect": [
+            115,
+            70,
+            30,
+            35
+          ],
+          "walk_position": [
+            130,
+            168
+          ],
+          "verbs": {
+            "look": "An empty dispenser with one pathetic sheet hanging out.",
+            "talk": "The dispenser rattles hollow. No comfort here.",
+            "use": "You grab the last towel. It's something."
+          }
+        },
+        {
+          "name": "Bathroom Door",
+          "rect": [
+            0,
+            60,
+            30,
+            85
+          ],
+          "walk_position": [
+            35,
+            172
+          ],
+          "verbs": {
+            "look": "A paint-chipped door marked with a faded 'WC' sign.",
+            "use": "You head back into the club's chaos.",
+            "talk": "The door muffles the bass thump from the main room."
+          },
+          "target_room": "hennepin_outside",
+          "target_position": [
+            150,
+            174
+          ],
+          "transition_verb": "use",
+          "transition_message": "The throb of music hits you like a wave as you exit."
+        }
+      ],
+      "zombies": [
+        {
+          "position": [
+            140,
+            160
+          ],
+          "type": "scene"
+        }
+      ]
+    },
+    {
+      "id": "record_vault",
+      "name": "The Record Vault",
+      "entry_message": "Dust dances in shafts of light between floor-to-ceiling vinyl treasures.",
+      "default_entry": [
+        30,
+        172
+      ],
+      "walkable_zones": [
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              25,
+              188
+            ],
+            [
+              295,
+              188
+            ],
+            [
+              295,
+              198
+            ],
+            [
+              25,
+              198
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              100,
+              155
+            ],
+            [
+              220,
+              155
+            ],
+            [
+              220,
+              188
+            ],
+            [
+              100,
+              188
+            ]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Rare Vinyl Shelves",
+          "rect": [
+            110,
+            30,
+            100,
+            140
+          ],
+          "walk_position": [
+            160,
+            175
+          ],
+          "verbs": {
+            "look": "Shelves packed with rare pressings: Prince demos, Husker Du live bootlegs.",
+            "talk": "The records whisper Minneapolis music history in crackling grooves.",
+            "use": "You flip through carefully. Each cover is a portal to 1982."
+          }
+        },
+        {
+          "name": "Golden Display Case",
+          "rect": [
+            240,
+            60,
+            50,
+            60
+          ],
+          "walk_position": [
+            265,
+            175
+          ],
+          "verbs": {
+            "look": "A locked case holds the crown jewel: an ultra-rare 'Zombie Minneapolis' pressing.",
+            "talk": "The record glows golden under protective glass. Priceless.",
+            "use": "The case won't budge. This treasure stays protected."
+          },
+          "give_item": "Vinyl Record",
+          "give_item_triggers": [
+            "use"
+          ],
+          "required_item": "Guitar Pick"
+        },
+        {
+          "name": "Wooden Ladder",
+          "rect": [
+            135,
+            40,
+            36,
+            115
+          ],
+          "walk_position": [
+            153,
+            175
+          ],
+          "verbs": {
+            "look": "A rolling ladder for reaching top-shelf rarities.",
+            "talk": "The ladder has witnessed countless vinyl hunts.",
+            "use": "You climb up. The view from here is nothing but music."
+          }
+        },
+        {
+          "name": "Record Crate",
+          "rect": [
+            20,
+            120,
+            55,
+            35
+          ],
+          "walk_position": [
+            47,
+            175
+          ],
+          "verbs": {
+            "look": "A weathered crate filled with vinyl waiting to be sorted.",
+            "talk": "Crate-digger zombies guard this collection jealously.",
+            "use": "You dig through. Mostly common pressings, but the hunt thrills."
+          }
+        },
+        {
+          "name": "Listening Station",
+          "rect": [
+            235,
+            110,
+            60,
+            45
+          ],
+          "walk_position": [
+            265,
+            175
+          ],
+          "verbs": {
+            "look": "A vintage turntable ready to spin any treasure you find.",
+            "talk": "The needle waits to translate grooves into magic.",
+            "use": "You cue up a record. The vault fills with Minneapolis sound."
+          }
+        },
+        {
+          "name": "Vault Door",
+          "rect": [
+            0,
+            75,
+            26,
+            80
+          ],
+          "walk_position": [
+            30,
+            172
+          ],
+          "verbs": {
+            "look": "A heavy door marked 'VAULT' in gold lettering.",
+            "use": "You step out, ears still ringing with vinyl ghosts.",
+            "talk": "The door guards musical history like a bank vault guards gold."
+          },
+          "target_room": "record_store",
+          "target_position": [
+            64,
+            174
+          ],
+          "transition_verb": "use",
+          "transition_message": "You emerge from the archives, carrying sonic memories."
+        }
+      ],
+      "zombies": [
+        {
+          "position": [
+            75,
+            165
+          ],
+          "type": "scene"
+        },
+        {
+          "position": [
+            195,
+            168
+          ],
+          "type": "rocker"
+        }
+      ]
+    },
+    {
+      "id": "promoter_office",
+      "name": "The Promoter's Office",
+      "entry_message": "Red carpet and gold records mask something darker lurking in the shadows.",
+      "default_entry": [
+        280,
+        172
+      ],
+      "walkable_zones": [
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              20,
+              185
+            ],
+            [
+              280,
+              185
+            ],
+            [
+              280,
+              195
+            ],
+            [
+              20,
+              195
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              35,
+              150
+            ],
+            [
+              265,
+              150
+            ],
+            [
+              265,
+              185
+            ],
+            [
+              35,
+              185
+            ]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Massive Desk",
+          "rect": [
+            80,
+            100,
+            160,
+            50
+          ],
+          "walk_position": [
+            160,
+            175
+          ],
+          "verbs": {
+            "look": "An imposing desk covered in contracts, a rotary phone, and whiskey.",
+            "talk": "The desk radiates power. How many careers were made and broken here?",
+            "use": "You rifle through the papers. Standard contracts with... unusual clauses."
+          }
+        },
+        {
+          "name": "Contracts",
+          "rect": [
+            110,
+            107,
+            45,
+            30
+          ],
+          "walk_position": [
+            132,
+            175
+          ],
+          "verbs": {
+            "look": "Stacks of band contracts with tiny print. Something feels off.",
+            "talk": "The contracts promise fame but demand... your soul? Metaphorically?",
+            "use": "You read the fine print. 'Eternal service to First Avenue.' Yikes."
+          }
+        },
+        {
+          "name": "Gold Records",
+          "rect": [
+            90,
+            35,
+            130,
+            50
+          ],
+          "walk_position": [
+            155,
+            165
+          ],
+          "verbs": {
+            "look": "Gold records line the wall: The Neon Dead, Soul Asylum, Husker Du.",
+            "talk": "Each gold disc represents a soul... er, a successful album.",
+            "use": "You examine them closely. They seem to glow with unnatural light."
+          }
+        },
+        {
+          "name": "Occult Symbols",
+          "rect": [
+            260,
+            165,
+            35,
+            30
+          ],
+          "walk_position": [
+            277,
+            178
+          ],
+          "verbs": {
+            "look": "Subtle pentagrams woven into the carpet pattern. Barely visible.",
+            "talk": "The symbols pulse with dark energy. This explains everything.",
+            "use": "You trace the pattern. The zombie outbreak started here, didn't it?"
+          }
+        },
+        {
+          "name": "Bookshelf",
+          "rect": [
+            235,
+            60,
+            75,
+            90
+          ],
+          "walk_position": [
+            272,
+            172
+          ],
+          "verbs": {
+            "look": "Business books mixed with occult volumes. 'Contracts with the Damned' stands out.",
+            "talk": "The books speak of dark bargains and musical immortality.",
+            "use": "You pull out a tome. Chapter 1: 'Raising the Dead for Fun and Profit.'"
+          }
+        },
+        {
+          "name": "Window",
+          "rect": [
+            10,
+            35,
+            50,
+            60
+          ],
+          "walk_position": [
+            35,
+            165
+          ],
+          "verbs": {
+            "look": "City lights twinkle below. Minneapolis glows like a circuit board.",
+            "talk": "From up here, you can see the neon spreading like an infection.",
+            "use": "You press your hand to the cold glass. The city needs saving."
+          }
+        },
+        {
+          "name": "Private Door",
+          "rect": [
+            285,
+            65,
+            35,
+            85
+          ],
+          "walk_position": [
+            280,
+            172
+          ],
+          "verbs": {
+            "look": "A door marked 'PRIVATE' in blood-red letters.",
+            "use": "You leave the villain's lair, plan forming in your mind.",
+            "talk": "The door guards secrets darker than you imagined."
+          },
+          "target_room": "backstage_stage",
+          "target_position": [
+            72,
+            172
+          ],
+          "transition_verb": "use",
+          "transition_message": "You descend from the office, knowledge weighing heavy."
+        }
+      ],
+      "zombies": [
+        {
+          "position": [
+            50,
+            160
+          ],
+          "type": "bouncer"
+        }
+      ]
+    },
+    {
+      "id": "loading_dock",
+      "name": "The Loading Dock",
+      "entry_message": "Zombie roadies shuffle equipment under sodium lights and a starlit sky.",
+      "default_entry": [
+        35,
+        172
+      ],
+      "walkable_zones": [
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              0,
+              115
+            ],
+            [
+              120,
+              115
+            ],
+            [
+              120,
+              140
+            ],
+            [
+              0,
+              140
+            ]
+          ]
+        },
+        {
+          "shape": "polygon",
+          "points": [
+            [
+              20,
+              140
+            ],
+            [
+              300,
+              140
+            ],
+            [
+              300,
+              198
+            ],
+            [
+              20,
+              198
+            ]
+          ]
+        }
+      ],
+      "hotspots": [
+        {
+          "name": "Semi-Truck",
+          "rect": [
+            100,
+            70,
+            180,
+            70
+          ],
+          "walk_position": [
+            190,
+            165
+          ],
+          "verbs": {
+            "look": "A trailer emblazoned with 'THE NEON DEAD' tour logo. Ready to roll.",
+            "talk": "The truck represents escape, freedom, the open road.",
+            "use": "You climb into the cab. Keys are still in the ignition..."
+          }
+        },
+        {
+          "name": "Road Cases",
+          "rect": [
+            20,
+            90,
+            80,
+            60
+          ],
+          "walk_position": [
+            60,
+            175
+          ],
+          "verbs": {
+            "look": "Flight cases stenciled with tour dates and city names. Well-traveled.",
+            "talk": "Each case carries memories of stages played and crowds moved.",
+            "use": "You pop one open. Cables, pedals, and a roadie's flask."
+          },
+          "give_item": "Guitar Pick",
+          "give_item_triggers": [
+            "use"
+          ]
+        },
+        {
+          "name": "Loading Dock Platform",
+          "rect": [
+            0,
+            115,
+            120,
+            25
+          ],
+          "walk_position": [
+            60,
+            130
+          ],
+          "verbs": {
+            "look": "A raised platform where gear gets loaded and unloaded.",
+            "talk": "This dock has seen more equipment than most stages.",
+            "use": "You stand on the platform, surveying your kingdom."
+          }
+        },
+        {
+          "name": "Security Light",
+          "rect": [
+            22,
+            20,
+            20,
+            120
+          ],
+          "walk_position": [
+            32,
+            165
+          ],
+          "verbs": {
+            "look": "A bright sodium lamp casting orange pools across the asphalt.",
+            "talk": "The light keeps the darkness at bay. Barely.",
+            "use": "You step into the glow. Temporary safety."
+          }
+        },
+        {
+          "name": "Zombie Roadie",
+          "rect": [
+            245,
+            110,
+            30,
+            40
+          ],
+          "walk_position": [
+            260,
+            170
+          ],
+          "verbs": {
+            "look": "A zombie roadie clutches a coiled cable, forever loading in.",
+            "talk": "The roadie moans the ancient song: 'One more trip to the truck.'",
+            "use": "You pat the roadie's shoulder. Thanks for the dedication, pal."
+          }
+        },
+        {
+          "name": "Exit Sign",
+          "rect": [
+            105,
+            80,
+            20,
+            10
+          ],
+          "walk_position": [
+            115,
+            128
+          ],
+          "verbs": {
+            "look": "A glowing green EXIT sign. Your way out of Minneapolis?",
+            "talk": "The sign beckons. But can you really leave the city like this?",
+            "use": "You memorize the route. Escape is always an option."
+          }
+        },
+        {
+          "name": "Overhead Door",
+          "rect": [
+            10,
+            35,
+            90,
+            80
+          ],
+          "walk_position": [
+            55,
+            128
+          ],
+          "verbs": {
+            "look": "A rolling door leading back into the venue's depths.",
+            "use": "You duck under the door, back into the musical labyrinth.",
+            "talk": "The door groans on its track, mechanical and weary."
+          },
+          "target_room": "backstage_stage",
+          "target_position": [
+            72,
+            172
+          ],
+          "transition_verb": "use",
+          "transition_message": "The night air fades as you re-enter the venue's electric maze."
+        }
+      ],
+      "zombies": [
+        {
+          "position": [
+            250,
+            160
+          ],
+          "type": "rocker"
+        },
+        {
+          "position": [
+            125,
+            155
+          ],
+          "type": "scene"
+        }
       ]
     }
   ]

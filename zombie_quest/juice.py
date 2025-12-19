@@ -114,16 +114,27 @@ class HitstopManager:
         self.frozen = False
         self.freeze_frames = 0
         self.frame_counter = 0
+        self.is_heavy_hit = False
 
-    def trigger(self, frames: int = 2) -> None:
+    def trigger(self, frames: int = 6, hit_type: str = "medium") -> None:
         """Trigger a hitstop freeze.
 
         Args:
-            frames: Number of frames to freeze (at 60fps). 2 frames = 33ms.
+            frames: Number of frames to freeze (at 60fps). 6 frames = 100ms.
+            hit_type: "light" (4 frames), "medium" (8 frames), "heavy" (12 frames)
         """
+        # Determine frames based on hit type
+        if hit_type == "light":
+            frames = 4
+        elif hit_type == "heavy":
+            frames = 12
+        elif hit_type == "medium":
+            frames = 8
+
         self.frozen = True
         self.freeze_frames = frames
         self.frame_counter = 0
+        self.is_heavy_hit = (hit_type == "heavy")
 
     def update(self) -> bool:
         """Update hitstop state. Returns True if game should be frozen."""
@@ -142,6 +153,10 @@ class HitstopManager:
         """Check if game is currently frozen."""
         return self.frozen
 
+    def should_screen_flash(self) -> bool:
+        """Check if this hitstop should trigger a screen flash."""
+        return self.is_heavy_hit and self.frozen
+
 
 # ============================================================================
 # KNOCKBACK SYSTEM
@@ -155,10 +170,15 @@ class KnockbackEffect:
     duration: float  # Total duration
     elapsed: float = 0.0
     easing: Callable[[float], float] = ease_out_cubic
+    has_landed: bool = False  # Track if ground impact has been triggered
+    knockback_type: str = "push"  # "nudge", "push", or "slam"
 
     def update(self, dt: float) -> Optional[pygame.Vector2]:
         """Update knockback and return displacement vector, or None if finished."""
         if self.elapsed >= self.duration:
+            # Trigger landing effect before finishing
+            if not self.has_landed:
+                self.has_landed = True
             return None
 
         self.elapsed += dt
@@ -168,7 +188,15 @@ class KnockbackEffect:
         current_strength = self.strength * (1.0 - self.easing(progress))
         displacement = self.direction * current_strength * dt
 
+        # Check if about to land (90% complete and hasn't landed yet)
+        if progress >= 0.9 and not self.has_landed:
+            self.has_landed = True
+
         return displacement
+
+    def should_emit_impact(self) -> bool:
+        """Check if ground impact particles should be emitted."""
+        return self.has_landed
 
 
 class KnockbackManager:
@@ -177,22 +205,32 @@ class KnockbackManager:
     def __init__(self) -> None:
         self.active_knockback: Optional[KnockbackEffect] = None
 
-    def apply(self, direction: pygame.Vector2, strength: float = 120.0,
-              duration: float = 0.25) -> None:
+    def apply(self, direction: pygame.Vector2, strength: float = 350.0,
+              duration: float = 0.25, knockback_type: str = "push") -> None:
         """Apply knockback in a direction.
 
         Args:
             direction: Direction vector (will be normalized)
-            strength: Initial knockback strength in pixels/second (120 = ~30 pixels total)
+            strength: Initial knockback strength in pixels/second
             duration: How long the knockback lasts (0.25s is snappy)
+            knockback_type: "nudge" (200), "push" (400), "slam" (600)
         """
+        # Determine strength based on knockback type
+        if knockback_type == "nudge":
+            strength = 200.0
+        elif knockback_type == "slam":
+            strength = 600.0
+        elif knockback_type == "push":
+            strength = 400.0
+
         if direction.length_squared() > 0:
             normalized = direction.normalize()
             self.active_knockback = KnockbackEffect(
                 direction=normalized,
                 strength=strength,
                 duration=duration,
-                easing=ease_out_cubic
+                easing=ease_out_cubic,
+                knockback_type=knockback_type
             )
 
     def update(self, dt: float) -> Optional[pygame.Vector2]:
@@ -202,6 +240,20 @@ class KnockbackManager:
             if displacement is None:
                 self.active_knockback = None
             return displacement
+        return None
+
+    def should_emit_impact(self) -> bool:
+        """Check if ground impact particles should be emitted."""
+        if self.active_knockback and self.active_knockback.should_emit_impact():
+            # Reset the flag so we only emit once
+            self.active_knockback.has_landed = False
+            return True
+        return False
+
+    def get_knockback_type(self) -> Optional[str]:
+        """Get the type of active knockback."""
+        if self.active_knockback:
+            return self.active_knockback.knockback_type
         return None
 
     def clear(self) -> None:
@@ -274,26 +326,34 @@ class CameraTrauma:
     def __init__(self) -> None:
         self.trauma = 0.0  # 0.0 to 1.0
         self.trauma_decay = 2.0  # How fast trauma decays per second
-        self.max_offset = 15.0  # Maximum pixel offset
-        self.max_rotation = 0.8  # Maximum rotation in degrees
+        self.max_offset = 40.0  # Maximum pixel offset (AMPLIFIED from 15)
+        self.max_rotation = 2.5  # Maximum rotation in degrees (AMPLIFIED from 0.8)
         self.shake_speed = 20.0  # Frequency of shake oscillation
         self.time = 0.0
+        self.trauma_multiplier = 1.0  # Multiplier for proximity effects
 
-    def add_trauma(self, amount: float) -> None:
+    def add_trauma(self, amount: float, multiplier: float = 1.0) -> None:
         """Add trauma to the camera.
 
         Args:
             amount: Trauma amount (0.0-1.0). 0.3 = small hit, 0.6 = medium, 1.0 = huge
+            multiplier: Optional multiplier for proximity effects (e.g., zombie nearby)
         """
-        self.trauma = min(1.0, self.trauma + amount)
+        self.trauma_multiplier = max(1.0, multiplier)
+        self.trauma = min(1.0, self.trauma + amount * self.trauma_multiplier)
 
-    def update(self, dt: float) -> Tuple[float, float, float]:
+    def update(self, dt: float, zombie_proximity: float = 0.0) -> Tuple[float, float, float]:
         """Update trauma and return (offset_x, offset_y, rotation).
+
+        Args:
+            zombie_proximity: 0.0-1.0, how close zombies are (amplifies shake)
 
         Returns:
             Tuple of (x_offset, y_offset, rotation_degrees)
         """
         if self.trauma <= 0:
+            # Decay multiplier when no trauma
+            self.trauma_multiplier = max(1.0, self.trauma_multiplier - dt * 2.0)
             return (0.0, 0.0, 0.0)
 
         # Decay trauma
@@ -302,8 +362,11 @@ class CameraTrauma:
         # Advance time for shake variation
         self.time += dt
 
+        # Proximity multiplier for zombie tension
+        proximity_mult = 1.0 + zombie_proximity * 0.5
+
         # Shake is based on trauma squared (makes small trauma barely noticeable)
-        shake = self.trauma * self.trauma
+        shake = self.trauma * self.trauma * proximity_mult
 
         # Use Perlin-like noise via sine waves at different frequencies
         offset_x = self.max_offset * shake * math.sin(self.time * self.shake_speed)
@@ -324,12 +387,12 @@ class CameraTrauma:
 class SquashStretch:
     """Squash and stretch effect for characters.
 
-    Subtle deformation that makes movement feel more alive.
-    5% max deformation is barely noticeable but adds life.
+    AMPLIFIED deformation that makes movement feel PUNCHY and ALIVE.
+    12% max deformation is noticeable and adds serious life.
     """
 
-    def __init__(self, max_deform: float = 0.05) -> None:
-        self.max_deform = max_deform  # 0.05 = 5% max deformation
+    def __init__(self, max_deform: float = 0.12) -> None:
+        self.max_deform = max_deform  # 0.12 = 12% max deformation (AMPLIFIED from 0.05)
         self.current_deform_x = 1.0
         self.current_deform_y = 1.0
         self.target_deform_x = 1.0

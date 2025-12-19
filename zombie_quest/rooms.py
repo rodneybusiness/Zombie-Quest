@@ -36,6 +36,16 @@ class Hotspot:
     transition_message: Optional[str] = None
     give_item_triggers: Tuple[str, ...] = ("use",)
     remove_item_triggers: Tuple[str, ...] = ("use",)
+    # Multi-solution puzzle support
+    alternate_items: Tuple[str, ...] = ()  # Alternative items that work
+    puzzle_type: Optional[str] = None  # Type of puzzle (frequency_match, sequence_match, etc.)
+    puzzle_solution: Optional[List] = None  # Solution data for puzzles
+    puzzle_hint: Optional[str] = None  # Hint for solving the puzzle
+    required_flag: Optional[str] = None  # Flag that must be set to interact
+    set_flag: Optional[str] = None  # Flag to set on successful interaction
+    alternate_reward: Optional[str] = None  # Additional item to give
+    alternate_access: bool = False  # Whether this provides alternate access
+    alternate_access_to: Optional[str] = None  # Room this provides access to
 
     def message_for(self, verb: str, outcome: str = "default") -> str:
         if outcome and outcome != "default":
@@ -146,6 +156,9 @@ class Room:
         rect = pygame.Rect(data.get("rect", [0, 0, 10, 10]))
         verbs: VerbMessages = data.get("verbs", {})
         walk_position = tuple(data.get("walk_position")) if data.get("walk_position") else None
+        # Parse alternate items
+        alternate_items_data = data.get("alternate_items", [])
+        alternate_items = tuple(alternate_items_data) if alternate_items_data else ()
         return Hotspot(
             rect=rect,
             name=data.get("name", "Hotspot"),
@@ -162,6 +175,15 @@ class Room:
             transition_message=data.get("transition_message"),
             give_item_triggers=tuple(trigger.lower() for trigger in data.get("give_item_triggers", ["use"])),
             remove_item_triggers=tuple(trigger.lower() for trigger in data.get("remove_item_triggers", ["use"])),
+            alternate_items=alternate_items,
+            puzzle_type=data.get("puzzle_type"),
+            puzzle_solution=data.get("puzzle_solution"),
+            puzzle_hint=data.get("puzzle_hint"),
+            required_flag=data.get("required_flag"),
+            set_flag=data.get("set_flag"),
+            alternate_reward=data.get("alternate_reward"),
+            alternate_access=bool(data.get("alternate_access", False)),
+            alternate_access_to=data.get("alternate_access_to"),
         )
 
     def update(self, dt: float, hero: Hero) -> None:
