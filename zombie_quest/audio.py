@@ -920,8 +920,8 @@ class AudioManager:
     # ==================== PROCEDURAL MUSIC SYSTEM ====================
 
     def _init_procedural_music(self) -> None:
-        """Initialize procedural music layers."""
-        # Base layer - always playing softly
+        """Initialize procedural music layers with room-specific themes."""
+        # BASS LAYER - Foundation (changes per room)
         self.music_layers.append(ProceduralMusicLayer(
             name="bass",
             base_freq=55,  # A1
@@ -930,24 +930,52 @@ class AudioManager:
             duration=8.0
         ))
 
-        # Arpeggio layer - exploration
+        # STREET LAYER - Distant punk bass
         self.music_layers.append(ProceduralMusicLayer(
-            name="arpeggio",
+            name="street_punk",
+            base_freq=82,  # E2
+            pattern=[0, 0, 5, 5, 3, 3, 5, 5],  # Punk rhythm
+            waveform="square",
+            duration=4.0
+        ))
+
+        # RECORD STORE LAYER - New wave arpeggio
+        self.music_layers.append(ProceduralMusicLayer(
+            name="record_newwave",
             base_freq=220,  # A3
-            pattern=[0, 4, 7, 12, 7, 4, 0, -5],  # Amin arpeggio
+            pattern=[0, 4, 7, 11, 12, 11, 7, 4],  # New wave progression
             waveform="triangle",
             duration=8.0
         ))
 
-        # Pad layer - ambient
+        # RADIO STATION LAYER - Electronic synth
         self.music_layers.append(ProceduralMusicLayer(
-            name="pad",
+            name="radio_electronic",
             base_freq=440,  # A4
-            pattern=[0, 0, 0, 0, 5, 5, 7, 7],  # Sustained chords
-            waveform="sine",
-            duration=8.0
+            pattern=[0, 2, 5, 7, 9, 7, 5, 2],  # Electronic melody
+            waveform="sawtooth",
+            duration=6.0
         ))
 
+        # BACKSTAGE LAYER - Raw guitar energy
+        self.music_layers.append(ProceduralMusicLayer(
+            name="backstage_guitar",
+            base_freq=165,  # E3
+            pattern=[0, 0, 7, 7, 5, 7, 10, 12],  # Rock progression
+            waveform="square",
+            duration=4.0
+        ))
+
+        # GREEN ROOM LAYER - Acoustic ambient
+        self.music_layers.append(ProceduralMusicLayer(
+            name="greenroom_ambient",
+            base_freq=330,  # E4
+            pattern=[0, 4, 7, 4, 0, -3, 0, 4],  # Gentle acoustic
+            waveform="triangle",
+            duration=10.0
+        ))
+
+        # TENSION LAYERS (universal)
         # Pulse layer - danger/tension
         self.music_layers.append(ProceduralMusicLayer(
             name="pulse",
@@ -969,29 +997,90 @@ class AudioManager:
         # Set initial tension
         self.set_music_tension(TensionLevel.EXPLORATION)
 
-    def set_music_tension(self, tension: TensionLevel) -> None:
-        """Set music tension level (crossfades layers)."""
+    def set_music_tension(self, tension: TensionLevel, room_id: Optional[str] = None) -> None:
+        """Set music tension level with room-specific themes.
+
+        Args:
+            tension: Current tension level
+            room_id: Optional room ID to customize music per location
+        """
         self.current_tension = tension
 
+        # Base volumes for all room layers (off by default)
+        room_volumes = {
+            'street_punk': 0.0,
+            'record_newwave': 0.0,
+            'radio_electronic': 0.0,
+            'backstage_guitar': 0.0,
+            'greenroom_ambient': 0.0,
+        }
+
+        # Activate appropriate room layer
+        if room_id == 'hennepin_outside':
+            # Street - Distant punk bass, city ambience
+            room_volumes['street_punk'] = 0.3 if tension in [TensionLevel.SAFE, TensionLevel.EXPLORATION] else 0.2
+        elif room_id == 'record_store':
+            # Record Store - Lo-fi new wave, vinyl warmth
+            room_volumes['record_newwave'] = 0.4 if tension in [TensionLevel.SAFE, TensionLevel.EXPLORATION] else 0.3
+        elif room_id == 'college_station':
+            # KJRR - Electronic/synth, radio static
+            room_volumes['radio_electronic'] = 0.5 if tension in [TensionLevel.SAFE, TensionLevel.EXPLORATION] else 0.3
+        elif room_id == 'backstage_stage':
+            # Backstage - Raw rock energy, pre-show tension
+            room_volumes['backstage_guitar'] = 0.4 if tension in [TensionLevel.SAFE, TensionLevel.EXPLORATION] else 0.3
+        elif room_id == 'green_room':
+            # Green Room - Acoustic intimacy, quiet moments
+            room_volumes['greenroom_ambient'] = 0.4 if tension in [TensionLevel.SAFE, TensionLevel.EXPLORATION] else 0.2
+
+        # Set tension-based layers
         if tension == TensionLevel.MENU:
-            # Just bass and pad
-            self._set_layer_volumes(bass=0.3, arpeggio=0.0, pad=0.4, pulse=0.0, lead=0.0)
+            # Just bass and room ambient
+            self._set_layer_volumes(
+                bass=0.3,
+                pulse=0.0,
+                lead=0.0,
+                **room_volumes
+            )
 
         elif tension == TensionLevel.SAFE:
-            # Gentle, minimal
-            self._set_layer_volumes(bass=0.2, arpeggio=0.3, pad=0.3, pulse=0.0, lead=0.0)
+            # Gentle, room-specific
+            self._set_layer_volumes(
+                bass=0.2,
+                pulse=0.0,
+                lead=0.0,
+                **room_volumes
+            )
 
         elif tension == TensionLevel.EXPLORATION:
-            # Normal exploration
-            self._set_layer_volumes(bass=0.3, arpeggio=0.4, pad=0.2, pulse=0.1, lead=0.0)
+            # Normal exploration with room flavor
+            self._set_layer_volumes(
+                bass=0.3,
+                pulse=0.1,
+                lead=0.0,
+                **room_volumes
+            )
 
         elif tension == TensionLevel.DANGER:
-            # Zombie detected
-            self._set_layer_volumes(bass=0.4, arpeggio=0.3, pad=0.1, pulse=0.4, lead=0.2)
+            # Zombie detected - reduce room music, add tension
+            for key in room_volumes:
+                room_volumes[key] *= 0.5
+            self._set_layer_volumes(
+                bass=0.4,
+                pulse=0.4,
+                lead=0.2,
+                **room_volumes
+            )
 
         elif tension == TensionLevel.CHASE:
-            # Active chase
-            self._set_layer_volumes(bass=0.5, arpeggio=0.2, pad=0.0, pulse=0.6, lead=0.5)
+            # Active chase - minimal room music, max tension
+            for key in room_volumes:
+                room_volumes[key] *= 0.2
+            self._set_layer_volumes(
+                bass=0.5,
+                pulse=0.6,
+                lead=0.5,
+                **room_volumes
+            )
 
     def _set_layer_volumes(self, **volumes):
         """Set target volumes for named layers."""
@@ -1059,7 +1148,11 @@ class AudioManager:
     # ==================== ROOM AMBIENCE ====================
 
     def set_room_ambience(self, room_id: str) -> None:
-        """Set ambient sound for current room."""
+        """Set ambient sound and music theme for current room.
+
+        Args:
+            room_id: ID of the room to set ambience for
+        """
         if not self.initialized:
             return
 
@@ -1076,6 +1169,9 @@ class AudioManager:
             channel = pygame.mixer.Channel(MUSIC_CHANNELS + SFX_CHANNELS)
             channel.set_volume(self.ambient_volume * self.master_volume)
             channel.play(ambience, loops=-1, fade_ms=500)
+
+        # Update music layers for room theme
+        self.set_music_tension(self.current_tension, room_id)
 
     # ==================== PLAYBACK CONTROL ====================
 

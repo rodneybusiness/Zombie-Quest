@@ -27,6 +27,7 @@ class Particle:
     gravity: float = 0.0
     fade: bool = True
     shrink: bool = True
+    shape: str = "circle"  # "circle" or "star" for variety
 
     def update(self, dt: float) -> bool:
         """Update particle, return False if dead."""
@@ -46,11 +47,29 @@ class Particle:
         size = max(1, int(self.size * ratio)) if self.shrink else int(self.size)
 
         # Create particle surface with alpha
-        particle_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+        particle_surf = pygame.Surface((size * 3, size * 3), pygame.SRCALPHA)
         color_with_alpha = (*self.color, alpha)
-        pygame.draw.circle(particle_surf, color_with_alpha, (size, size), size)
 
-        surface.blit(particle_surf, (int(self.x - size), int(self.y - size)))
+        center = (size + size // 2, size + size // 2)
+
+        if self.shape == "star":
+            # Draw star-shaped particle (4-pointed)
+            points = [
+                (center[0], center[1] - size),  # top
+                (center[0] + size // 2, center[1] - size // 2),
+                (center[0] + size, center[1]),  # right
+                (center[0] + size // 2, center[1] + size // 2),
+                (center[0], center[1] + size),  # bottom
+                (center[0] - size // 2, center[1] + size // 2),
+                (center[0] - size, center[1]),  # left
+                (center[0] - size // 2, center[1] - size // 2),
+            ]
+            pygame.draw.polygon(particle_surf, color_with_alpha, points)
+        else:
+            # Circle particle
+            pygame.draw.circle(particle_surf, color_with_alpha, center, size)
+
+        surface.blit(particle_surf, (int(self.x - size - size // 2), int(self.y - size - size // 2)))
 
 
 class ParticleSystem:
@@ -68,12 +87,14 @@ class ParticleSystem:
         for particle in self.particles:
             particle.draw(surface)
 
-    def emit_burst(self, x: float, y: float, color: Color, count: int = 10,
+    def emit_burst(self, x: float, y: float, color: Color, count: int = 30,
                    speed: float = 50.0, lifetime: float = 1.0) -> None:
-        """Emit a burst of particles."""
-        for _ in range(count):
+        """Emit a burst of particles. (TRIPLED count from 10 to 30)"""
+        for i in range(count):
             angle = random.uniform(0, 2 * math.pi)
             speed_var = random.uniform(0.5, 1.5) * speed
+            # Every 5th particle is a star for variety
+            shape = "star" if i % 5 == 0 else "circle"
             self.particles.append(Particle(
                 x=x, y=y,
                 vx=math.cos(angle) * speed_var,
@@ -82,13 +103,15 @@ class ParticleSystem:
                 max_life=lifetime,
                 color=color,
                 size=random.uniform(2, 5),
-                gravity=20.0
+                gravity=20.0,
+                shape=shape
             ))
 
     def emit_sparkle(self, x: float, y: float, color: Color) -> None:
-        """Emit a sparkle effect (item pickup)."""
-        for i in range(8):
-            angle = i * (math.pi / 4)
+        """Emit a sparkle effect (item pickup). (TRIPLED count from 8 to 24)"""
+        for i in range(24):
+            angle = i * (math.pi / 12)
+            # All sparkles are stars for maximum visual impact
             self.particles.append(Particle(
                 x=x, y=y,
                 vx=math.cos(angle) * 40,
@@ -97,13 +120,16 @@ class ParticleSystem:
                 max_life=0.5,
                 color=color,
                 size=3,
-                gravity=-10
+                gravity=-10,
+                shape="star"
             ))
 
     def emit_damage(self, x: float, y: float) -> None:
-        """Emit damage particles (red flash)."""
-        for _ in range(15):
+        """Emit damage particles (red flash). (TRIPLED count from 15 to 45)"""
+        for i in range(45):
             angle = random.uniform(0, 2 * math.pi)
+            # Mix of circles and stars for impact
+            shape = "star" if i % 3 == 0 else "circle"
             self.particles.append(Particle(
                 x=x + random.uniform(-10, 10),
                 y=y + random.uniform(-20, 0),
@@ -113,7 +139,8 @@ class ParticleSystem:
                 max_life=0.4,
                 color=(255, 50, 50),
                 size=random.uniform(2, 4),
-                gravity=100
+                gravity=100,
+                shape=shape
             ))
 
     def emit_ambient_dust(self, bounds: pygame.Rect) -> None:
@@ -133,6 +160,41 @@ class ParticleSystem:
             fade=True,
             shrink=False
         ))
+
+    def emit_motion_trail(self, x: float, y: float, velocity: pygame.Vector2, color: Color) -> None:
+        """Emit motion trail particles for fast movement.
+
+        Args:
+            x, y: Current position
+            velocity: Movement velocity vector
+            color: Trail color
+        """
+        speed = velocity.length()
+        if speed < 50:  # Only emit trails on fast movement
+            return
+
+        # Emit 2-3 trail particles behind the movement
+        count = random.randint(2, 3)
+        for i in range(count):
+            # Position slightly behind movement direction
+            offset = velocity.normalize() * -5 if speed > 0 else pygame.Vector2(0, 0)
+            trail_x = x + offset.x + random.uniform(-3, 3)
+            trail_y = y + offset.y + random.uniform(-3, 3)
+
+            self.particles.append(Particle(
+                x=trail_x,
+                y=trail_y,
+                vx=random.uniform(-10, 10),
+                vy=random.uniform(-10, 10),
+                life=0.2,
+                max_life=0.2,
+                color=color,
+                size=random.uniform(1, 2),
+                gravity=0,
+                fade=True,
+                shrink=True,
+                shape="circle"
+            ))
 
 
 class ScreenTransition:
@@ -552,8 +614,8 @@ class DustPuffEmitter:
             position: (x, y) where dust appears
             direction: Optional direction vector for directional puff
         """
-        # Create 3-5 particles per puff
-        count = random.randint(3, 5)
+        # Create 5-8 particles per puff (AMPLIFIED from 3-5)
+        count = random.randint(5, 8)
         for _ in range(count):
             angle = random.uniform(0, 2 * math.pi)
             speed = random.uniform(10, 30)
@@ -571,6 +633,39 @@ class DustPuffEmitter:
                 vy=math.sin(angle) * speed - 10,  # Slight upward
                 life=random.uniform(0.3, 0.6),
                 size=random.uniform(2, 4)
+            )
+            self.puffs.append(puff)
+
+    def emit_impact(self, position: Tuple[float, float], knockback_type: str = "push") -> None:
+        """Emit ground impact dust on knockback landing.
+
+        Args:
+            position: (x, y) where impact occurs
+            knockback_type: "nudge", "push", or "slam" - determines particle count
+        """
+        # Particle count based on impact strength
+        if knockback_type == "nudge":
+            count = random.randint(8, 12)
+            speed_range = (20, 40)
+        elif knockback_type == "slam":
+            count = random.randint(25, 35)  # HUGE impact
+            speed_range = (40, 80)
+        else:  # "push"
+            count = random.randint(15, 20)
+            speed_range = (30, 60)
+
+        for _ in range(count):
+            # Radial burst pattern
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(*speed_range)
+
+            puff = DustPuff(
+                x=position[0] + random.uniform(-8, 8),
+                y=position[1] + random.uniform(-5, 5),
+                vx=math.cos(angle) * speed,
+                vy=math.sin(angle) * speed - 15,  # Upward bias
+                life=random.uniform(0.4, 0.7),
+                size=random.uniform(3, 6)
             )
             self.puffs.append(puff)
 

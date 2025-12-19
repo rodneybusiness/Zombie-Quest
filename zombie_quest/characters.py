@@ -6,10 +6,12 @@ Features:
 - Health system with damage and invincibility frames
 - Smooth pathfinding and collision detection
 - Full keyboard and mouse control support
+- Music response system for zombies
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 import random
 from typing import Dict, List, Optional, Tuple
 
@@ -18,9 +20,18 @@ import pygame
 from .config import GAMEPLAY, ANIMATION
 from .pathfinding import GridPathfinder
 from .sprites import create_hero_animations, create_zombie_animations
+from .juice import SquashStretch
 
 Direction = str
 WorldPos = Tuple[float, float]
+
+
+class ZombieMusicState(Enum):
+    """States zombies can enter when exposed to music."""
+    HOSTILE = "hostile"          # Normal behavior, attacks player
+    ENTRANCED = "entranced"      # Frozen in place, listening to music
+    DANCING = "dancing"          # Swaying rhythmically, harmless
+    REMEMBERING = "remembering"  # Brief lucidity, may even help player
 
 
 @dataclass
@@ -140,6 +151,13 @@ class Hero(Character):
         self.keyboard_velocity = pygame.Vector2(0, 0)
         self.using_keyboard = False
 
+        # JUICE SYSTEMS for MAXIMUM FEEL
+        self.squash_stretch = SquashStretch(max_deform=0.12)  # AMPLIFIED from 0.05
+        self.last_direction = pygame.Vector2(0, 1)
+        self.last_footstep_frame = -1
+        self.footstep_callback: Optional[callable] = None  # Hook for sound/dust emission
+        self.current_velocity = pygame.Vector2(0, 0)  # Track for squash/stretch
+
     def set_destination(self, destination: WorldPos, pathfinder: GridPathfinder) -> None:
         """Set a destination to pathfind to (mouse click movement)."""
         self.using_keyboard = False
@@ -209,6 +227,16 @@ class Hero(Character):
                 new_pos.y = max(room_bounds.top + 10, min(room_bounds.bottom - 10, new_pos.y))
 
             if can_move:
+                # Track velocity for juice effects
+                actual_movement = new_pos - self.position
+                self.current_velocity = actual_movement / max(dt, 0.001)
+
+                # Apply squash/stretch on direction change
+                direction_change = actual_movement - self.last_direction
+                if direction_change.length() > 0.5:
+                    self.squash_stretch.apply_impact(actual_movement, strength=0.8)
+                    self.last_direction = actual_movement.copy()
+
                 self.position = new_pos
                 self._update_direction(self.keyboard_velocity)
                 moving = True
@@ -234,6 +262,16 @@ class Hero(Character):
                     can_move = walkable_check((new_pos.x, new_pos.y))
 
                 if can_move:
+                    # Track velocity for juice effects
+                    actual_movement = new_pos - self.position
+                    self.current_velocity = actual_movement / max(dt, 0.001)
+
+                    # Apply squash/stretch on direction change
+                    direction_change = actual_movement - self.last_direction
+                    if direction_change.length() > 0.5:
+                        self.squash_stretch.apply_impact(actual_movement, strength=0.6)
+                        self.last_direction = actual_movement.copy()
+
                     self.position = new_pos
                     self._update_direction(direction)
                     moving = True
@@ -244,6 +282,17 @@ class Hero(Character):
 
         elif self.path:
             self.current_target = self.path.pop(0)
+
+        # Update squash/stretch
+        if not moving:
+            self.current_velocity = pygame.Vector2(0, 0)
+
+        # FOOTSTEP SYNC: Check animation frame for footstep emission
+        if moving and self.animation_state.frame_index in [1, 3]:
+            # Emit footstep on specific animation frames
+            if self.last_footstep_frame != self.animation_state.frame_index:
+                self.last_footstep_frame = self.animation_state.frame_index
+                self.emit_footstep()
 
         self.update_animation(dt, moving)
 
@@ -271,18 +320,68 @@ class Hero(Character):
         """Check if hero is dead."""
         return self.health <= 0
 
-    def draw(self, surface: pygame.Surface, room_height: int) -> pygame.Rect:
-        """Draw hero with invincibility flash effect."""
-        # Flash when invincible
-        if self.is_invincible:
-            if int(self.flash_timer * 10) % 2 == 0:
-                return pygame.Rect(0, 0, 0, 0)  # Skip frame for flash effect
+    def emit_footstep(self) -> None:
+        """Emit footstep effect (sound/dust particles)."""
+        if self.footstep_callback:
+            self.footstep_callback(self.position, self.current_velocity)
 
-        return super().draw(surface, room_height)
+    def set_footstep_callback(self, callback: callable) -> None:
+        """Set callback for footstep emission."""
+        self.footstep_callback = callback
+
+    def draw(self, surface: pygame.Surface, room_height: int) -> pygame.Rect:
+        """Draw hero with AMPLIFIED invincibility visual and squash/stretch."""
+        # Update squash/stretch and get deformation
+        scale_x, scale_y = self.squash_stretch.update(1/60.0, self.current_velocity)
+
+        # Get base frame
+        frame = self.current_frame
+        scale = self.compute_scale(room_height)
+
+        # Apply squash/stretch deformation
+        width = max(1, int(frame.get_width() * scale * scale_x))
+        height = max(1, int(frame.get_height() * scale * scale_y))
+        scaled = pygame.transform.scale(frame, (width, height))
+
+        # AMPLIFIED INVINCIBILITY VISUAL: Color overlay instead of strobe
+        if self.is_invincible:
+            # Create glowing outline overlay
+            glow_intensity = abs((self.flash_timer * 4) % 1.0 - 0.5) * 2  # Smooth pulse
+
+            # Create cyan glow overlay
+            glow_surf = pygame.Surface((width + 8, height + 8), pygame.SRCALPHA)
+            alpha = int(180 * glow_intensity)
+
+            # Draw multiple glow layers for outline effect
+            for i in range(3):
+                offset = 2 + i * 2
+                glow_color = (100, 200, 255, alpha // (i + 1))
+                # Draw scaled sprite with glow tint
+                temp_surf = pygame.transform.scale(frame, (width + offset, height + offset))
+                temp_overlay = pygame.Surface((width + offset, height + offset), pygame.SRCALPHA)
+                temp_overlay.fill(glow_color)
+                temp_surf.blit(temp_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                glow_surf.blit(temp_surf, (4 - offset // 2, 4 - offset // 2))
+
+            # Draw main sprite on top of glow
+            glow_surf.blit(scaled, (4, 4))
+
+            draw_pos = (int(self.position.x - width // 2 - 4), int(self.position.y - height - 4))
+            surface.blit(glow_surf, draw_pos)
+            return pygame.Rect(draw_pos, (width + 8, height + 8))
+
+        # Normal drawing with squash/stretch
+        draw_pos = (int(self.position.x - width // 2), int(self.position.y - height))
+        surface.blit(scaled, draw_pos)
+        return pygame.Rect(draw_pos, (width, height))
 
 
 class Zombie(Character):
-    """A zombie enemy with shambling movement and player detection."""
+    """A zombie enemy with shambling movement and player detection.
+
+    Now features music response system - zombies react to different
+    types of music based on their type and the intensity of the music.
+    """
 
     def __init__(self, position: WorldPos, zombie_type: str = "scene") -> None:
         # Use detailed pixel art sprites with type variation
@@ -298,8 +397,126 @@ class Zombie(Character):
         # Groan timer for audio
         self.groan_timer: float = random.uniform(2.0, 5.0)
 
+        # Music response system
+        self.music_state: ZombieMusicState = ZombieMusicState.HOSTILE
+        self.music_effect_timer: float = 0.0
+        self.music_memory_duration: float = 0.0
+
+        # Music preferences by zombie type
+        self.music_affinities = self._get_music_affinities()
+
+    def _get_music_affinities(self) -> Dict[str, float]:
+        """Get music type affinities for this zombie type.
+
+        Returns dict of music_type -> affinity multiplier (higher = more affected)
+        """
+        affinities = {
+            'scene': {
+                'new_wave': 1.5,    # Scene kids love new wave
+                'electronic': 1.3,   # Electronic is cool
+                'guitar': 0.8,       # Less interested in guitar
+                'punk': 1.0,         # Moderate interest
+                'ambient': 1.2       # Chill vibes
+            },
+            'bouncer': {
+                'new_wave': 0.5,     # Not into new wave
+                'electronic': 0.4,   # Too soft
+                'guitar': 1.6,       # Rock and metal
+                'punk': 1.8,         # Hardcore all the way
+                'ambient': 0.3       # Makes them angry
+            },
+            'rocker': {
+                'new_wave': 0.7,     # Eh
+                'electronic': 0.5,   # Not their thing
+                'guitar': 2.0,       # THIS IS IT
+                'punk': 1.7,         # Hell yeah
+                'ambient': 0.6       # Boring
+            },
+            'dj': {
+                'new_wave': 1.4,     # Good beats
+                'electronic': 2.0,   # Pure bliss
+                'guitar': 0.6,       # Too analog
+                'punk': 0.7,         # Too chaotic
+                'ambient': 1.5       # They can mix this
+            }
+        }
+        return affinities.get(self.zombie_type, affinities['scene'])
+
+    def respond_to_music(self, music_type: str, intensity: float) -> ZombieMusicState:
+        """Calculate zombie response to music.
+
+        Args:
+            music_type: Type of music ('guitar', 'electronic', 'new_wave', etc.)
+            intensity: Music intensity 0.0-1.0
+
+        Returns:
+            New music state for this zombie
+        """
+        # Get affinity for this music type
+        affinity = self.music_affinities.get(music_type, 0.5)
+
+        # Calculate effective intensity
+        effective_intensity = intensity * affinity
+
+        # Determine state based on effective intensity
+        if effective_intensity < 0.3:
+            # Weak effect - still hostile
+            return ZombieMusicState.HOSTILE
+        elif effective_intensity < 0.6:
+            # Moderate effect - entranced (frozen)
+            self.music_effect_timer = 3.0 + random.uniform(-0.5, 0.5)
+            return ZombieMusicState.ENTRANCED
+        elif effective_intensity < 0.9:
+            # Strong effect - dancing (harmless, swaying)
+            self.music_effect_timer = 5.0 + random.uniform(-1.0, 1.0)
+            return ZombieMusicState.DANCING
+        else:
+            # Overwhelming effect - remembering (brief lucidity)
+            self.music_effect_timer = 4.0 + random.uniform(-0.5, 0.5)
+            self.music_memory_duration = self.music_effect_timer
+            return ZombieMusicState.REMEMBERING
+
+    def apply_music_effect(self, music_type: str, intensity: float) -> None:
+        """Apply music effect to this zombie."""
+        new_state = self.respond_to_music(music_type, intensity)
+
+        # Only transition if not already in a music state or if new state is stronger
+        state_priority = {
+            ZombieMusicState.HOSTILE: 0,
+            ZombieMusicState.ENTRANCED: 1,
+            ZombieMusicState.DANCING: 2,
+            ZombieMusicState.REMEMBERING: 3
+        }
+
+        current_priority = state_priority[self.music_state]
+        new_priority = state_priority[new_state]
+
+        if new_priority > current_priority or self.music_effect_timer <= 0:
+            self.music_state = new_state
+
+    def update_music_state(self, dt: float) -> None:
+        """Update music effect timer and state."""
+        if self.music_effect_timer > 0:
+            self.music_effect_timer -= dt
+
+            if self.music_effect_timer <= 0:
+                # Effect wore off, return to hostile
+                self.music_state = ZombieMusicState.HOSTILE
+                self.music_effect_timer = 0.0
+
+    def is_harmless(self) -> bool:
+        """Check if zombie is currently harmless due to music."""
+        return self.music_state in [
+            ZombieMusicState.ENTRANCED,
+            ZombieMusicState.DANCING,
+            ZombieMusicState.REMEMBERING
+        ]
+
     def update(self, dt: float, hero_position: WorldPos, room_rect: pygame.Rect) -> bool:
         """Update zombie movement. Returns True if zombie touched hero."""
+        # Update music state first
+        self.update_music_state(dt)
+
         self.wander_timer -= dt
         self.groan_timer -= dt
         moving = False
@@ -308,18 +525,45 @@ class Zombie(Character):
         offset = pygame.Vector2(hero_position) - self.position
         distance_to_hero = offset.length()
 
-        if self.wander_timer <= 0:
-            self.wander_timer = GAMEPLAY.ZOMBIE_WANDER_INTERVAL
-
-            if distance_to_hero < self.detection_radius:
-                # Chase the hero
-                self.wander_direction = offset.normalize() if distance_to_hero > 0 else pygame.Vector2(0, 0)
-                self.is_chasing = True
-            else:
-                # Random wandering
+        # Music state affects behavior
+        if self.music_state == ZombieMusicState.ENTRANCED:
+            # Frozen in place, listening
+            moving = False
+            self.is_chasing = False
+        elif self.music_state == ZombieMusicState.DANCING:
+            # Swaying in place with slight movement
+            if self.wander_timer <= 0:
+                self.wander_timer = GAMEPLAY.ZOMBIE_WANDER_INTERVAL * 2
+                # Gentle swaying motion
                 angle = random.uniform(0, 360)
-                self.wander_direction = pygame.Vector2(1, 0).rotate(angle)
-                self.is_chasing = False
+                self.wander_direction = pygame.Vector2(1, 0).rotate(angle) * 0.3
+            moving = True
+            self.is_chasing = False
+        elif self.music_state == ZombieMusicState.REMEMBERING:
+            # Slow, contemplative movement away from player
+            if self.wander_timer <= 0:
+                self.wander_timer = GAMEPLAY.ZOMBIE_WANDER_INTERVAL
+                # Move away from hero slowly
+                if distance_to_hero > 0:
+                    self.wander_direction = -offset.normalize() * 0.5
+                else:
+                    self.wander_direction = pygame.Vector2(0, 0)
+            moving = True
+            self.is_chasing = False
+        else:
+            # Normal hostile behavior
+            if self.wander_timer <= 0:
+                self.wander_timer = GAMEPLAY.ZOMBIE_WANDER_INTERVAL
+
+                if distance_to_hero < self.detection_radius:
+                    # Chase the hero
+                    self.wander_direction = offset.normalize() if distance_to_hero > 0 else pygame.Vector2(0, 0)
+                    self.is_chasing = True
+                else:
+                    # Random wandering
+                    angle = random.uniform(0, 360)
+                    self.wander_direction = pygame.Vector2(1, 0).rotate(angle)
+                    self.is_chasing = False
 
         if self.wander_direction.length_squared() > 0:
             self.position += self.wander_direction * self.speed * dt
@@ -330,9 +574,12 @@ class Zombie(Character):
 
         self.update_animation(dt, moving)
 
-        # Check collision with hero
+        # Check collision with hero (only if hostile)
         collision_distance = 20  # pixels
-        return distance_to_hero < collision_distance
+        touched_hero = distance_to_hero < collision_distance
+
+        # Only damage if hostile
+        return touched_hero and not self.is_harmless()
 
     def should_groan(self) -> bool:
         """Check if zombie should make a groan sound."""

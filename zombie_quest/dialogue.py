@@ -474,3 +474,399 @@ def create_dj_dialogue() -> DialogueTree:
     ))
 
     return tree
+
+
+def create_maya_dialogue() -> DialogueTree:
+    """Create dialogue tree for Maya - the emotional climax of the game.
+
+    This dialogue adapts to the player's backstory and determines the ending.
+    Maya is your former bandmate, half-transformed into a zombie, standing at the
+    edge of the rooftop. She represents everything you've sacrificed for your art.
+    """
+    tree = DialogueTree("Maya")
+
+    # Entry nodes - different based on backstory
+
+    # SELLOUT BACKSTORY - Maya is bitter about your betrayal
+    tree.add_node(DialogueNode(
+        id="start_sellout",
+        speaker="Maya",
+        text="Of course it's you. The one who got out. The one who made it. Tell me—was it worth it? The contracts, the compromises, the lies?",
+        choices=[
+            DialogueChoice(
+                text="I'm sorry. I should have brought you with me.",
+                next_node="sellout_apology",
+            ),
+            DialogueChoice(
+                text="I did what I had to do. The scene was dying anyway.",
+                next_node="sellout_defensive",
+            ),
+            DialogueChoice(
+                text="None of it mattered without you. That's why I'm here.",
+                next_node="sellout_confession",
+            ),
+        ],
+        conditions=["backstory_sellout"]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="sellout_apology",
+        speaker="Maya",
+        text="Sorry? SORRY?! You left me in basement clubs while you posed for magazine covers. You don't get to apologize your way out of this.",
+        choices=[
+            DialogueChoice(
+                text="You're right. I was a coward. But I'm here now.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="I came back, didn't I? That should mean something.",
+                next_node="maya_rejection_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="sellout_defensive",
+        speaker="Maya",
+        text="*laughs bitterly* Classic. Even now, you can't admit you were wrong. You sold us out. You sold ME out. And for what? A Billboard chart position?",
+        choices=[
+            DialogueChoice(
+                text="I... you're right. I fucked up. I fucked up everything.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="At least I'm not the one turning into a zombie.",
+                next_node="cruel_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="sellout_confession",
+        speaker="Maya",
+        text="*her expression softens slightly* ...The infection is spreading. I can feel it. My fingers don't remember the chords anymore. They remember... hunger.",
+        choices=[
+            DialogueChoice(
+                text="Then let's play one last show. Together. Before it's too late.",
+                next_node="maya_hope_path",
+            ),
+            DialogueChoice(
+                text="Maybe the transformation isn't an ending. Maybe it's evolution.",
+                next_node="transcendence_path",
+            ),
+        ]
+    ))
+
+    # PURIST BACKSTORY - Maya respects you but questions your arrival
+    tree.add_node(DialogueNode(
+        id="start_purist",
+        speaker="Maya",
+        text="You always kept the faith. Never sold out, never compromised. But now you're here, on a night like this. Why? To save me? Or to save your conscience?",
+        choices=[
+            DialogueChoice(
+                text="Because you'd do the same for me.",
+                next_node="purist_loyalty",
+            ),
+            DialogueChoice(
+                text="Because the scene needs you. The music needs you.",
+                next_node="purist_idealism",
+            ),
+            DialogueChoice(
+                text="Because I... because I can't lose you.",
+                next_node="purist_honesty",
+            ),
+        ],
+        conditions=["backstory_purist"]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="purist_loyalty",
+        speaker="Maya",
+        text="Would I? Would I risk infection, risk everything, for someone too proud to admit they care? You always hid behind the music. Behind the 'art.'",
+        choices=[
+            DialogueChoice(
+                text="Then let me be honest now: I need you. The music needs you. I need you.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="The art IS what matters. And together, we can still create it.",
+                next_node="maya_hope_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="purist_idealism",
+        speaker="Maya",
+        text="*bitter laugh* The scene. Always the scene. What about what I need? What about what I want? I'm not a symbol. I'm not your muse. I'm dying here.",
+        choices=[
+            DialogueChoice(
+                text="You're right. This isn't about the scene. It's about you. About us.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="Then die for something beautiful. Die making the music that matters.",
+                next_node="cruel_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="purist_honesty",
+        speaker="Maya",
+        text="*eyes widen* ...Finally. Finally you say it. After all these years of pretending it was just about the music. *she steps closer* But is it too late?",
+        choices=[
+            DialogueChoice(
+                text="It's never too late. Come back with me. We'll find a cure, we'll—",
+                next_node="maya_hope_path",
+            ),
+            DialogueChoice(
+                text="Maybe. But we can have this moment. This one perfect moment.",
+                next_node="transcendence_path",
+            ),
+        ]
+    ))
+
+    # SURVIVOR BACKSTORY - Maya is both hopeful and skeptical
+    tree.add_node(DialogueNode(
+        id="start_survivor",
+        speaker="Maya",
+        text="You're still standing. After everything—the overdoses, the closures, the funerals—you're still here. So am I. Barely. What's one more survivor's story, right?",
+        choices=[
+            DialogueChoice(
+                text="This isn't just another tragedy. We can still make it out.",
+                next_node="survivor_optimism",
+            ),
+            DialogueChoice(
+                text="Maybe survival isn't always the point. Maybe art is.",
+                next_node="survivor_acceptance",
+            ),
+            DialogueChoice(
+                text="I'm tired of losing people. I'm tired of being the one left behind.",
+                next_node="survivor_weariness",
+            ),
+        ],
+        conditions=["backstory_survivor"]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="survivor_optimism",
+        speaker="Maya",
+        text="*shakes head* You still believe. After everything, you still believe in happy endings. God, I wish I had that. I can feel the infection spreading. Soon I won't be me anymore.",
+        choices=[
+            DialogueChoice(
+                text="Then we fight it. Together. We've survived worse.",
+                next_node="maya_hope_path",
+            ),
+            DialogueChoice(
+                text="Maybe 'you' is bigger than just being human. Maybe you can still be Maya.",
+                next_node="transcendence_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="survivor_acceptance",
+        speaker="Maya",
+        text="*smiles sadly* There it is. The survivor's philosophy. We endure for the art, for the music, for something bigger than ourselves. But what if I'm just... tired?",
+        choices=[
+            DialogueChoice(
+                text="Then rest. But rest alive. Rest human. Let me help you.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="Then let's make one last beautiful thing before the end.",
+                next_node="maya_hope_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="survivor_weariness",
+        speaker="Maya",
+        text="*reaches out, her hand trembling* Me too. God, me too. I'm so tired of fighting. But... *she pulls her hand back* I'm scared. I'm so scared of what I'm becoming.",
+        choices=[
+            DialogueChoice(
+                text="*takes her hand* Then don't face it alone. Let's fight this together.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="What if becoming something new isn't the end? What if it's freedom?",
+                next_node="transcendence_path",
+            ),
+        ]
+    ))
+
+    # CRITICAL NODES - These determine the ending
+
+    tree.add_node(DialogueNode(
+        id="maya_moment_truth",
+        speaker="Maya",
+        text="*tears in her eyes* I want to believe you. I want to believe we can fix this. But look at me—I'm already halfway gone. Can you really accept that?",
+        choices=[
+            DialogueChoice(
+                text="I accept all of you. Human, infected, whatever. You're still Maya.",
+                next_node="redemption_path",
+                effects=[(DialogueEffect.SET_FLAG, "maya_acceptance")]
+            ),
+            DialogueChoice(
+                text="I... I don't know if I can watch you turn into a monster.",
+                next_node="abandonment_path",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="redemption_path",
+        speaker="Maya",
+        text="*sobbing* God. Goddammit. You actually mean it. After everything, you... *she collapses into your arms* Okay. Okay. Let's go back. Let's try. Let's play that show together.",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_saved"),
+            (DialogueEffect.SET_FLAG, "maya_forgiven"),
+            (DialogueEffect.SET_FLAG, "redemption_achieved")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="maya_hope_path",
+        speaker="Maya",
+        text="One last show. Together. Like the old days, before everything got complicated. Before the infection, before the scene died, before... *she picks up her guitar* Yeah. Let's make it count.",
+        choices=[
+            DialogueChoice(
+                text="This isn't goodbye. This is the beginning of something new.",
+                next_node="redemption_path",
+            ),
+            DialogueChoice(
+                text="Let's make it legendary. Whatever happens after.",
+                next_node="bittersweet_path",
+                effects=[(DialogueEffect.SET_FLAG, "last_show_together")]
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="bittersweet_path",
+        speaker="Maya",
+        text="Legendary. Yeah. Even if I'm not fully human by the end of it. Even if this is our swan song. *she smiles through tears* Let's burn down the fucking house.",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_saved"),
+            (DialogueEffect.SET_FLAG, "bittersweet_ending"),
+            (DialogueEffect.SET_FLAG, "stayed_for_show")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="transcendence_path",
+        speaker="Maya",
+        text="Evolution. Transformation. Becoming something... more than human. *her eyes glow faintly* Maybe you're right. Maybe death is just a key change. Are you brave enough to change with me?",
+        choices=[
+            DialogueChoice(
+                text="If it means we stay together, yes. Transform me too.",
+                next_node="transcendence_accepted",
+                effects=[(DialogueEffect.SET_FLAG, "accepted_transformation")]
+            ),
+            DialogueChoice(
+                text="I want to. But I can't. I'm sorry.",
+                next_node="transcendence_refused",
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="transcendence_accepted",
+        speaker="Maya",
+        text="*she bites your neck gently* There. Now we're the same. No more human limitations, no more mortality. Just us, and the music, forever. *she takes your hand* Let's show them what eternity sounds like.",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_transformed"),
+            (DialogueEffect.SET_FLAG, "player_transformed"),
+            (DialogueEffect.SET_FLAG, "transcendence_ending")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="transcendence_refused",
+        speaker="Maya",
+        text="*steps back* I understand. You want to stay human. Stay safe. I can't blame you. But I... I'm going to let it happen. I'm going to become. *she looks at the city below* Goodbye. Tell them I chose this.",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_transformed_alone"),
+            (DialogueEffect.SET_FLAG, "rejected_transformation"),
+            (DialogueEffect.SET_FLAG, "maya_lost")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="abandonment_path",
+        speaker="Maya",
+        text="*her expression hardens* There it is. The truth. You came up here to ease your guilt, not to save me. You want the version of Maya that makes you feel good. Not the real, infected, complicated me.",
+        choices=[
+            DialogueChoice(
+                text="Wait, that's not—I didn't mean—",
+                next_node="abandonment_regret",
+            ),
+            DialogueChoice(
+                text="You're right. I can't do this. I'm sorry.",
+                next_node="abandonment_final",
+                effects=[(DialogueEffect.SET_FLAG, "chose_selfishness")]
+            ),
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="abandonment_regret",
+        speaker="Maya",
+        text="Too late. I see who you really are now. Go. Go do your show. Be the star. I'll be here, turning into something you can't use for your redemption arc. GET OUT!",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_abandoned"),
+            (DialogueEffect.SET_FLAG, "guilt_path")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="abandonment_final",
+        speaker="Maya",
+        text="*turns away* Yeah. That's what I thought. Go be great without me. Just like always. *her voice breaks* Just... go.",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_abandoned"),
+            (DialogueEffect.SET_FLAG, "chose_selfishness"),
+            (DialogueEffect.SET_FLAG, "hollow_victory_ending")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="cruel_path",
+        speaker="Maya",
+        text="*her eyes flash with hurt and rage* ...Get away from me. GET AWAY! You're not here to help. You're here to make yourself feel better. I don't need your pity or your cruelty!",
+        choices=[],
+        effects=[
+            (DialogueEffect.SET_FLAG, "maya_abandoned"),
+            (DialogueEffect.SET_FLAG, "cruel_choice"),
+            (DialogueEffect.SET_FLAG, "hollow_victory_ending")
+        ]
+    ))
+
+    tree.add_node(DialogueNode(
+        id="maya_rejection_path",
+        speaker="Maya",
+        text="Mean something? You think showing up erases everything? The years I spent broke and struggling while you got fat on major label money? *she laughs bitterly* You're delusional.",
+        choices=[
+            DialogueChoice(
+                text="I know I can't undo the past. But maybe we can build a future.",
+                next_node="maya_moment_truth",
+            ),
+            DialogueChoice(
+                text="Fine. Stay here and rot. I tried.",
+                next_node="abandonment_final",
+            ),
+        ]
+    ))
+
+    # Fallback for if something goes wrong
+    tree.fallback_node = "start_purist"
+
+    return tree
