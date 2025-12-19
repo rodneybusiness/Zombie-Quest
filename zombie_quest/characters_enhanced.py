@@ -1,11 +1,7 @@
-"""Character system with stunning pixel art sprites and enhanced gameplay.
+"""Enhanced character system with improved movement feel.
 
-Features:
-- Detailed pixel art hero with 80s punk rocker aesthetic
-- Multiple zombie types with unique visual traits
-- Health system with damage and invincibility frames
-- Smooth pathfinding and collision detection
-- Full keyboard and mouse control support
+This is a drop-in replacement for characters.py that integrates the
+new movement system with acceleration, momentum, and smooth controls.
 """
 from __future__ import annotations
 
@@ -18,6 +14,7 @@ import pygame
 from .config import GAMEPLAY, ANIMATION
 from .pathfinding import GridPathfinder
 from .sprites import create_hero_animations, create_zombie_animations
+from .movement import EnhancedMovement, MovementConfig, DualMovementController
 
 Direction = str
 WorldPos = Tuple[float, float]
@@ -115,13 +112,22 @@ class Character:
         )
 
 
-class Hero(Character):
-    """The player character - an 80s punk rocker navigating the zombie-infested scene."""
+class EnhancedHero(Character):
+    """Enhanced hero with improved movement feel."""
 
     def __init__(self, position: WorldPos) -> None:
         # Use detailed pixel art sprites
         animations = create_hero_animations(scale=2.5)
         super().__init__("Frontperson", position, animations, speed=GAMEPLAY.HERO_SPEED)
+
+        # Enhanced movement system
+        movement_config = MovementConfig(
+            max_speed=GAMEPLAY.HERO_SPEED,
+            acceleration_time=0.15,
+            deceleration_time=0.1
+        )
+        self.movement = EnhancedMovement(movement_config)
+        self.movement_controller = DualMovementController(self.movement)
 
         # Pathfinding
         self.path: List[pygame.Vector2] = []
@@ -136,17 +142,13 @@ class Hero(Character):
         self.is_invincible: bool = False
         self.flash_timer: float = 0.0
 
-        # Keyboard movement
-        self.keyboard_velocity = pygame.Vector2(0, 0)
-        self.using_keyboard = False
-
     def set_destination(self, destination: WorldPos, pathfinder: GridPathfinder) -> None:
         """Set a destination to pathfind to (mouse click movement)."""
-        self.using_keyboard = False
         self.pathfinder = pathfinder
         path_points = pathfinder.find_path(tuple(self.position), destination)
         self.path = [pygame.Vector2(point) for point in path_points]
 
+        # Remove points we've already reached
         while self.path and (self.path[0] - self.position).length() <= self.arrival_tolerance:
             self.path.pop(0)
 
@@ -156,7 +158,7 @@ class Hero(Character):
             self.current_target = None
 
     def handle_keyboard_input(self, keys_pressed: pygame.key.ScancodeWrapper) -> None:
-        """Handle keyboard movement input."""
+        """Handle keyboard movement input with smooth acceleration."""
         dx, dy = 0, 0
 
         # Arrow keys and WASD support
@@ -169,23 +171,24 @@ class Hero(Character):
         if keys_pressed[pygame.K_DOWN] or keys_pressed[pygame.K_s]:
             dy += 1
 
-        if dx != 0 or dy != 0:
-            self.using_keyboard = True
+        # Create input direction vector
+        input_direction = pygame.Vector2(dx, dy)
+
+        # Normalize diagonal movement
+        if input_direction.length_squared() > 0:
+            input_direction = input_direction.normalize()
+
+        # Update movement controller (handles keyboard interruption of pathfinding)
+        self.movement_controller.set_keyboard_input(input_direction)
+
+        # Clear pathfinding if keyboard is active
+        if input_direction.length_squared() > 0:
             self.path = []
             self.current_target = None
-            self.keyboard_velocity = pygame.Vector2(dx, dy)
-            if self.keyboard_velocity.length() > 0:
-                self.keyboard_velocity = self.keyboard_velocity.normalize()
-        else:
-            self.keyboard_velocity = pygame.Vector2(0, 0)
-            if self.using_keyboard:
-                self.using_keyboard = False
 
     def update(self, dt: float, room_bounds: Optional[pygame.Rect] = None,
                walkable_check: Optional[callable] = None) -> None:
-        """Update hero position and animation."""
-        moving = False
-
+        """Update hero position with enhanced movement."""
         # Update invincibility
         if self.is_invincible:
             self.invincibility_timer -= dt
@@ -194,9 +197,34 @@ class Hero(Character):
                 self.is_invincible = False
                 self.invincibility_timer = 0
 
-        # Keyboard movement takes priority
-        if self.using_keyboard and self.keyboard_velocity.length_squared() > 0:
-            new_pos = self.position + self.keyboard_velocity * self.speed * dt
+        # Handle pathfinding if active
+        if self.current_target is not None:
+            to_target = self.current_target - self.position
+            distance = to_target.length()
+
+            if distance <= self.arrival_tolerance:
+                # Reached waypoint
+                if self.path:
+                    self.current_target = self.path.pop(0)
+                else:
+                    self.current_target = None
+                    self.movement_controller.cancel_pathfinding()
+            else:
+                # Move toward target
+                direction = to_target.normalize()
+                self.movement_controller.set_pathfinding_direction(direction)
+        elif self.path:
+            self.current_target = self.path.pop(0)
+        else:
+            # No pathfinding active
+            self.movement_controller.cancel_pathfinding()
+
+        # Update movement system
+        velocity, is_moving = self.movement_controller.update(dt)
+
+        # Apply movement with collision checking
+        if velocity.length_squared() > 0:
+            new_pos = self.position + velocity * dt
 
             # Check walkability
             can_move = True
@@ -210,46 +238,24 @@ class Hero(Character):
 
             if can_move:
                 self.position = new_pos
-                self._update_direction(self.keyboard_velocity)
-                moving = True
-
-        # Pathfinding movement
-        elif self.current_target is not None:
-            to_target = self.current_target - self.position
-            distance = to_target.length()
-
-            if distance <= self.arrival_tolerance:
-                if self.path:
-                    self.current_target = self.path.pop(0)
-                else:
-                    self.current_target = None
             else:
-                direction = to_target.normalize()
-                step = min(distance, self.speed * dt)
-                new_pos = self.position + direction * step
-
-                # Check walkability for pathfinding movement too
-                can_move = True
-                if walkable_check:
-                    can_move = walkable_check((new_pos.x, new_pos.y))
-
-                if can_move:
-                    self.position = new_pos
-                    self._update_direction(direction)
-                    moving = True
-                else:
-                    # Can't move, clear path
+                # Hit obstacle - stop pathfinding
+                if self.current_target:
                     self.path = []
                     self.current_target = None
+                    self.movement_controller.cancel_pathfinding()
 
-        elif self.path:
-            self.current_target = self.path.pop(0)
+        # Update facing direction from movement
+        if velocity.length_squared() > 0.1:
+            cardinal_dir = self.movement.get_cardinal_direction()
+            self.animation_state.direction = cardinal_dir
 
-        self.update_animation(dt, moving)
+        # Update animation
+        self.update_animation(dt, is_moving)
 
     def has_arrived(self) -> bool:
         """Check if hero has arrived at destination."""
-        return self.current_target is None and not self.path and not self.using_keyboard
+        return self.current_target is None and not self.path and not self.movement.is_moving()
 
     def take_damage(self, amount: int = 1) -> bool:
         """Take damage. Returns True if hero died."""
@@ -279,6 +285,10 @@ class Hero(Character):
                 return pygame.Rect(0, 0, 0, 0)  # Skip frame for flash effect
 
         return super().draw(surface, room_height)
+
+
+# Backward compatibility alias
+Hero = EnhancedHero
 
 
 class Zombie(Character):
