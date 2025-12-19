@@ -105,6 +105,10 @@ class GameEngine:
         if initial_message:
             self.message_box.show(initial_message)
 
+        # Set initial room ambience
+        if self.audio.event_system:
+            self.audio.event_system.trigger('room_enter', {'room_id': start_room_id})
+
     def _generate_room_backgrounds(self) -> None:
         """Generate detailed backgrounds for all rooms."""
         for room_id, room in self.rooms.items():
@@ -362,6 +366,9 @@ class GameEngine:
 
     def update(self, dt: float) -> None:
         """Update game state."""
+        # Update audio (music layers, etc.)
+        self.audio.update_music(dt)
+
         # Update effects
         self.glow.update(dt)
         self.particles.update(dt)
@@ -391,6 +398,9 @@ class GameEngine:
         # Update room and zombies
         self._update_room(dt)
 
+        # Update music tension based on zombie proximity
+        self._update_music_tension()
+
         # Check for pending interactions
         if self.pending_interaction and self.hero.has_arrived():
             hotspot, verb = self.pending_interaction
@@ -415,9 +425,56 @@ class GameEngine:
             if collision:
                 self._damage_hero(1)
 
-            # Zombie groans
+            # Zombie groans with spatial audio
             if zombie.should_groan():
-                self.audio.play("zombie_groan", volume=0.3)
+                zombie_pos = zombie.foot_position
+                # Use spatial audio for zombie groans
+                self.audio.play_spatial(
+                    f'zombie_groan_{zombie.zombie_type}',
+                    source_pos=zombie_pos,
+                    listener_pos=hero_pos,
+                    volume=0.5,
+                    fallback_sound='zombie_groan'
+                )
+
+    def _update_music_tension(self) -> None:
+        """Update music tension based on zombie proximity."""
+        from .audio import TensionLevel
+        import math
+
+        if not self.current_room.zombies:
+            # No zombies - safe
+            self.audio.set_music_tension(TensionLevel.SAFE)
+            return
+
+        hero_pos = self.hero.foot_position
+        min_distance = float('inf')
+        chasing_count = 0
+
+        for zombie in self.current_room.zombies:
+            zombie_pos = zombie.foot_position
+            distance = math.sqrt(
+                (zombie_pos[0] - hero_pos[0])**2 +
+                (zombie_pos[1] - hero_pos[1])**2
+            )
+            min_distance = min(min_distance, distance)
+
+            if zombie.is_chasing:
+                chasing_count += 1
+
+        # Set tension based on proximity and chase state
+        if chasing_count > 0 and min_distance < 50:
+            # Active chase, very close
+            self.audio.set_music_tension(TensionLevel.CHASE)
+        elif chasing_count > 0 or min_distance < 100:
+            # Being chased or zombie nearby
+            self.audio.set_music_tension(TensionLevel.DANGER)
+        elif min_distance < 150:
+            # Zombie in detection range
+            self.audio.set_music_tension(TensionLevel.EXPLORATION)
+        else:
+            # Far from all zombies
+            self.audio.set_music_tension(TensionLevel.SAFE)
 
     def _damage_hero(self, amount: int) -> None:
         """Apply damage to hero."""
@@ -425,12 +482,16 @@ class GameEngine:
             # Hero died
             self.state = GameState.GAME_OVER
             self.message_box.show("The neon fades to black...")
-            self.audio.play("error")
+            self.audio.play("death")
         else:
             # Took damage but survived
             self.audio.play("hit")
             self.screen_shake.shake(8.0, 0.3)
             self.particles.emit_damage(self.hero.position.x, self.hero.position.y - 20)
+
+            # Play low health warning if critically hurt
+            if self.hero.health == 1:
+                self.audio.play("health_low", volume=0.4)
 
     def perform_hotspot_action(self, hotspot: Hotspot, verb: Verb) -> None:
         """Execute an action on a hotspot."""
@@ -562,6 +623,10 @@ class GameEngine:
         self.hero.current_target = None
         self.hero.using_keyboard = False
         self.pending_interaction = None
+
+        # Trigger room ambience change
+        if self.audio.event_system:
+            self.audio.event_system.trigger('room_enter', {'room_id': room_id})
 
         if announce:
             entry_message = message or room.entry_message or f"You arrive at {room.name}."

@@ -350,3 +350,320 @@ class FlickerLight:
                              (layer_radius, layer_radius), layer_radius)
             surface.blit(glow_surf,
                         (self.position[0] - layer_radius, self.position[1] - layer_radius))
+
+
+# ============================================================================
+# ENVIRONMENTAL EFFECTS
+# ============================================================================
+
+@dataclass
+class FlutteringPoster:
+    """Poster that flutters slightly from ambient air."""
+    position: Tuple[int, int]
+    size: Tuple[int, int]  # (width, height)
+    color: Color
+    flutter_speed: float = 3.0
+    flutter_amount: float = 2.0  # Max pixels of flutter
+    time: float = field(default=0.0)
+    phase_offset: float = field(default_factory=lambda: random.uniform(0, 6.28))
+
+    def update(self, dt: float) -> None:
+        self.time += dt
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw poster with subtle flutter animation."""
+        # Calculate flutter offset (sine wave with phase)
+        flutter_x = math.sin(self.time * self.flutter_speed + self.phase_offset) * self.flutter_amount
+        flutter_y = math.cos(self.time * self.flutter_speed * 0.7 + self.phase_offset) * self.flutter_amount * 0.5
+
+        # Draw poster slightly offset
+        pos = (int(self.position[0] + flutter_x), int(self.position[1] + flutter_y))
+        pygame.draw.rect(surface, self.color, (*pos, *self.size))
+
+        # Draw border
+        pygame.draw.rect(surface, (max(0, self.color[0] - 40),
+                                   max(0, self.color[1] - 40),
+                                   max(0, self.color[2] - 40)),
+                        (*pos, *self.size), 1)
+
+
+class SmokeEmitter:
+    """Emits rising smoke/steam wisps."""
+
+    def __init__(self, position: Tuple[int, int], emit_rate: float = 0.5) -> None:
+        self.position = position
+        self.emit_rate = emit_rate  # Wisps per second
+        self.emit_timer = 0.0
+        self.wisps: List[SmokeWisp] = []
+
+    def update(self, dt: float) -> None:
+        """Update smoke emission."""
+        self.emit_timer += dt
+
+        # Emit new wisps
+        while self.emit_timer >= self.emit_rate:
+            self.emit_timer -= self.emit_rate
+            self._emit_wisp()
+
+        # Update wisps
+        self.wisps = [w for w in self.wisps if w.update(dt)]
+
+    def _emit_wisp(self) -> None:
+        """Emit a single smoke wisp."""
+        # Random horizontal offset
+        offset_x = random.uniform(-5, 5)
+        wisp = SmokeWisp(
+            x=self.position[0] + offset_x,
+            y=self.position[1],
+            vx=random.uniform(-5, 5),
+            vy=random.uniform(-30, -20),  # Rise upward
+            life=random.uniform(2.0, 3.5),
+            size=random.uniform(3, 6)
+        )
+        self.wisps.append(wisp)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw all smoke wisps."""
+        for wisp in self.wisps:
+            wisp.draw(surface)
+
+
+@dataclass
+class SmokeWisp:
+    """Individual smoke particle."""
+    x: float
+    y: float
+    vx: float
+    vy: float
+    life: float
+    max_life: float = field(init=False)
+    size: float = 4.0
+
+    def __post_init__(self):
+        self.max_life = self.life
+
+    def update(self, dt: float) -> bool:
+        """Update wisp, return False if dead."""
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.life -= dt
+
+        # Slow down over time
+        self.vx *= 0.98
+        self.vy *= 0.98
+
+        return self.life > 0
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw smoke wisp with fade."""
+        if self.life <= 0:
+            return
+
+        ratio = self.life / self.max_life
+        alpha = int(50 * ratio)  # Subtle smoke
+        size = int(self.size * (1.5 - ratio * 0.5))  # Expands as it rises
+
+        # Gray smoke color
+        smoke_color = (200, 190, 210)
+
+        # Draw as circle with alpha
+        smoke_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+        pygame.draw.circle(smoke_surf, (*smoke_color, alpha), (size, size), size)
+        surface.blit(smoke_surf, (int(self.x - size), int(self.y - size)))
+
+
+class RedVignette:
+    """Red vignette overlay for danger moments (zombie groans)."""
+
+    def __init__(self, size: Tuple[int, int]) -> None:
+        self.size = size
+        self.intensity = 0.0
+        self.target_intensity = 0.0
+        self.fade_speed = 3.0  # How fast it fades in/out
+
+    def trigger(self, intensity: float = 0.3, duration: float = 0.5) -> None:
+        """Trigger a red vignette pulse.
+
+        Args:
+            intensity: Vignette strength (0.0-1.0)
+            duration: How long to sustain before fading
+        """
+        self.target_intensity = intensity
+        self.duration_timer = duration
+
+    def update(self, dt: float) -> None:
+        """Update vignette fade."""
+        # Fade in to target
+        if self.intensity < self.target_intensity:
+            self.intensity = min(self.target_intensity,
+                                self.intensity + self.fade_speed * dt)
+        # Fade out after duration
+        elif hasattr(self, 'duration_timer'):
+            self.duration_timer -= dt
+            if self.duration_timer <= 0:
+                self.target_intensity = 0.0
+                delattr(self, 'duration_timer')
+
+        # Fade to target
+        if self.intensity > self.target_intensity:
+            self.intensity = max(self.target_intensity,
+                               self.intensity - self.fade_speed * dt)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw red vignette."""
+        if self.intensity <= 0:
+            return
+
+        # Create red vignette overlay
+        overlay = pygame.Surface(self.size, pygame.SRCALPHA)
+        center_x, center_y = self.size[0] // 2, self.size[1] // 2
+        max_dist = math.sqrt(center_x**2 + center_y**2)
+
+        # Sample fewer points for performance
+        for y in range(0, self.size[1], 4):
+            for x in range(0, self.size[0], 4):
+                dist = math.sqrt((x - center_x)**2 + (y - center_y)**2)
+                ratio = dist / max_dist
+                alpha = int(180 * self.intensity * (ratio ** 2))
+                color = (255, 0, 0, alpha)
+                pygame.draw.rect(overlay, color, (x, y, 4, 4))
+
+        surface.blit(overlay, (0, 0))
+
+
+class DustPuffEmitter:
+    """Emits dust puffs on footsteps and direction changes."""
+
+    def __init__(self) -> None:
+        self.puffs: List[DustPuff] = []
+
+    def emit(self, position: Tuple[float, float], direction: Optional[Tuple[float, float]] = None) -> None:
+        """Emit a dust puff at position.
+
+        Args:
+            position: (x, y) where dust appears
+            direction: Optional direction vector for directional puff
+        """
+        # Create 3-5 particles per puff
+        count = random.randint(3, 5)
+        for _ in range(count):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(10, 30)
+
+            # If direction provided, bias particles backward
+            if direction:
+                dir_x, dir_y = direction
+                angle = math.atan2(-dir_y, -dir_x) + random.uniform(-1, 1)
+                speed = random.uniform(15, 40)
+
+            puff = DustPuff(
+                x=position[0] + random.uniform(-5, 5),
+                y=position[1] + random.uniform(-3, 3),
+                vx=math.cos(angle) * speed,
+                vy=math.sin(angle) * speed - 10,  # Slight upward
+                life=random.uniform(0.3, 0.6),
+                size=random.uniform(2, 4)
+            )
+            self.puffs.append(puff)
+
+    def update(self, dt: float) -> None:
+        """Update all dust puffs."""
+        self.puffs = [p for p in self.puffs if p.update(dt)]
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw all dust puffs."""
+        for puff in self.puffs:
+            puff.draw(surface)
+
+
+@dataclass
+class DustPuff:
+    """Individual dust puff particle."""
+    x: float
+    y: float
+    vx: float
+    vy: float
+    life: float
+    max_life: float = field(init=False)
+    size: float = 3.0
+
+    def __post_init__(self):
+        self.max_life = self.life
+
+    def update(self, dt: float) -> bool:
+        """Update puff, return False if dead."""
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.life -= dt
+
+        # Friction
+        self.vx *= 0.92
+        self.vy *= 0.92
+
+        return self.life > 0
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw dust puff."""
+        if self.life <= 0:
+            return
+
+        ratio = self.life / self.max_life
+        alpha = int(100 * ratio)
+        size = int(self.size * (1.2 - ratio * 0.2))
+
+        # Dusty beige color
+        dust_color = (200, 180, 160)
+
+        dust_surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
+        pygame.draw.circle(dust_surf, (*dust_color, alpha), (size, size), size)
+        surface.blit(dust_surf, (int(self.x - size), int(self.y - size)))
+
+
+class LightSpill:
+    """Light spilling from doorways and exits."""
+
+    def __init__(self, rect: pygame.Rect, color: Color, direction: str = "up") -> None:
+        """
+        Args:
+            rect: Area where light spills
+            color: Light color
+            direction: "up", "down", "left", "right" - direction of spill
+        """
+        self.rect = rect
+        self.color = color
+        self.direction = direction
+        self.intensity_time = 0.0
+        self.pulse_speed = 1.0
+
+    def update(self, dt: float) -> None:
+        """Update light animation."""
+        self.intensity_time += dt
+
+    def draw(self, surface: pygame.Surface) -> None:
+        """Draw light spill with gradient."""
+        # Pulsing intensity
+        pulse = (math.sin(self.intensity_time * self.pulse_speed * 2 * math.pi) + 1) / 2
+        intensity = 0.3 + pulse * 0.2
+
+        # Create gradient based on direction
+        light_surf = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+
+        steps = 20
+        if self.direction in ("up", "down"):
+            for i in range(steps):
+                ratio = i / steps if self.direction == "up" else 1 - i / steps
+                alpha = int(80 * intensity * ratio)
+                y = int(self.rect.height * i / steps)
+                height = int(self.rect.height / steps) + 1
+                pygame.draw.rect(light_surf, (*self.color, alpha),
+                               (0, y, self.rect.width, height))
+        else:  # left or right
+            for i in range(steps):
+                ratio = i / steps if self.direction == "left" else 1 - i / steps
+                alpha = int(80 * intensity * ratio)
+                x = int(self.rect.width * i / steps)
+                width = int(self.rect.width / steps) + 1
+                pygame.draw.rect(light_surf, (*self.color, alpha),
+                               (x, 0, width, self.rect.height))
+
+        surface.blit(light_surf, self.rect.topleft)
