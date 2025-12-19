@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field, asdict, fields
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
@@ -22,6 +22,11 @@ class SaveData:
     current_room: str = "hennepin_outside"
     hero_position: Tuple[float, float] = (72.0, 172.0)
     hero_health: int = 3
+    hero_infection: float = 0.0  # Infection level (0-100)
+
+    # Checkpoint system
+    checkpoint_room: str = "hennepin_outside"
+    checkpoint_position: Tuple[float, float] = (72.0, 172.0)
 
     # Inventory
     inventory_items: List[str] = field(default_factory=list)
@@ -41,17 +46,23 @@ class SaveData:
     def to_dict(self) -> Dict:
         """Convert to dictionary for JSON serialization."""
         data = asdict(self)
-        # Convert tuple to list for JSON
+        # Convert tuples to lists for JSON
         data['hero_position'] = list(self.hero_position)
+        data['checkpoint_position'] = list(self.checkpoint_position)
         return data
 
     @classmethod
     def from_dict(cls, data: Dict) -> 'SaveData':
         """Create from dictionary."""
-        # Convert position back to tuple
+        # Convert positions back to tuples
         if 'hero_position' in data:
             data['hero_position'] = tuple(data['hero_position'])
-        return cls(**data)
+        if 'checkpoint_position' in data:
+            data['checkpoint_position'] = tuple(data['checkpoint_position'])
+        # Filter out unknown fields to prevent TypeError
+        valid_fields = {f.name for f in fields(cls)}
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered_data)
 
 
 class SaveManager:
@@ -198,6 +209,15 @@ class GameStateSerializer:
         save_data.current_room = engine.current_room.id
         save_data.hero_position = (engine.hero.position.x, engine.hero.position.y)
         save_data.hero_health = getattr(engine.hero, 'health', 3)
+        save_data.hero_infection = getattr(engine.hero, 'infection', 0.0)
+
+        # Checkpoint data
+        if hasattr(engine, 'checkpoint_room') and engine.checkpoint_room:
+            save_data.checkpoint_room = engine.checkpoint_room
+            save_data.checkpoint_position = engine.checkpoint_position
+        else:
+            save_data.checkpoint_room = engine.current_room.id
+            save_data.checkpoint_position = (engine.hero.position.x, engine.hero.position.y)
 
         # Inventory
         save_data.inventory_items = [item.name for item in engine.inventory.items]
@@ -233,9 +253,16 @@ class GameStateSerializer:
         engine.hero.path = []
         engine.hero.current_target = None
 
-        # Health
+        # Health and infection
         if hasattr(engine.hero, 'health'):
             engine.hero.health = save_data.hero_health
+        if hasattr(engine.hero, 'infection'):
+            engine.hero.infection = save_data.hero_infection
+
+        # Restore checkpoint
+        if hasattr(engine, 'checkpoint_room'):
+            engine.checkpoint_room = save_data.checkpoint_room
+            engine.checkpoint_position = save_data.checkpoint_position
 
         # Inventory
         engine.inventory.items.clear()

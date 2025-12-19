@@ -42,6 +42,8 @@ class Particle:
         if self.life <= 0:
             return
 
+        if self.max_life <= 0:
+            return
         ratio = self.life / self.max_life
         alpha = int(255 * ratio) if self.fade else 255
         size = max(1, int(self.size * ratio)) if self.shrink else int(self.size)
@@ -263,10 +265,36 @@ class GlowEffect:
 
     def __init__(self) -> None:
         self.time = 0.0
+        self.pulse_active = False
+        self.pulse_color: Color = (255, 0, 0)
+        self.pulse_duration = 0.0
+        self.pulse_time = 0.0
 
     def update(self, dt: float) -> None:
         """Update glow animation."""
         self.time += dt
+        if self.pulse_active:
+            self.pulse_time += dt
+            if self.pulse_time >= self.pulse_duration:
+                self.pulse_active = False
+
+    def pulse(self, color: Color, duration: float = 1.0) -> None:
+        """Trigger a full-screen color pulse effect."""
+        self.pulse_active = True
+        self.pulse_color = color
+        self.pulse_duration = duration
+        self.pulse_time = 0.0
+
+    def draw_pulse(self, surface: pygame.Surface) -> None:
+        """Draw the pulse overlay if active."""
+        if not self.pulse_active:
+            return
+        progress = self.pulse_time / self.pulse_duration if self.pulse_duration > 0 else 1.0
+        alpha = int(180 * (1.0 - progress))
+        if alpha > 0:
+            overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+            overlay.fill((*self.pulse_color, alpha))
+            surface.blit(overlay, (0, 0))
 
     def get_glow_intensity(self, speed: float = 1.0, min_val: float = 0.6) -> float:
         """Get current glow intensity (0-1)."""

@@ -41,6 +41,26 @@ class GameplayConfig:
     HERO_INVINCIBILITY_TIME: float = 1.5  # After taking damage
     ARRIVAL_TOLERANCE: float = 2.0
 
+    # Infection system
+    INFECTION_PER_HIT: float = 15.0  # Infection gained per zombie hit
+    INFECTION_DECAY_RATE: float = 2.0  # Infection lost per second (passive)
+    INFECTION_MUSIC_REDUCTION: float = 10.0  # Infection reduced when using music items
+    INFECTION_TRANSFORMATION_THRESHOLD: float = 100.0  # Full infection = game over
+    INFECTION_VISUAL_THRESHOLD: float = 40.0  # When visual effects start
+    INFECTION_HIGH_THRESHOLD: float = 70.0  # When effects intensify
+
+    # Zombie alertness
+    ZOMBIE_ALERT_RADIUS: float = 120.0  # Zombies within this radius can be alerted
+    ZOMBIE_SUSPICIOUS_TIME: float = 3.0  # How long suspicious state lasts
+    ZOMBIE_HUNTING_SPEED_MULT: float = 1.3  # Speed multiplier when hunting
+    ZOMBIE_FRENZIED_SPEED_MULT: float = 1.6  # Speed multiplier when frenzied
+    ZOMBIE_GROUP_DISTANCE: float = 80.0  # Distance for group coordination
+    ZOMBIE_FLANKING_ANGLE: float = 120.0  # Angle for flanking attempts (degrees)
+
+    # Checkpoint system
+    CHECKPOINT_INFECTION_RESTORE: float = 30.0  # Infection level when respawning
+    INTERACTION_RADIUS: float = 40.0  # Radius for interactions
+
 
 @dataclass(frozen=True)
 class AnimationConfig:
@@ -86,6 +106,13 @@ class ColorPalette:
     VERB_LOOK: Color = (220, 200, 70)
     VERB_USE: Color = (120, 200, 120)
     VERB_TALK: Color = (220, 120, 160)
+
+    # Infection colors
+    INFECTION_LOW: Color = (100, 255, 100)  # Green - safe
+    INFECTION_MED: Color = (255, 200, 50)   # Yellow - warning
+    INFECTION_HIGH: Color = (255, 100, 50)  # Orange - danger
+    INFECTION_CRITICAL: Color = (255, 20, 20)  # Red - critical
+    INFECTION_VEIN: Color = (80, 40, 100)   # Purple veins
 
 
 # Global config instances
