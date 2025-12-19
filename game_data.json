@@ -23,6 +23,16 @@
       "name": "Setlist",
       "description": "Tonight's scrawled setlist, complete with notes about where the zombie choir joins in.",
       "icon_color": [210, 210, 210]
+    },
+    {
+      "name": "Guitar Pick",
+      "description": "A worn neon pick that once shredded through a legendary solo.",
+      "icon_color": [0, 255, 200]
+    },
+    {
+      "name": "Vinyl Record",
+      "description": "A rare pressing of 'Zombie Minneapolis' by The Neon Dead.",
+      "icon_color": [20, 20, 20]
     }
   ],
   "starting_inventory": [],
@@ -59,9 +69,9 @@
           "rect": [20, 110, 54, 70],
           "walk_position": [44, 174],
           "verbs": {
-            "look": "Flyers for Hüsker Dü and The Suburbs flutter in the warm night.",
+            "look": "Flyers for Husker Du and The Suburbs flutter in the warm night.",
             "talk": "The paper rustles like a synth pad in the wind.",
-            "use": "You peel back a fresh gig flyer from the stack." 
+            "use": "You peel back a fresh gig flyer from the stack."
           },
           "give_item": "Gig Flyer",
           "give_item_triggers": ["use"]
@@ -120,11 +130,21 @@
             "look": "Tonight: The Neon Dead with special guest Soul Asylum (undead mix).",
             "talk": "You pitch your own band name. The marquee winks in approval."
           }
+        },
+        {
+          "name": "Street Light",
+          "rect": [8, 40, 20, 150],
+          "walk_position": [30, 170],
+          "verbs": {
+            "look": "A flickering sodium lamp casts orange shadows on the sidewalk.",
+            "talk": "The light hums an electronic drone in E minor.",
+            "use": "You tap the pole; it flickers in response like a morse code message."
+          }
         }
       ],
       "zombies": [
-        {"position": [100, 164]},
-        {"position": [222, 160]}
+        {"position": [100, 164], "type": "bouncer"},
+        {"position": [222, 160], "type": "scene"}
       ]
     },
     {
@@ -178,9 +198,10 @@
           }
         },
         {
-          "name": "Clerk Counter",
+          "name": "Record Clerk",
           "rect": [222, 86, 76, 96],
           "walk_position": [242, 174],
+          "talk_target": "clerk",
           "verbs": {
             "look": "A clerk polishes seven-inches with ritual precision.",
             "talk": "\"Scene kids only,\" the clerk grins. \"What have you got?\"",
@@ -193,10 +214,31 @@
           "give_item_triggers": ["use"],
           "remove_item": "Gig Flyer",
           "remove_item_triggers": ["use"]
+        },
+        {
+          "name": "New Arrivals Bin",
+          "rect": [140, 130, 60, 50],
+          "walk_position": [170, 175],
+          "verbs": {
+            "look": "Fresh pressings gleam under the black light: Replacements, Prince, Suburbs.",
+            "talk": "The records whisper track listings in your ear.",
+            "use": "You flip through, letting the album art wash over you."
+          }
+        },
+        {
+          "name": "Rare Vinyl Section",
+          "rect": [140, 86, 60, 40],
+          "walk_position": [170, 170],
+          "verbs": {
+            "look": "Behind glass: bootlegs, test pressings, and a rumored Prince demo.",
+            "talk": "Legends murmur from these grooves.",
+            "use": "The case is locked. The clerk guards this section jealously."
+          }
         }
       ],
       "zombies": [
-        {"position": [152, 162]}
+        {"position": [152, 162], "type": "scene"},
+        {"position": [90, 168], "type": "rocker"}
       ]
     },
     {
@@ -250,9 +292,10 @@
           }
         },
         {
-          "name": "DJ Booth",
+          "name": "DJ Rotten",
           "rect": [214, 84, 90, 100],
           "walk_position": [236, 172],
+          "talk_target": "dj",
           "verbs": {
             "look": "Stacks of cassettes teeter beside a flickering console.",
             "talk": "\"Got anything raw for the airwaves?\" the DJ rasps.",
@@ -265,10 +308,31 @@
           "give_item_triggers": ["use"],
           "remove_item": "Demo Tape",
           "remove_item_triggers": ["use"]
+        },
+        {
+          "name": "Request Line Phone",
+          "rect": [130, 140, 40, 40],
+          "walk_position": [150, 175],
+          "verbs": {
+            "look": "A rotary phone covered in stickers. The receiver dangles off the hook.",
+            "talk": "You hear static and distant moaning. Someone's requesting 'Brains in the Night'.",
+            "use": "You dial a request for the DJ. They nod approvingly."
+          }
+        },
+        {
+          "name": "Poster Wall",
+          "rect": [50, 88, 50, 50],
+          "walk_position": [75, 168],
+          "verbs": {
+            "look": "Gig posters layer the wall: Husker Du, The Replacements, Prince.",
+            "talk": "The posters rustle as if responding to your presence.",
+            "use": "You carefully peel back a corner, but the poster crumbles to dust."
+          }
         }
       ],
       "zombies": [
-        {"position": [120, 160]}
+        {"position": [120, 160], "type": "dj"},
+        {"position": [180, 165], "type": "scene"}
       ]
     },
     {
@@ -332,11 +396,145 @@
           "target_position": [206, 174],
           "transition_verb": "use",
           "transition_message": "You emerge into the Minnesota night, setlist in hand."
+        },
+        {
+          "name": "Makeup Mirrors",
+          "rect": [200, 86, 70, 50],
+          "walk_position": [235, 172],
+          "verbs": {
+            "look": "Bulbs blaze around mirrors reflecting pale faces and heavy eyeliner.",
+            "talk": "Your reflection mouths 'Rock on' silently.",
+            "use": "You apply some dramatic eyeliner. Stage-ready."
+          }
+        },
+        {
+          "name": "Flight Cases",
+          "rect": [140, 150, 40, 30],
+          "walk_position": [160, 178],
+          "verbs": {
+            "look": "Battered cases stenciled with band names and tour dates.",
+            "talk": "They creak with stories of a hundred venues.",
+            "use": "You check for loose picks. You find one glowing neon green."
+          },
+          "give_item": "Guitar Pick",
+          "give_item_triggers": ["use"]
+        },
+        {
+          "name": "Green Room Door",
+          "rect": [0, 100, 30, 80],
+          "walk_position": [35, 172],
+          "verbs": {
+            "look": "A door marked 'Green Room - Band Only'.",
+            "use": "You push through into the green room.",
+            "talk": "You hear muffled vocal warmups from inside."
+          },
+          "target_room": "green_room",
+          "target_position": [280, 170],
+          "transition_verb": "use",
+          "transition_message": "The smell of cigarettes and hairspray fills your nostrils."
         }
       ],
       "zombies": [
-        {"position": [98, 156]},
-        {"position": [210, 162]}
+        {"position": [98, 156], "type": "rocker"},
+        {"position": [210, 162], "type": "bouncer"}
+      ]
+    },
+    {
+      "id": "green_room",
+      "name": "The Green Room",
+      "entry_message": "Band members tune up while roadies carry cables and coffee.",
+      "default_entry": [280, 170],
+      "background": {
+        "label": "Green Room",
+        "gradient": [[20, 50, 35], [60, 120, 80], [15, 35, 25]],
+        "accent_lines": [
+          {"y": 110, "height": 4, "color": [200, 255, 180]},
+          {"y": 140, "height": 3, "color": [255, 200, 150]}
+        ],
+        "shapes": [
+          {"shape": "rect", "rect": [20, 80, 100, 60], "color": [50, 80, 60]},
+          {"shape": "rect", "rect": [200, 85, 100, 55], "color": [45, 75, 55]}
+        ],
+        "label_color": [220, 255, 230]
+      },
+      "priority_regions": [
+        {"shape": "rect", "rect": [0, 100, 320, 40]}
+      ],
+      "walkable_zones": [
+        {"shape": "polygon", "points": [[20, 185], [300, 185], [300, 195], [20, 195]]},
+        {"shape": "polygon", "points": [[40, 150], [280, 150], [280, 185], [40, 185]]}
+      ],
+      "hotspots": [
+        {
+          "name": "Backstage Door",
+          "rect": [285, 95, 35, 90],
+          "walk_position": [280, 172],
+          "verbs": {
+            "look": "The door back to the main backstage area.",
+            "use": "You head back to the backstage.",
+            "talk": "Stage sounds leak through the crack."
+          },
+          "target_room": "backstage_stage",
+          "target_position": [35, 172],
+          "transition_verb": "use",
+          "transition_message": "You return to the bustling backstage area."
+        },
+        {
+          "name": "Vintage Couch",
+          "rect": [30, 90, 80, 50],
+          "walk_position": [70, 168],
+          "verbs": {
+            "look": "A worn leather couch that's seen countless pre-show jitters.",
+            "talk": "The cushions wheeze with decades of rock history.",
+            "use": "You sink into the couch for a moment of calm before the storm."
+          }
+        },
+        {
+          "name": "Deli Tray",
+          "rect": [130, 100, 50, 35],
+          "walk_position": [155, 165],
+          "verbs": {
+            "look": "Cold cuts and cheese. The rider demands have been met.",
+            "talk": "The bologna whispers secrets of contract negotiations.",
+            "use": "You grab a bite. Touring fuel."
+          }
+        },
+        {
+          "name": "Band Poster Wall",
+          "rect": [210, 88, 70, 50],
+          "walk_position": [245, 168],
+          "verbs": {
+            "look": "Signed posters from every act that's graced this stage.",
+            "talk": "Each signature tells a story of rock and roll survival.",
+            "use": "You trace your finger over Prince's autograph. Magical."
+          }
+        },
+        {
+          "name": "Guitar Rack",
+          "rect": [50, 145, 40, 35],
+          "walk_position": [70, 175],
+          "verbs": {
+            "look": "Guitars gleam under the dim lights: a Les Paul, a Rickenbacker, a custom Flying V.",
+            "talk": "They hum with potential energy, ready to scream.",
+            "use": "You strum a chord. The room vibrates with anticipation."
+          }
+        },
+        {
+          "name": "Record Collection",
+          "rect": [180, 145, 50, 35],
+          "walk_position": [205, 175],
+          "verbs": {
+            "look": "A crate of vinyl, mostly local bands and rare imports.",
+            "talk": "The records spin tales of Minneapolis music history.",
+            "use": "You flip through and find a pristine copy of 'Zombie Minneapolis'."
+          },
+          "give_item": "Vinyl Record",
+          "give_item_triggers": ["use"]
+        }
+      ],
+      "zombies": [
+        {"position": [120, 158], "type": "rocker"},
+        {"position": [200, 160], "type": "scene"}
       ]
     }
   ]

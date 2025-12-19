@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pygame
 
-from .characters import Hero, Zombie
+from .characters import Hero, Zombie, ZombieSpawner
 from .pathfinding import GridPathfinder
 from .resources import (
     DEFAULT_BG_COLOR,
@@ -134,7 +134,7 @@ class Room:
         self.pathfinder = GridPathfinder(self.walkable_mask)
         self.bounds = pygame.Rect((0, 0), self.size)
         self.hotspots: List[Hotspot] = [self._create_hotspot(h) for h in data.get("hotspots", [])]
-        self.zombies: List[Zombie] = [Zombie(tuple(z.get("position", (160, 120)))) for z in data.get("zombies", [])]
+        self.zombies: List[Zombie] = ZombieSpawner.create_zombies_for_room(data.get("zombies", []), self.id)
         self.entry_message = data.get("entry_message")
         default_entry = data.get("default_entry")
         if default_entry:
