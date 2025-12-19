@@ -198,10 +198,12 @@ class SubtitleSystem:
 
     def update(self, dt: float) -> None:
         """Update subtitle timers."""
-        self.entries = [
-            entry for entry in self.entries
-            if (entry.remaining := entry.remaining - dt) > 0
-        ]
+        remaining_entries = []
+        for entry in self.entries:
+            entry.remaining -= dt
+            if entry.remaining > 0:
+                remaining_entries.append(entry)
+        self.entries = remaining_entries
 
     def draw(self, surface: pygame.Surface, config: AccessibilityConfig) -> None:
         """Draw subtitles at bottom of screen."""

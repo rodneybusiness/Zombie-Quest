@@ -240,7 +240,9 @@ class TutorialSystem:
 
         # Draw dismiss hint
         if config.auto_dismiss and config.duration > 0:
-            dismiss_text = f"({int(self.hint_timer)}s)"
+            # Ensure timer never shows negative
+            timer_display = max(0, int(self.hint_timer))
+            dismiss_text = f"({timer_display}s)"
             dismiss_surf = self.font.render(dismiss_text, True, (150, 150, 170))
             dismiss_surf.set_alpha(int(self.hint_alpha * 0.7))
             surface.blit(dismiss_surf,

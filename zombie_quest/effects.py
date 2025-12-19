@@ -307,6 +307,10 @@ class VignetteOverlay:
         center_x, center_y = size[0] // 2, size[1] // 2
         max_dist = math.sqrt(center_x**2 + center_y**2)
 
+        # Guard against division by zero for tiny surfaces
+        if max_dist < 1.0:
+            max_dist = 1.0
+
         for y in range(size[1]):
             for x in range(size[0]):
                 dist = math.sqrt((x - center_x)**2 + (y - center_y)**2)
@@ -518,6 +522,10 @@ class RedVignette:
         overlay = pygame.Surface(self.size, pygame.SRCALPHA)
         center_x, center_y = self.size[0] // 2, self.size[1] // 2
         max_dist = math.sqrt(center_x**2 + center_y**2)
+
+        # Guard against division by zero for tiny surfaces
+        if max_dist < 1.0:
+            max_dist = 1.0
 
         # Sample fewer points for performance
         for y in range(0, self.size[1], 4):

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
@@ -78,7 +79,10 @@ class SaveManager:
         return os.path.join(self.save_directory, f"{safe_name}.json")
 
     def save_game(self, save_data: SaveData, slot_name: str = None) -> bool:
-        """Save the game to a slot. Returns True on success."""
+        """Save the game to a slot. Returns True on success.
+
+        Uses atomic write pattern (temp file + rename) to prevent corruption.
+        """
         if slot_name is None:
             slot_name = self.autosave_slot
 
@@ -86,8 +90,21 @@ class SaveManager:
         save_path = self._get_save_path(slot_name)
 
         try:
-            with open(save_path, 'w', encoding='utf-8') as f:
-                json.dump(save_data.to_dict(), f, indent=2)
+            # Write to temp file first, then atomically rename
+            fd, temp_path = tempfile.mkstemp(
+                suffix='.json.tmp',
+                dir=self.save_directory
+            )
+            try:
+                with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                    json.dump(save_data.to_dict(), f, indent=2)
+                # Atomic rename (works on POSIX, best-effort on Windows)
+                os.replace(temp_path, save_path)
+            except Exception:
+                # Clean up temp file on failure
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+                raise
             return True
         except Exception as e:
             print(f"Failed to save game: {e}")

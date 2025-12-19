@@ -93,6 +93,10 @@ class DamageVignette:
         center_x, center_y = width // 2, height // 2
         max_dist = math.sqrt(center_x ** 2 + center_y ** 2)
 
+        # Guard against division by zero for tiny surfaces
+        if max_dist < 1.0:
+            max_dist = 1.0
+
         # Sample points for performance
         step = 4
         for y in range(0, height, step):

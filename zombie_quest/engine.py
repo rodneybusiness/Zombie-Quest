@@ -46,7 +46,15 @@ class GameEngine:
         data = load_game_data(base_path)
         self.rooms = build_rooms(data.get("rooms", []))
         hero_data = data.get("hero", {})
-        start_room_id = hero_data.get("start_room") or next(iter(self.rooms.keys()))
+
+        # Safely get start room with validation
+        if not self.rooms:
+            raise RuntimeError("No rooms loaded from game_data.json")
+
+        start_room_id = hero_data.get("start_room")
+        if not start_room_id or start_room_id not in self.rooms:
+            start_room_id = next(iter(self.rooms.keys()))
+
         self.current_room: Room = self.rooms[start_room_id]
         hero_start = tuple(hero_data.get("position", (ROOM_WIDTH // 2, int(ROOM_HEIGHT * 0.8))))
         self.hero = Hero(hero_start)
@@ -199,10 +207,12 @@ class GameEngine:
             elif effect == DialogueEffect.CLEAR_FLAG:
                 self.game_flags[value] = False
             elif effect == DialogueEffect.HEAL:
-                self.hero.heal(int(value) if value.isdigit() else 1)
+                heal_amount = int(value) if isinstance(value, int) else (int(value) if isinstance(value, str) and value.isdigit() else 1)
+                self.hero.heal(heal_amount)
                 self.audio.play("success")
             elif effect == DialogueEffect.DAMAGE:
-                self._damage_hero(int(value) if value.isdigit() else 1)
+                damage_amount = int(value) if isinstance(value, int) else (int(value) if isinstance(value, str) and value.isdigit() else 1)
+                self._damage_hero(damage_amount)
 
     def _handle_playing_event(self, event: pygame.event.Event) -> None:
         """Handle input while playing."""

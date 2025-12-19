@@ -212,7 +212,8 @@ class DialogueManager:
         # Check for auto-advance
         if node.auto_next and not node.choices:
             next_node = self.current_tree.nodes.get(node.auto_next) if self.current_tree else None
-            if next_node:
+            # Guard against self-referencing loops
+            if next_node and next_node.id != node.id:
                 self._enter_node(next_node)
             else:
                 self.end_dialogue()

@@ -122,11 +122,12 @@ def draw_stars(surface: pygame.Surface, count: int = 30) -> None:
         else:
             pygame.draw.circle(surface, (brightness, brightness, brightness), (x, y), 1)
 
-            # Twinkle rays for larger stars
+            # Twinkle rays for larger stars (use dimmer color since surface is not SRCALPHA)
             if random.random() > 0.7:
-                pygame.draw.line(surface, (brightness, brightness, brightness, 100),
+                ray_brightness = brightness // 2  # Simulate alpha by reducing brightness
+                pygame.draw.line(surface, (ray_brightness, ray_brightness, ray_brightness),
                                (x - 2, y), (x + 2, y))
-                pygame.draw.line(surface, (brightness, brightness, brightness, 100),
+                pygame.draw.line(surface, (ray_brightness, ray_brightness, ray_brightness),
                                (x, y - 2), (x, y + 2))
 
 
