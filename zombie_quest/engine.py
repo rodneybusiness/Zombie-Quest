@@ -16,7 +16,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pygame
 
-from .characters import Hero, ZombieSpawner, ZombieMusicState
+from .characters import Hero, ZombieSpawner, ZombieMusicState, ZombieAlertness
 from .config import DISPLAY, GAMEPLAY, COLORS, GameState
 from .data_loader import build_items, build_rooms, load_game_data
 from .rooms import Hotspot, Room
@@ -27,6 +27,7 @@ from .dialogue import DialogueManager, DialogueEffect, create_clerk_dialogue, cr
 from .backgrounds import get_room_background
 from .diegetic_audio import get_diegetic_audio
 from .memory import MemorySystem
+from .juice import InfectionVisualEffect
 
 ROOM_WIDTH = DISPLAY.ROOM_WIDTH
 ROOM_HEIGHT = DISPLAY.ROOM_HEIGHT
@@ -90,6 +91,7 @@ class GameEngine:
         self.glow = GlowEffect()
         self.screen_shake = ScreenShake()
         self.scanlines = ScanlineOverlay(WINDOW_SIZE, intensity=0.08)
+        self.infection_visuals = InfectionVisualEffect()
 
         # Audio
         self.audio = get_audio_manager()
@@ -125,6 +127,11 @@ class GameEngine:
         self.state = GameState.PLAYING
         self.pending_interaction: Optional[Tuple[Hotspot, Verb]] = None
         self.running = True
+
+        # Checkpoint system
+        self.checkpoint_room: str = start_room_id
+        self.checkpoint_position: Tuple[float, float] = hero_start
+        self.last_checkpoint_time: float = 0.0
 
         # Generate detailed backgrounds for rooms
         self._generate_room_backgrounds()
@@ -412,6 +419,13 @@ class GameEngine:
         self.transition.update(dt)
         shake_offset = self.screen_shake.update(dt)
 
+        # Update infection visuals
+        self.infection_visuals.update(dt, self.hero.get_infection_percentage())
+
+        # Update infection flags for consequences
+        infection_flags = self.hero.get_infection_flags()
+        self.game_flags.update(infection_flags)
+
         # Skip gameplay updates if paused or in dialogue
         if self.state == GameState.PAUSED:
             return
@@ -458,15 +472,18 @@ class GameEngine:
         # Apply music effects to zombies based on diegetic sources
         self._apply_music_to_zombies()
 
+        # Handle zombie group coordination and alerting
+        self._update_zombie_group_behavior()
+
         for zombie in self.current_room.zombies:
             room_rect = pygame.Rect(0, 0, ROOM_WIDTH, ROOM_HEIGHT)
-            collision = zombie.update(dt, hero_pos, room_rect)
+            collision = zombie.update(dt, hero_pos, room_rect, can_see_hero=True)
 
             if collision:
                 self._damage_hero(1)
 
             # Zombie groans with spatial audio
-            # Modify groan based on music state
+            # Modify groan based on music state and alertness
             if zombie.should_groan():
                 zombie_pos = zombie.foot_position
                 volume = 0.5
@@ -476,6 +493,10 @@ class GameEngine:
                     volume = 0.3  # Quieter, happier groans
                 elif zombie.music_state == ZombieMusicState.REMEMBERING:
                     volume = 0.2  # Very quiet, contemplative
+                elif zombie.alertness == ZombieAlertness.HUNTING:
+                    volume = 0.7  # Louder when hunting
+                elif zombie.alertness == ZombieAlertness.FRENZIED:
+                    volume = 0.9  # Very loud when frenzied
 
                 # Use spatial audio for zombie groans
                 self.audio.play_spatial(
@@ -497,6 +518,48 @@ class GameEngine:
             # Apply each music effect
             for music_type, intensity in music_effects:
                 zombie.apply_music_effect(music_type, intensity)
+
+    def _update_zombie_group_behavior(self) -> None:
+        """Update zombie group coordination and alerting."""
+        import math
+
+        hero_pos = pygame.Vector2(self.hero.foot_position)
+        zombies = self.current_room.zombies
+
+        # Check for alerted zombies that should alert nearby zombies
+        for zombie in zombies:
+            if zombie.can_alert_nearby_zombies():
+                zombie_pos = zombie.position
+
+                # Alert nearby zombies
+                for other_zombie in zombies:
+                    if other_zombie is zombie:
+                        continue
+
+                    # Check if within alert radius
+                    distance = (other_zombie.position - zombie_pos).length()
+
+                    if distance < GAMEPLAY.ZOMBIE_ALERT_RADIUS:
+                        # Alert this zombie if not already alerted
+                        if other_zombie.alertness in [ZombieAlertness.DORMANT, ZombieAlertness.WANDERING]:
+                            other_zombie.become_suspicious(hero_pos)
+
+        # Check for group frenzy conditions (3+ zombies hunting nearby)
+        hunting_zombies = [z for z in zombies if z.alertness == ZombieAlertness.HUNTING]
+
+        if len(hunting_zombies) >= 3:
+            # Check if they're close together (pack hunting)
+            for zombie in hunting_zombies:
+                nearby_hunters = 0
+                for other in hunting_zombies:
+                    if other is not zombie:
+                        dist = (other.position - zombie.position).length()
+                        if dist < GAMEPLAY.ZOMBIE_GROUP_DISTANCE:
+                            nearby_hunters += 1
+
+                # If 2+ other hunters nearby, enter frenzy
+                if nearby_hunters >= 2:
+                    zombie.become_frenzied()
 
     def _update_music_tension(self) -> None:
         """Update music tension based on zombie proximity and threat level."""
@@ -548,11 +611,17 @@ class GameEngine:
 
     def _damage_hero(self, amount: int) -> None:
         """Apply damage to hero."""
+        # Add infection on zombie hit
+        transformed = self.hero.add_infection(GAMEPLAY.INFECTION_PER_HIT)
+
+        if transformed:
+            # Full infection - transformation ending
+            self._trigger_infection_ending()
+            return
+
         if self.hero.take_damage(amount):
-            # Hero died
-            self.state = GameState.GAME_OVER
-            self.message_box.show("The neon fades to black...")
-            self.audio.play("death")
+            # Hero died - respawn at checkpoint
+            self._respawn_at_checkpoint()
         else:
             # Took damage but survived
             self.audio.play("hit")
@@ -562,6 +631,16 @@ class GameEngine:
             # Play low health warning if critically hurt
             if self.hero.health == 1:
                 self.audio.play("health_low", volume=0.4)
+
+            # Infection feedback
+            infection = self.hero.get_infection_percentage()
+            if infection >= 70:
+                # High infection warning
+                self.message_box.show("The hunger grows stronger...")
+            elif infection >= 40:
+                # Mild infection notice
+                if amount > 0:  # Only on new damage
+                    self.message_box.show("You feel the infection spreading.")
 
     def perform_hotspot_action(self, hotspot: Hotspot, verb: Verb) -> None:
         """Execute an action on a hotspot."""
@@ -688,6 +767,14 @@ class GameEngine:
             else:
                 should_transition = interaction_outcome != "missing"
 
+            # Check infection-based blocking (optional - for specific hotspots)
+            # Some areas might refuse entry if infection is too high
+            if should_transition and hasattr(hotspot, 'max_infection') and hotspot.max_infection:
+                if self.hero.get_infection_percentage() > hotspot.max_infection:
+                    should_transition = False
+                    self.message_box.show("They won't let you in - you look too far gone...")
+                    self.audio.play("error")
+
         if should_transition:
             # Start transition effect
             combined_message_parts: List[str] = []
@@ -795,6 +882,9 @@ class GameEngine:
             self.message_box.show(full_message)
             self.audio.play("success", volume=0.8)
 
+            # Reduce infection when using music items
+            self.hero.reduce_infection(GAMEPLAY.INFECTION_MUSIC_REDUCTION)
+
             # Visual effects
             self.particles.emit_sparkle(
                 self.hero.position.x,
@@ -868,8 +958,16 @@ class GameEngine:
         # Blit room to screen with shake offset
         self.screen.blit(self.room_surface, (shake_x, UI_BAR_HEIGHT + shake_y))
 
+        # Apply infection visual effects to room surface
+        if self.hero.get_infection_percentage() > 0:
+            # Vein overlay
+            self.infection_visuals.draw_vein_overlay(self.screen, self.hero.get_infection_percentage())
+
+            # Vignette
+            self.infection_visuals.draw_vignette(self.screen)
+
         # Draw UI
-        self.verb_bar.draw(self.screen, self.hero.health)
+        self.verb_bar.draw(self.screen, self.hero.health, self.hero.get_infection_percentage())
         self.message_box.draw(self.screen)
 
         # Draw inventory window
@@ -1007,3 +1105,42 @@ class GameEngine:
 
         # Visual effect for ending
         self.glow.pulse(COLORS.HOT_MAGENTA, 2.0)
+
+    def _trigger_infection_ending(self) -> None:
+        """Trigger the transformation ending due to full infection."""
+        self.state = GameState.GAME_OVER
+        self.message_box.show("=== TRANSFORMATION ===\n\nThe infection consumes you. Your humanity fades as you join the neon dead, shambling through the Minneapolis night forever.\n\n--- Sometimes the scene claims us all ---")
+        self.audio.play("death", volume=0.8)
+        self.glow.pulse(COLORS.INFECTION_VEIN, 3.0)
+
+    def set_checkpoint(self) -> None:
+        """Set a checkpoint at the current location."""
+        self.checkpoint_room = self.current_room.id
+        self.checkpoint_position = (self.hero.position.x, self.hero.position.y)
+        self.last_checkpoint_time = pygame.time.get_ticks() / 1000.0
+        self.message_box.show("Checkpoint saved.")
+        self.audio.play("success", volume=0.5)
+
+    def _respawn_at_checkpoint(self) -> None:
+        """Respawn hero at last checkpoint with restored health/infection."""
+        # Restore position
+        self.change_room(
+            self.checkpoint_room,
+            self.checkpoint_position,
+            message="You awaken back at the checkpoint, the neon haze clearing slightly...",
+            announce=True
+        )
+
+        # Restore hero state
+        self.hero.health = GAMEPLAY.HERO_MAX_HEALTH
+        self.hero.infection = GAMEPLAY.CHECKPOINT_INFECTION_RESTORE
+        self.hero.is_invincible = False
+        self.hero.invincibility_timer = 0.0
+
+        # Clear paths
+        self.hero.path = []
+        self.hero.current_target = None
+
+        # Audio feedback
+        self.audio.play("pickup", volume=0.6)
+        self.state = GameState.PLAYING

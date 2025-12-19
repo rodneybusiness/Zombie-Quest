@@ -132,7 +132,7 @@ def draw_stars(surface: pygame.Surface, count: int = 30) -> None:
 
 
 def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Surface:
-    """Create the Hennepin Avenue / First Avenue exterior background."""
+    """Create the Hennepin Avenue / First Avenue exterior background - LEGENDARY EDITION."""
     surface = pygame.Surface(size)
     w, h = size
 
@@ -145,22 +145,49 @@ def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Sur
     ])
 
     # Stars
-    draw_stars(surface, 40)
+    draw_stars(surface, 60)  # MORE STARS
 
-    # Distant city skyline
-    for i in range(5):
-        bx = i * 70 - 20
-        bw = random.randint(40, 60)
-        bh = random.randint(40, 70)
+    # Moon with clouds passing
+    moon_x, moon_y = w - 60, 25
+    # Moon glow
+    for i in range(8, 0, -1):
+        alpha_sim = 255 - i * 28
+        pygame.draw.circle(surface, (70, 70, 100), (moon_x, moon_y), 15 + i)
+    pygame.draw.circle(surface, (240, 240, 250), (moon_x, moon_y), 12)
+    pygame.draw.circle(surface, (220, 220, 240), (moon_x, moon_y), 10)
+    # Moon craters
+    pygame.draw.circle(surface, (200, 200, 230), (moon_x - 3, moon_y - 2), 2)
+    pygame.draw.circle(surface, (200, 200, 230), (moon_x + 4, moon_y + 3), 1)
+    # Passing cloud
+    cloud_points = [(moon_x + 8, moon_y - 5), (moon_x + 15, moon_y - 8), (moon_x + 20, moon_y - 5)]
+    for px, py in cloud_points:
+        pygame.draw.circle(surface, (30, 25, 50), (px, py), 4)
+
+    # Distant city skyline with MORE detail
+    for i in range(7):  # More buildings
+        bx = i * 50 - 20
+        bw = random.randint(35, 55)
+        bh = random.randint(40, 75)
         draw_building_silhouette(surface, bx, bw, bh, (25, 20, 45), windows=True)
+
+    # Distant lightning flash (subtle)
+    lightning_x = random.randint(50, 150)
+    pygame.draw.line(surface, (200, 200, 255), (lightning_x, 10), (lightning_x + 5, 35), 1)
+    pygame.draw.line(surface, (200, 200, 255), (lightning_x + 5, 35), (lightning_x - 3, 55), 1)
+    # Lightning glow in clouds
+    for i in range(3):
+        pygame.draw.circle(surface, (80, 80, 120), (lightning_x, 30), 15 + i * 5)
 
     # Street level ground
     ground_y = h - 55
     pygame.draw.rect(surface, (25, 25, 40), (0, ground_y, w, 60))
 
-    # Sidewalk
+    # Sidewalk with MORE detail
     pygame.draw.rect(surface, (50, 50, 65), (0, ground_y, w, 8))
     pygame.draw.rect(surface, (60, 60, 75), (0, ground_y, w, 2))
+    # Sidewalk cracks
+    pygame.draw.line(surface, (35, 35, 50), (40, ground_y), (42, ground_y + 6), 1)
+    pygame.draw.line(surface, (35, 35, 50), (180, ground_y + 2), (178, ground_y + 8), 1)
 
     # === FIRST AVENUE BUILDING ===
     # Main building structure
@@ -171,10 +198,20 @@ def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Sur
 
     pygame.draw.rect(surface, (35, 30, 50), (building_x, building_y, building_w, building_h))
     pygame.draw.rect(surface, (45, 40, 60), (building_x, building_y, building_w, 4))
+    # Building texture/brick detail
+    for i in range(5):
+        brick_y = building_y + 10 + i * 25
+        pygame.draw.line(surface, (30, 25, 45), (building_x, brick_y), (building_x + building_w, brick_y), 1)
 
-    # Famous First Avenue star
+    # Famous First Avenue star with FLICKER animation
     star_x, star_y = building_x + building_w // 2, building_y + 20
-    star_color = (255, 255, 200)
+    star_flicker = random.choice([0.85, 0.9, 1.0, 1.0, 1.0])  # Occasional flicker
+    star_color = (int(255 * star_flicker), int(255 * star_flicker), int(200 * star_flicker))
+    # Star glow
+    for i in range(4):
+        glow_size = 18 + i * 4
+        pygame.draw.circle(surface, (255, 240, 180), (star_x, star_y), glow_size)
+    # Star shape
     for i in range(5):
         angle = math.radians(i * 72 - 90)
         x1 = star_x + int(12 * math.cos(angle))
@@ -191,13 +228,19 @@ def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Sur
     pygame.draw.rect(surface, (80, 70, 60), (door_x, h - 100, 30, 3))
     # Door handle
     pygame.draw.circle(surface, (180, 160, 100), (door_x + 25, h - 75), 2)
+    # Door window
+    pygame.draw.rect(surface, (60, 50, 80), (door_x + 8, h - 92, 14, 20))
 
-    # Marquee
+    # Marquee with enhanced detail
     pygame.draw.rect(surface, (60, 50, 80), (building_x + 10, building_y + 40, 80, 25))
     pygame.draw.rect(surface, (200, 180, 100), (building_x + 10, building_y + 40, 80, 2))
     pygame.draw.rect(surface, (200, 180, 100), (building_x + 10, building_y + 63, 80, 2))
+    # Marquee bulbs
+    for i in range(8):
+        bulb_x = building_x + 15 + i * 10
+        pygame.draw.circle(surface, (255, 220, 150), (bulb_x, building_y + 38), 2)
 
-    # Marquee text
+    # Marquee text with animated glow
     draw_neon_sign(surface, "THE NEON DEAD", (building_x + 18, building_y + 46),
                    (255, 100, 200), font_size=14)
 
@@ -212,6 +255,8 @@ def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Sur
     # Store window
     pygame.draw.rect(surface, (30, 25, 45), (store_x + 10, store_y + 30, 60, 40))
     pygame.draw.rect(surface, (100, 80, 60), (store_x + 10, store_y + 30, 60, 2))
+    # Window reflection
+    pygame.draw.rect(surface, (60, 50, 100), (store_x + 12, store_y + 32, 25, 15))
 
     # Neon "OPEN" sign
     draw_neon_sign(surface, "OPEN", (store_x + 25, store_y + 45), (100, 255, 150), 12)
@@ -225,14 +270,25 @@ def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Sur
     pygame.draw.rect(surface, (60, 55, 75), (kiosk_x, h - 110, 20, 60))
     pygame.draw.rect(surface, (70, 65, 85), (kiosk_x, h - 110, 20, 3))
 
-    # Posters on kiosk
-    poster_colors = [(255, 180, 60), (255, 100, 150), (100, 200, 255)]
+    # Posters on kiosk with MORE variety
+    poster_colors = [(255, 180, 60), (255, 100, 150), (100, 200, 255), (150, 255, 100)]
     for i, color in enumerate(poster_colors):
-        py = h - 105 + i * 18
-        pygame.draw.rect(surface, color, (kiosk_x + 3, py, 14, 15))
+        py = h - 108 + i * 14
+        pygame.draw.rect(surface, color, (kiosk_x + 3, py, 14, 12))
         # Poster details
-        pygame.draw.rect(surface, tuple(c - 40 for c in color), (kiosk_x + 5, py + 2, 10, 3))
-        pygame.draw.rect(surface, tuple(c - 40 for c in color), (kiosk_x + 5, py + 7, 10, 2))
+        pygame.draw.rect(surface, tuple(max(0, c - 40) for c in color), (kiosk_x + 5, py + 2, 10, 2))
+        pygame.draw.rect(surface, tuple(max(0, c - 40) for c in color), (kiosk_x + 5, py + 5, 10, 2))
+
+    # === CROWD SILHOUETTES ===
+    crowd_positions = [(55, h - 60), (65, h - 58), (125, h - 62), (260, h - 59), (275, h - 61)]
+    for cx, cy in crowd_positions:
+        # Head
+        pygame.draw.circle(surface, (15, 15, 25), (cx, cy - 8), 4)
+        # Body
+        pygame.draw.rect(surface, (15, 15, 25), (cx - 3, cy - 4, 6, 10))
+        # Arms (some raised)
+        if random.random() > 0.5:
+            pygame.draw.line(surface, (15, 15, 25), (cx - 3, cy - 2), (cx - 6, cy - 8), 2)
 
     # === ALLEY ENTRANCE (to radio station) ===
     alley_x = w - 50
@@ -240,30 +296,72 @@ def create_hennepin_background(size: Tuple[int, int] = (320, 200)) -> pygame.Sur
     # Graffiti arrow
     pygame.draw.polygon(surface, (150, 100, 200),
                        [(alley_x + 5, h - 90), (alley_x + 20, h - 100), (alley_x + 20, h - 80)])
+    # More alley graffiti
+    pygame.draw.rect(surface, (200, 100, 150), (alley_x + 3, h - 75, 8, 6))
+    pygame.draw.line(surface, (100, 200, 255), (alley_x + 15, h - 70), (alley_x + 25, h - 68), 2)
 
     # === STREET DETAILS ===
     # Street lights
     for lx in [80, 200, 290]:
         pygame.draw.rect(surface, (60, 60, 70), (lx, h - 140, 4, 90))
         # Light glow
-        for i in range(3):
-            alpha = 100 - i * 30
+        for i in range(4):
+            alpha = 120 - i * 30
             pygame.draw.circle(surface, (255, 240, 200),
-                             (lx + 2, h - 145), 8 + i * 4)
+                             (lx + 2, h - 145), 10 + i * 5)
 
-    # Puddle reflections
-    pygame.draw.ellipse(surface, (40, 35, 60), (100, h - 40, 40, 8))
-    pygame.draw.ellipse(surface, (60, 50, 90), (102, h - 39, 36, 5))
+    # Steam rising from vents
+    vent_positions = [(140, h - 50), (230, h - 52)]
+    for vx, vy in vent_positions:
+        # Vent grate
+        pygame.draw.rect(surface, (40, 40, 50), (vx, vy, 12, 6))
+        for i in range(3):
+            pygame.draw.line(surface, (30, 30, 40), (vx + 2 + i * 3, vy), (vx + 2 + i * 3, vy + 6), 1)
+        # Steam
+        for i in range(4):
+            steam_y = vy - 10 - i * 8
+            steam_alpha = 100 - i * 20
+            pygame.draw.circle(surface, (180, 180, 200), (vx + 6, steam_y), 3 + i)
+
+    # Rain puddles with neon reflections
+    puddle_data = [
+        (100, h - 40, 40, 8, (255, 100, 200)),  # Pink reflection
+        (175, h - 38, 35, 7, (100, 255, 150)),  # Green reflection
+        (45, h - 42, 28, 6, (255, 150, 50)),    # Orange reflection
+    ]
+    for px, py, pw, ph, reflect_color in puddle_data:
+        # Puddle base
+        pygame.draw.ellipse(surface, (40, 35, 60), (px, py, pw, ph))
+        pygame.draw.ellipse(surface, (50, 45, 70), (px + 2, py + 1, pw - 4, ph - 2))
+        # Neon reflection in puddle
+        pygame.draw.ellipse(surface, reflect_color, (px + 4, py + 2, pw - 8, ph - 4))
+        pygame.draw.ellipse(surface, tuple(c // 2 for c in reflect_color), (px + 6, py + 3, pw - 12, ph - 5))
+
+    # Cigarette butts and debris
+    debris_positions = [(35, h - 48), (90, h - 46), (160, h - 49), (210, h - 47), (280, h - 48)]
+    for dx, dy in debris_positions:
+        # Cigarette butt
+        pygame.draw.rect(surface, (230, 220, 200), (dx, dy, 3, 1))
+        pygame.draw.circle(surface, (200, 150, 100), (dx, dy), 1)
+
+    # Flyers on ground
+    flyer_positions = [(70, h - 47, (255, 180, 60)), (190, h - 45, (100, 200, 255))]
+    for fx, fy, fcolor in flyer_positions:
+        pygame.draw.rect(surface, fcolor, (fx, fy, 8, 6))
+        pygame.draw.rect(surface, tuple(c - 40 for c in fcolor), (fx + 1, fy + 1, 6, 2))
 
     # Manhole cover
     pygame.draw.circle(surface, (50, 50, 60), (250, h - 35), 8)
     pygame.draw.circle(surface, (40, 40, 50), (250, h - 35), 6)
+    # Manhole details
+    pygame.draw.circle(surface, (60, 60, 70), (250, h - 35), 3)
+    pygame.draw.line(surface, (45, 45, 55), (246, h - 35), (254, h - 35), 1)
 
     return surface
 
 
 def create_record_store_background(size: Tuple[int, int] = (320, 200)) -> pygame.Surface:
-    """Create the Let It Be Records interior background."""
+    """Create the Let It Be Records interior background - LEGENDARY EDITION."""
     surface = pygame.Surface(size)
     w, h = size
 
@@ -290,20 +388,37 @@ def create_record_store_background(size: Tuple[int, int] = (320, 200)) -> pygame
     wall_y = 30
     pygame.draw.rect(surface, (80, 70, 100), (0, wall_y, w, floor_y - wall_y))
 
-    # Posters on wall
+    # Posters on wall - MORE ALBUMS!
     poster_data = [
         (20, 45, (255, 200, 80), "PRINCE"),
         (60, 40, (200, 100, 150), "HUSKER DU"),
         (100, 50, (100, 200, 255), "REPLACEMENTS"),
+        (140, 38, (255, 80, 80), "CLASH"),
+        (180, 48, (150, 100, 255), "BLONDIE"),
         (220, 42, (255, 150, 100), "SUBURBS"),
-        (270, 48, (150, 255, 150), "SOUL ASYLUM"),
+        (260, 46, (150, 255, 150), "SOUL ASYLUM"),
+        (145, 90, (255, 255, 100), "TALKING HEADS"),
     ]
 
     for px, py, color, name in poster_data:
         pygame.draw.rect(surface, color, (px, py, 35, 45))
         pygame.draw.rect(surface, (30, 30, 40), (px, py, 35, 45), 1)
         # Band image suggestion
-        pygame.draw.rect(surface, tuple(c - 50 for c in color), (px + 4, py + 5, 27, 25))
+        pygame.draw.rect(surface, tuple(max(0, c - 50) for c in color), (px + 4, py + 5, 27, 25))
+        # Album details
+        pygame.draw.line(surface, (30, 30, 40), (px + 6, py + 32), (px + 29, py + 32), 1)
+        pygame.draw.line(surface, (30, 30, 40), (px + 6, py + 37), (px + 29, py + 37), 1)
+
+    # === DUST PARTICLES IN LIGHT BEAMS ===
+    light_beam_x = 50
+    # Window light beam
+    for ly in range(35, floor_y, 15):
+        for lx in range(light_beam_x, light_beam_x + 40, 8):
+            if random.random() > 0.6:
+                dust_size = random.choice([1, 1, 2])
+                dust_bright = random.randint(180, 220)
+                pygame.draw.circle(surface, (dust_bright, dust_bright, dust_bright - 20),
+                                 (lx + random.randint(-3, 3), ly), dust_size)
 
     # === RECORD BINS ===
     bin_y = floor_y - 50
@@ -317,9 +432,11 @@ def create_record_store_background(size: Tuple[int, int] = (320, 200)) -> pygame
             rx = bx + 5 + i * 6
             color = random.choice([
                 (200, 180, 160), (180, 160, 140), (220, 200, 180),
-                (160, 180, 200), (200, 160, 180)
+                (160, 180, 200), (200, 160, 180), (220, 180, 220)
             ])
             pygame.draw.rect(surface, color, (rx, bin_y + 8, 4, 38))
+            # Album spine details
+            pygame.draw.line(surface, tuple(c - 20 for c in color), (rx, bin_y + 12), (rx, bin_y + 40), 1)
 
     # === COUNTER ===
     counter_x = w - 90
@@ -329,17 +446,72 @@ def create_record_store_background(size: Tuple[int, int] = (320, 200)) -> pygame
     # Cash register
     pygame.draw.rect(surface, (50, 50, 55), (counter_x + 20, floor_y - 65, 30, 20))
     pygame.draw.rect(surface, (40, 40, 45), (counter_x + 22, floor_y - 63, 26, 12))
+    # Register display
+    pygame.draw.rect(surface, (100, 255, 100), (counter_x + 24, floor_y - 61, 10, 6))
+
+    # CAT SLEEPING ON COUNTER!
+    cat_x, cat_y = counter_x + 50, floor_y - 15
+    # Cat body (curled up)
+    pygame.draw.ellipse(surface, (60, 50, 45), (cat_x, cat_y, 18, 12))
+    pygame.draw.ellipse(surface, (70, 60, 55), (cat_x + 2, cat_y + 2, 14, 8))
+    # Cat head
+    pygame.draw.circle(surface, (60, 50, 45), (cat_x + 15, cat_y + 4), 4)
+    # Cat ears
+    pygame.draw.polygon(surface, (55, 45, 40), [(cat_x + 13, cat_y + 2), (cat_x + 14, cat_y), (cat_x + 15, cat_y + 2)])
+    pygame.draw.polygon(surface, (55, 45, 40), [(cat_x + 16, cat_y + 2), (cat_x + 17, cat_y), (cat_x + 18, cat_y + 2)])
+    # Cat tail
+    pygame.draw.arc(surface, (60, 50, 45), (cat_x - 4, cat_y + 4, 12, 10), 0, math.pi, 2)
+
+    # COFFEE STEAM RISING
+    coffee_x, coffee_y = counter_x + 10, floor_y - 18
+    pygame.draw.rect(surface, (180, 140, 100), (coffee_x, coffee_y, 8, 10))
+    pygame.draw.rect(surface, (140, 100, 60), (coffee_x + 1, coffee_y + 1, 6, 8))
+    # Steam
+    for i in range(5):
+        steam_y = coffee_y - 5 - i * 5
+        steam_x_offset = random.randint(-2, 2)
+        pygame.draw.circle(surface, (200, 200, 220), (coffee_x + 4 + steam_x_offset, steam_y), 2 + i // 2)
 
     # === LISTENING BOOTH ===
     booth_x = 10
     pygame.draw.rect(surface, (40, 35, 55), (booth_x, floor_y - 90, 60, 90))
     pygame.draw.rect(surface, (60, 50, 75), (booth_x, floor_y - 90, 60, 5))
 
+    # ANIMATED LISTENING BOOTH LIGHT (pulsing)
+    booth_light_intensity = random.choice([0.8, 0.9, 1.0, 1.0])
+    light_color = (int(100 * booth_light_intensity), int(255 * booth_light_intensity), int(100 * booth_light_intensity))
+    pygame.draw.rect(surface, light_color, (booth_x + 45, floor_y - 85, 10, 6))
+    # Light glow
+    for i in range(3):
+        glow_color = tuple(c // (i + 2) for c in light_color)
+        pygame.draw.rect(surface, glow_color, (booth_x + 43 - i, floor_y - 87 - i, 14 + i * 2, 10 + i * 2))
+
+    # Turntable in booth
+    pygame.draw.circle(surface, (30, 30, 35), (booth_x + 30, floor_y - 50), 15)
+    pygame.draw.circle(surface, (40, 40, 45), (booth_x + 30, floor_y - 50), 12)
+    pygame.draw.circle(surface, (20, 20, 25), (booth_x + 30, floor_y - 50), 3)
+    # Tonearm
+    pygame.draw.line(surface, (100, 100, 110), (booth_x + 30, floor_y - 50), (booth_x + 45, floor_y - 55), 2)
+
     # Headphones on hook
     pygame.draw.arc(surface, (80, 80, 90), (booth_x + 20, floor_y - 80, 20, 15),
                    0, math.pi, 2)
     pygame.draw.rect(surface, (70, 70, 80), (booth_x + 18, floor_y - 73, 6, 8))
     pygame.draw.rect(surface, (70, 70, 80), (booth_x + 36, floor_y - 73, 6, 8))
+
+    # === CEILING LIGHTS (one flickering!) ===
+    # Normal light
+    pygame.draw.rect(surface, (255, 240, 200), (100, 25, 30, 6))
+    for i in range(3):
+        pygame.draw.circle(surface, (255, 240, 180), (115, 31 + i * 15), 20 + i * 8)
+
+    # FLICKERING FLUORESCENT
+    flicker_on = random.choice([True, True, True, False])  # Mostly on, occasional flicker
+    flicker_color = (255, 240, 200) if flicker_on else (150, 140, 120)
+    pygame.draw.rect(surface, flicker_color, (200, 25, 30, 6))
+    if flicker_on:
+        for i in range(2):
+            pygame.draw.circle(surface, (255, 240, 180), (215, 31 + i * 20), 15 + i * 8)
 
     # === NEON SIGNS ===
     draw_neon_sign(surface, "VINYL", (140, 35), (255, 100, 200), 16)
@@ -348,12 +520,21 @@ def create_record_store_background(size: Tuple[int, int] = (320, 200)) -> pygame
     pygame.draw.rect(surface, (20, 20, 30), (0, floor_y - 80, 25, 80))
     # Glass with street view hint
     pygame.draw.rect(surface, (40, 30, 60), (2, floor_y - 78, 21, 75))
+    # Door reflection
+    pygame.draw.rect(surface, (60, 50, 100), (4, floor_y - 76, 8, 30))
+
+    # === CUSTOMER BROWSING (silhouette hint) ===
+    customer_x = 190
+    # Head silhouette
+    pygame.draw.circle(surface, (30, 25, 40), (customer_x, floor_y - 20), 5)
+    # Shoulders/bent over records
+    pygame.draw.rect(surface, (30, 25, 40), (customer_x - 8, floor_y - 15, 16, 10))
 
     return surface
 
 
 def create_radio_station_background(size: Tuple[int, int] = (320, 200)) -> pygame.Surface:
-    """Create the KJRR basement radio station background."""
+    """Create the KJRR basement radio station background - LEGENDARY EDITION."""
     surface = pygame.Surface(size)
     w, h = size
 
@@ -370,6 +551,7 @@ def create_radio_station_background(size: Tuple[int, int] = (320, 200)) -> pygam
     # Floor cracks
     pygame.draw.line(surface, (40, 45, 50), (50, floor_y + 10), (100, h), 1)
     pygame.draw.line(surface, (40, 45, 50), (200, floor_y + 5), (180, h), 1)
+    pygame.draw.line(surface, (40, 45, 50), (120, floor_y + 8), (125, h), 1)
 
     # Cinderblock wall
     wall_y = 25
@@ -385,15 +567,19 @@ def create_radio_station_background(size: Tuple[int, int] = (320, 200)) -> pygam
             pygame.draw.rect(surface, block_color, (bx, by, block_w - 1, block_h - 1))
             pygame.draw.rect(surface, block_highlight, (bx, by, block_w - 1, 2))
 
-    # === ON AIR LIGHT ===
+    # === PULSING ON AIR LIGHT ===
     light_x, light_y = 150, 45
+    # Pulsing animation
+    pulse_intensity = random.choice([0.8, 0.9, 1.0, 1.0, 1.0])  # Subtle pulse
+    light_red = int(255 * pulse_intensity)
     pygame.draw.rect(surface, (40, 40, 50), (light_x - 5, light_y - 5, 50, 25))
-    pygame.draw.rect(surface, (255, 50, 50), (light_x, light_y, 40, 15))
-    # Glow
-    for i in range(4):
-        alpha = 100 - i * 25
-        pygame.draw.rect(surface, (255, 50, 50),
-                        (light_x - i * 2, light_y - i * 2, 40 + i * 4, 15 + i * 4), 1)
+    pygame.draw.rect(surface, (light_red, 50, 50), (light_x, light_y, 40, 15))
+    # PULSING RED GLOW
+    for i in range(6):
+        glow_alpha = int((120 - i * 20) * pulse_intensity)
+        glow_size = i * 3
+        pygame.draw.rect(surface, (light_red, 40, 40),
+                        (light_x - glow_size, light_y - glow_size, 40 + glow_size * 2, 15 + glow_size * 2), 1)
 
     # "ON AIR" text
     try:
@@ -420,45 +606,142 @@ def create_radio_station_background(size: Tuple[int, int] = (320, 200)) -> pygam
         sy = floor_y - 60 + random.randint(-5, 5)
         pygame.draw.rect(surface, (200, 180, 100), (sx, sy, 4, 3))
 
+    # VU METERS BOUNCING!
+    vu_x = booth_x + 12
+    vu_y = floor_y - 85
+    for i in range(2):
+        vu_offset = i * 30
+        # VU meter housing
+        pygame.draw.rect(surface, (30, 30, 35), (vu_x + vu_offset, vu_y, 25, 12))
+        pygame.draw.rect(surface, (20, 20, 25), (vu_x + vu_offset + 2, vu_y + 2, 21, 8))
+        # VU level (animated)
+        level = random.randint(8, 20)
+        level_color = (50, 255, 50) if level < 18 else (255, 200, 50)
+        pygame.draw.rect(surface, level_color, (vu_x + vu_offset + 3, vu_y + 3, level, 6))
+        # Peak indicator
+        pygame.draw.rect(surface, (255, 50, 50), (vu_x + vu_offset + 23, vu_y + 4, 1, 4))
+
+    # REEL-TO-REEL TAPE SPINNING!
+    reel_x, reel_y = booth_x + 50, floor_y - 90
+    # Left reel (fuller)
+    pygame.draw.circle(surface, (40, 35, 30), (reel_x, reel_y), 10)
+    pygame.draw.circle(surface, (60, 50, 40), (reel_x, reel_y), 8)
+    pygame.draw.circle(surface, (30, 25, 20), (reel_x, reel_y), 3)
+    # Tape on reel (rotating effect with spokes)
+    for spoke in range(4):
+        angle = math.radians(spoke * 90 + random.randint(0, 10))
+        spoke_x = reel_x + int(6 * math.cos(angle))
+        spoke_y = reel_y + int(6 * math.sin(angle))
+        pygame.draw.line(surface, (50, 45, 35), (reel_x, reel_y), (spoke_x, spoke_y), 1)
+
+    # Right reel (emptier)
+    reel_x2 = reel_x + 25
+    pygame.draw.circle(surface, (40, 35, 30), (reel_x2, reel_y), 10)
+    pygame.draw.circle(surface, (35, 30, 25), (reel_x2, reel_y), 5)
+    pygame.draw.circle(surface, (30, 25, 20), (reel_x2, reel_y), 3)
+    # Spokes
+    for spoke in range(4):
+        angle = math.radians(spoke * 90 + random.randint(0, 10))
+        spoke_x = reel_x2 + int(4 * math.cos(angle))
+        spoke_y = reel_y + int(4 * math.sin(angle))
+        pygame.draw.line(surface, (50, 45, 35), (reel_x2, reel_y), (spoke_x, spoke_y), 1)
+
+    # Tape running between reels
+    pygame.draw.line(surface, (70, 60, 50), (reel_x + 8, reel_y - 2), (reel_x2 - 8, reel_y - 2), 2)
+    pygame.draw.line(surface, (70, 60, 50), (reel_x + 8, reel_y + 2), (reel_x2 - 8, reel_y + 2), 2)
+
     # Turntables
     for tx in [booth_x + 15, booth_x + 55]:
         pygame.draw.circle(surface, (30, 30, 35), (tx + 12, floor_y - 40), 12)
         pygame.draw.circle(surface, (50, 50, 55), (tx + 12, floor_y - 40), 8)
         pygame.draw.circle(surface, (100, 100, 110), (tx + 12, floor_y - 40), 3)
+        # Vinyl record
+        pygame.draw.circle(surface, (20, 20, 20), (tx + 12, floor_y - 40), 11)
+        # Tonearm
+        pygame.draw.line(surface, (100, 100, 110), (tx + 12, floor_y - 40), (tx + 20, floor_y - 48), 2)
 
-    # === EQUIPMENT RACK ===
+    # SOUND WAVE VISUALIZER ON SCREEN
+    screen_x, screen_y = booth_x + 5, floor_y - 100
+    pygame.draw.rect(surface, (20, 20, 25), (screen_x, screen_y, 40, 25))
+    pygame.draw.rect(surface, (30, 50, 40), (screen_x + 2, screen_y + 2, 36, 21))
+    # Animated waveform
+    for i in range(18):
+        wave_height = random.randint(2, 12)
+        wave_x = screen_x + 4 + i * 2
+        wave_y = screen_y + 12
+        pygame.draw.line(surface, (50, 255, 150), (wave_x, wave_y), (wave_x, wave_y - wave_height), 1)
+        pygame.draw.line(surface, (50, 255, 150), (wave_x, wave_y), (wave_x, wave_y + wave_height), 1)
+
+    # === EQUIPMENT RACK WITH BLINKING LEDs ===
     rack_x = 30
     pygame.draw.rect(surface, (40, 40, 50), (rack_x, floor_y - 100, 60, 100))
 
-    # Rack units with blinking lights
+    # Rack units with MORE blinking lights
     for i in range(5):
         ry = floor_y - 95 + i * 18
         pygame.draw.rect(surface, (30, 30, 40), (rack_x + 5, ry, 50, 15))
-        # LED indicators
-        for j in range(4):
-            led_color = random.choice([(50, 255, 50), (255, 50, 50), (255, 200, 50)])
-            pygame.draw.circle(surface, led_color, (rack_x + 12 + j * 12, ry + 7), 2)
+        # LED indicators (more varied)
+        for j in range(5):
+            led_color = random.choice([(50, 255, 50), (255, 50, 50), (255, 200, 50), (50, 150, 255)])
+            pygame.draw.circle(surface, led_color, (rack_x + 10 + j * 10, ry + 7), 2)
+            # LED glow
+            pygame.draw.circle(surface, tuple(c // 3 for c in led_color), (rack_x + 10 + j * 10, ry + 7), 3)
+        # Equipment labels
+        pygame.draw.rect(surface, (200, 200, 200), (rack_x + 8, ry + 3, 10, 2))
 
-    # === CASSETTE STACKS ===
+    # === SMOKE/CIGARETTE ===
+    smoke_x, smoke_y = booth_x + 70, floor_y - 25
+    # Cigarette
+    pygame.draw.rect(surface, (230, 230, 230), (smoke_x, smoke_y, 6, 1))
+    pygame.draw.circle(surface, (255, 150, 50), (smoke_x, smoke_y), 1)
+    # Smoke rising
+    for i in range(6):
+        smoke_rise_y = smoke_y - 8 - i * 6
+        smoke_rise_x = smoke_x + random.randint(-2, 2)
+        pygame.draw.circle(surface, (180, 180, 200), (smoke_rise_x, smoke_rise_y), 2 + i // 2)
+
+    # === CASSETTE STACKS (more detail) ===
     for sx in [100, 120, 140]:
         stack_h = random.randint(20, 40)
         for i in range(stack_h // 5):
-            pygame.draw.rect(surface, (60, 50, 70), (sx, floor_y - 20 - i * 5, 15, 4))
+            tape_color = random.choice([(60, 50, 70), (70, 60, 80), (50, 60, 70)])
+            pygame.draw.rect(surface, tape_color, (sx, floor_y - 20 - i * 5, 15, 4))
+            # Tape label
+            pygame.draw.rect(surface, (200, 200, 220), (sx + 2, floor_y - 19 - i * 5, 8, 2))
 
-    # === POSTERS ===
-    poster_x = 5
-    pygame.draw.rect(surface, (200, 150, 100), (poster_x, 50, 30, 40))
-    pygame.draw.rect(surface, (20, 20, 30), (poster_x, 50, 30, 40), 1)
+    # === POSTERS (MORE!) ===
+    posters_data = [(5, 50, (200, 150, 100)), (5, 95, (150, 200, 255)), (190, 50, (255, 150, 150))]
+    for poster_x, poster_y, pcolor in posters_data:
+        pygame.draw.rect(surface, pcolor, (poster_x, poster_y, 30, 40))
+        pygame.draw.rect(surface, (20, 20, 30), (poster_x, poster_y, 30, 40), 1)
+        pygame.draw.rect(surface, tuple(c - 40 for c in pcolor), (poster_x + 4, poster_y + 4, 22, 25))
+
+    # === COFFEE CUP ===
+    coffee_x, coffee_y = booth_x + 5, floor_y - 10
+    pygame.draw.rect(surface, (180, 140, 100), (coffee_x, coffee_y, 10, 8))
+    pygame.draw.rect(surface, (100, 60, 30), (coffee_x + 1, coffee_y + 1, 8, 6))
+    # Steam
+    for i in range(3):
+        steam_y = coffee_y - 4 - i * 4
+        pygame.draw.circle(surface, (200, 200, 220), (coffee_x + 5, steam_y), 2)
 
     # === DOOR ===
     pygame.draw.rect(surface, (35, 35, 45), (0, floor_y - 75, 22, 75))
     pygame.draw.rect(surface, (45, 45, 55), (2, floor_y - 73, 18, 71))
 
+    # === CABLES ON FLOOR ===
+    cable_colors = [(30, 30, 35), (50, 50, 60), (40, 40, 50)]
+    cable_y_offsets = [0, 3, 6]
+    for cable_color, y_offset in zip(cable_colors, cable_y_offsets):
+        cable_points = [(20, floor_y - 5 + y_offset), (80, floor_y - 8 + y_offset),
+                       (140, floor_y - 6 + y_offset), (200, floor_y - 10 + y_offset)]
+        pygame.draw.lines(surface, cable_color, False, cable_points, 2)
+
     return surface
 
 
 def create_backstage_background(size: Tuple[int, int] = (320, 200)) -> pygame.Surface:
-    """Create the First Avenue backstage area background."""
+    """Create the First Avenue backstage area background - LEGENDARY EDITION."""
     surface = pygame.Surface(size)
     w, h = size
 
@@ -468,6 +751,21 @@ def create_backstage_background(size: Tuple[int, int] = (320, 200)) -> pygame.Su
         (70, 40, 100),
         (50, 30, 70),
     ])
+
+    # STAGE LIGHTS SWEEPING in background
+    for i in range(3):
+        light_x = 200 + i * 30
+        light_angle = random.randint(-15, 15)
+        # Light beam
+        beam_width = 25
+        beam_start_x = light_x + light_angle
+        pygame.draw.polygon(surface, (100, 60, 140),
+                          [(beam_start_x, 20), (beam_start_x - beam_width, 80),
+                           (beam_start_x + beam_width, 80)])
+        # Light source
+        pygame.draw.circle(surface, (255, 200, 100), (light_x, 18), 6)
+        for j in range(3):
+            pygame.draw.circle(surface, (255, 220, 150), (light_x, 18), 8 + j * 3)
 
     # Floor
     floor_y = h - 50
@@ -483,37 +781,76 @@ def create_backstage_background(size: Tuple[int, int] = (320, 200)) -> pygame.Su
     for i in range(0, 60, 8):
         pygame.draw.rect(surface, curtain_color if i % 16 == 0 else curtain_shadow,
                         (w - 60 + i, 20, 8, floor_y - 20))
+    # Curtain highlights
+    for i in range(0, 60, 16):
+        pygame.draw.line(surface, (140, 30, 50), (w - 60 + i + 4, 25), (w - 60 + i + 4, floor_y - 25), 1)
 
-    # === MAKEUP MIRRORS ===
+    # ROADIE SILHOUETTES moving in background
+    roadie_positions = [(w - 50, floor_y - 45), (w - 35, floor_y - 50)]
+    for rx, ry in roadie_positions:
+        # Head
+        pygame.draw.circle(surface, (20, 15, 30), (rx, ry), 5)
+        # Body
+        pygame.draw.rect(surface, (20, 15, 30), (rx - 4, ry + 5, 8, 12))
+        # Arms carrying equipment
+        pygame.draw.line(surface, (20, 15, 30), (rx - 4, ry + 8), (rx - 10, ry + 12), 2)
+        pygame.draw.rect(surface, (40, 35, 45), (rx - 12, ry + 10, 8, 6))
+
+    # === MAKEUP MIRRORS WITH FLICKERING BULBS ===
     for mx in [30, 90]:
         # Mirror frame
         pygame.draw.rect(surface, (70, 60, 80), (mx, 35, 45, 55))
         pygame.draw.rect(surface, (200, 190, 180), (mx + 3, 38, 39, 49))
+        # Reflection hint
+        pygame.draw.rect(surface, (180, 170, 160), (mx + 5, 40, 18, 25))
 
-        # Mirror bulbs
+        # Mirror bulbs with FLICKERING
         for i in range(5):
             by = 40 + i * 10
-            pygame.draw.circle(surface, (255, 240, 200), (mx + 5, by), 3)
-            pygame.draw.circle(surface, (255, 240, 200), (mx + 40, by), 3)
+            # Random flicker effect
+            flicker_intensity = random.choice([0.7, 0.85, 1.0, 1.0, 1.0])
+            bulb_color = (int(255 * flicker_intensity), int(240 * flicker_intensity), int(200 * flicker_intensity))
+            pygame.draw.circle(surface, bulb_color, (mx + 5, by), 3)
+            pygame.draw.circle(surface, bulb_color, (mx + 40, by), 3)
             # Glow
-            pygame.draw.circle(surface, (255, 240, 200), (mx + 5, by), 5)
-            pygame.draw.circle(surface, (255, 240, 200), (mx + 40, by), 5)
+            for g in range(2):
+                glow_color = tuple(c // (g + 2) for c in bulb_color)
+                pygame.draw.circle(surface, glow_color, (mx + 5, by), 5 + g * 2)
+                pygame.draw.circle(surface, glow_color, (mx + 40, by), 5 + g * 2)
 
     # Counter under mirrors
     pygame.draw.rect(surface, (50, 45, 60), (25, floor_y - 35, 120, 35))
     pygame.draw.rect(surface, (60, 55, 70), (25, floor_y - 35, 120, 3))
 
-    # Makeup items on counter
-    for i in range(6):
-        item_x = 35 + i * 18
+    # Makeup items on counter (MORE!)
+    for i in range(8):
+        item_x = 30 + i * 15
         item_color = random.choice([
             (200, 50, 50), (50, 200, 50), (200, 200, 50),
-            (150, 150, 200), (200, 100, 150)
+            (150, 150, 200), (200, 100, 150), (255, 180, 200)
         ])
         item_h = random.randint(8, 15)
         pygame.draw.rect(surface, item_color, (item_x, floor_y - 37 - item_h, 8, item_h))
+        # Item cap/top
+        pygame.draw.rect(surface, tuple(c - 30 for c in item_color), (item_x, floor_y - 38 - item_h, 8, 2))
 
-    # === FLIGHT CASES / EQUIPMENT ===
+    # === COSTUME RACK ===
+    rack_x, rack_y = 150, floor_y - 85
+    # Rack structure
+    pygame.draw.rect(surface, (60, 55, 65), (rack_x, rack_y, 4, 85))
+    pygame.draw.rect(surface, (60, 55, 65), (rack_x, rack_y, 40, 4))
+    # Iconic outfits hanging
+    outfit_colors = [(200, 50, 150), (100, 100, 250), (255, 200, 50), (150, 255, 100)]
+    for i, outfit_color in enumerate(outfit_colors):
+        hanger_x = rack_x + 5 + i * 8
+        # Hanger
+        pygame.draw.line(surface, (180, 180, 190), (hanger_x, rack_y + 2), (hanger_x, rack_y + 8), 1)
+        # Clothing
+        pygame.draw.rect(surface, outfit_color, (hanger_x - 3, rack_y + 8, 6, 15))
+        # Clothing detail
+        pygame.draw.line(surface, tuple(c - 40 for c in outfit_color), (hanger_x - 2, rack_y + 10), (hanger_x + 2, rack_y + 10), 1)
+
+    # === FLIGHT CASES WITH BAND STICKERS ===
     case_x = 165
     for i, case_h in enumerate([45, 35, 50]):
         cy = floor_y - case_h
@@ -521,17 +858,38 @@ def create_backstage_background(size: Tuple[int, int] = (320, 200)) -> pygame.Su
         pygame.draw.rect(surface, (50, 50, 55), (case_x + i * 35, cy, 30, 3))
         # Latches
         pygame.draw.rect(surface, (150, 140, 100), (case_x + i * 35 + 12, cy + case_h - 8, 6, 4))
+        # BAND STICKERS!
+        sticker_colors = [(255, 100, 150), (100, 200, 255), (255, 200, 50), (150, 255, 100)]
+        for s in range(random.randint(2, 4)):
+            sticker_y = cy + 8 + s * 8
+            sticker_color = random.choice(sticker_colors)
+            pygame.draw.rect(surface, sticker_color, (case_x + i * 35 + 4, sticker_y, 12, 6))
+            pygame.draw.rect(surface, tuple(c - 40 for c in sticker_color), (case_x + i * 35 + 5, sticker_y + 1, 10, 2))
 
-    # === SETLIST CRATE ===
+    # === SETLIST CRATE WITH SETLISTS TAPED EVERYWHERE ===
     crate_x = 40
     pygame.draw.rect(surface, (70, 60, 50), (crate_x, floor_y - 40, 50, 40))
     pygame.draw.rect(surface, (80, 70, 60), (crate_x, floor_y - 40, 50, 4))
 
-    # Papers sticking out
-    for i in range(4):
-        paper_x = crate_x + 8 + i * 10
+    # Setlists taped to wall above crate
+    for tape_i in range(3):
+        tape_x = crate_x - 5 + tape_i * 15
+        tape_y = floor_y - 70 - tape_i * 8
+        # Setlist paper
+        pygame.draw.rect(surface, (240, 235, 225), (tape_x, tape_y, 18, 22))
+        pygame.draw.rect(surface, (30, 30, 35), (tape_x, tape_y, 18, 22), 1)
+        # Handwriting lines
+        for line in range(5):
+            pygame.draw.line(surface, (60, 60, 70), (tape_x + 2, tape_y + 4 + line * 3), (tape_x + 16, tape_y + 4 + line * 3), 1)
+        # Tape holding it
+        pygame.draw.rect(surface, (220, 210, 180), (tape_x + 6, tape_y - 2, 6, 4))
+
+    # Papers sticking out of crate
+    for i in range(5):
+        paper_x = crate_x + 6 + i * 8
         paper_color = (240, 235, 225)
-        pygame.draw.rect(surface, paper_color, (paper_x, floor_y - 50, 8, 15))
+        pygame.draw.rect(surface, paper_color, (paper_x, floor_y - 50, 6, 15))
+        pygame.draw.line(surface, (200, 195, 185), (paper_x + 1, floor_y - 48), (paper_x + 5, floor_y - 48), 1)
 
     # === MONITOR MIX CONSOLE ===
     console_x = w // 2 - 30
@@ -568,20 +926,31 @@ def create_backstage_background(size: Tuple[int, int] = (320, 200)) -> pygame.Su
     except:
         pass
 
-    # === CABLES ON FLOOR ===
+    # === CABLES ON FLOOR WITH STAGE GLOW ===
     cable_points = [(50, h - 30), (100, h - 25), (150, h - 35), (200, h - 28)]
     pygame.draw.lines(surface, (30, 30, 35), False, cable_points, 3)
+    # Another cable with glow from stage
+    glowing_cable_points = [(180, h - 32), (220, h - 30), (260, h - 28)]
+    pygame.draw.lines(surface, (80, 60, 100), False, glowing_cable_points, 2)
 
     # === INSTRUMENTS IN CORNER ===
     # Guitar case
     pygame.draw.ellipse(surface, (50, 40, 35), (5, floor_y - 25, 15, 50))
     pygame.draw.ellipse(surface, (40, 30, 25), (7, floor_y - 23, 11, 46))
+    # Case latches
+    pygame.draw.rect(surface, (150, 140, 100), (10, floor_y - 5, 5, 2))
+
+    # Mic stand
+    mic_x = 15
+    pygame.draw.rect(surface, (70, 70, 80), (mic_x, floor_y - 70, 2, 70))
+    pygame.draw.circle(surface, (80, 80, 90), (mic_x + 1, floor_y - 72), 4)
+    pygame.draw.circle(surface, (100, 100, 110), (mic_x + 1, floor_y - 72), 3)
 
     return surface
 
 
 def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.Surface:
-    """Create the green room background with band hangout atmosphere."""
+    """Create the green room background with band hangout atmosphere - LEGENDARY EDITION."""
     surface = pygame.Surface(size)
     w, h = size
 
@@ -595,11 +964,16 @@ def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.S
     # Floor - worn carpet
     floor_y = h - 45
     pygame.draw.rect(surface, (50, 65, 55), (0, floor_y, w, 50))
-    # Carpet texture
-    for i in range(20):
+    # Carpet texture (more worn)
+    for i in range(30):
         cx = random.randint(0, w)
         cy = random.randint(floor_y, h)
         pygame.draw.circle(surface, (55, 70, 60), (cx, cy), 2)
+    # Carpet stains
+    for i in range(5):
+        stain_x = random.randint(20, w - 20)
+        stain_y = random.randint(floor_y + 5, h - 5)
+        pygame.draw.ellipse(surface, (45, 60, 50), (stain_x, stain_y, 15, 8))
 
     # === BACK WALL ===
     wall_color = (45, 60, 50)
@@ -624,6 +998,8 @@ def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.S
     # Cushion lines
     pygame.draw.line(surface, (75, 45, 35), (couch_x + 30, couch_y), (couch_x + 30, couch_y + couch_h), 2)
     pygame.draw.line(surface, (75, 45, 35), (couch_x + 60, couch_y), (couch_x + 60, couch_y + couch_h), 2)
+    # Wear marks on couch
+    pygame.draw.ellipse(surface, (80, 50, 40), (couch_x + 40, couch_y + 15, 20, 15))
 
     # Couch legs
     pygame.draw.rect(surface, (50, 40, 30), (couch_x + 5, floor_y - 5, 8, 8))
@@ -638,42 +1014,128 @@ def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.S
     pygame.draw.ellipse(surface, (200, 200, 200), (table_x + 10, floor_y - 25, 8, 5))
     pygame.draw.ellipse(surface, (150, 100, 80), (table_x + 30, floor_y - 25, 8, 5))
 
-    # === DELI TRAY ===
+    # === BAND MEMBERS' PERSONAL ITEMS ===
+    # Photo frame
+    photo_x, photo_y = 200, 90
+    pygame.draw.rect(surface, (80, 70, 60), (photo_x, photo_y, 30, 35))
+    pygame.draw.rect(surface, (220, 210, 200), (photo_x + 3, photo_y + 3, 24, 29))
+    # Photo image hint
+    pygame.draw.rect(surface, (150, 140, 130), (photo_x + 5, photo_y + 5, 20, 15))
+    pygame.draw.circle(surface, (180, 170, 160), (photo_x + 15, photo_y + 20), 5)
+
+    # Letters/postcards
+    letter_x, letter_y = 245, 88
+    pygame.draw.rect(surface, (240, 235, 225), (letter_x, letter_y, 22, 16))
+    pygame.draw.rect(surface, (180, 100, 100), (letter_x + 16, letter_y + 2, 4, 3))  # Stamp
+    # Handwriting lines
+    for i in range(3):
+        pygame.draw.line(surface, (100, 100, 120), (letter_x + 2, letter_y + 4 + i * 3), (letter_x + 14, letter_y + 4 + i * 3), 1)
+
+    # === DELI TRAY WITH HALF-EATEN FOOD ===
     tray_x = 140
     pygame.draw.rect(surface, (180, 180, 190), (tray_x, floor_y - 50, 50, 35))
     pygame.draw.rect(surface, (160, 160, 170), (tray_x + 2, floor_y - 48, 46, 31))
-    # Food items
-    food_colors = [(180, 100, 100), (255, 220, 100), (150, 200, 150), (200, 150, 100)]
-    for i, color in enumerate(food_colors):
-        fx = tray_x + 8 + (i % 2) * 20
-        fy = floor_y - 45 + (i // 2) * 15
-        pygame.draw.rect(surface, color, (fx, fy, 15, 12))
+    # Food items (some partially eaten)
+    food_items = [
+        (tray_x + 8, floor_y - 45, 15, 12, (180, 100, 100)),  # Half-eaten
+        (tray_x + 28, floor_y - 45, 12, 10, (255, 220, 100)),  # Cheese (partial)
+        (tray_x + 8, floor_y - 30, 15, 12, (150, 200, 150)),
+        (tray_x + 28, floor_y - 30, 15, 12, (200, 150, 100)),
+    ]
+    for fx, fy, fw, fh, color in food_items:
+        pygame.draw.rect(surface, color, (fx, fy, fw, fh))
+        # Bite marks
+        if random.random() > 0.5:
+            pygame.draw.circle(surface, (160, 160, 170), (fx + fw - 3, fy + 3), 3)
 
-    # === POSTER WALL ===
+    # === POSTER WALL (MORE!) ===
     posters = [
         (200, 35, (255, 180, 80), "PRINCE"),
         (240, 40, (200, 100, 200), "THE CURE"),
         (280, 35, (100, 200, 255), "NEW ORDER"),
+        (200, 130, (255, 100, 150), "BLONDIE"),
     ]
     for px, py, color, _ in posters:
         pygame.draw.rect(surface, color, (px, py, 35, 45))
         pygame.draw.rect(surface, (30, 30, 40), (px, py, 35, 45), 1)
-        pygame.draw.rect(surface, tuple(c - 50 for c in color), (px + 4, py + 5, 27, 25))
+        pygame.draw.rect(surface, tuple(max(0, c - 50) for c in color), (px + 4, py + 5, 27, 25))
+        # Autograph hint
+        pygame.draw.line(surface, (255, 255, 255), (px + 8, py + 35), (px + 28, py + 38), 1)
+
+    # === ACOUSTIC GUITAR WITH REFLECTION ===
+    guitar_x, guitar_y = 240, floor_y - 65
+    # Guitar body
+    pygame.draw.ellipse(surface, (180, 120, 60), (guitar_x, guitar_y, 25, 40))
+    pygame.draw.ellipse(surface, (200, 140, 80), (guitar_x + 2, guitar_y + 2, 21, 36))
+    # Sound hole
+    pygame.draw.circle(surface, (40, 30, 20), (guitar_x + 12, guitar_y + 20), 6)
+    pygame.draw.circle(surface, (60, 50, 40), (guitar_x + 12, guitar_y + 20), 5)
+    # Neck
+    pygame.draw.rect(surface, (140, 100, 50), (guitar_x + 10, guitar_y - 30, 6, 32))
+    # Strings
+    for i in range(6):
+        string_x = guitar_x + 11 + i
+        pygame.draw.line(surface, (200, 200, 180), (string_x, guitar_y - 25), (string_x, guitar_y + 35), 1)
+    # Reflection on floor
+    pygame.draw.ellipse(surface, (80, 60, 30), (guitar_x + 5, floor_y - 8, 15, 6))
 
     # === GUITAR RACK ===
     rack_x = 10
     pygame.draw.rect(surface, (60, 50, 40), (rack_x, floor_y - 90, 35, 90))
     pygame.draw.rect(surface, (50, 40, 30), (rack_x + 3, floor_y - 87, 29, 84))
 
-    # Guitars
-    guitar_colors = [(180, 50, 50), (50, 50, 50), (200, 150, 80)]
-    for i, gc in enumerate(guitar_colors):
+    # Guitars (MORE!)
+    guitar_colors = [(180, 50, 50), (50, 50, 50), (200, 150, 80), (100, 100, 200)]
+    for i, gc in enumerate(guitar_colors[:3]):
         gy = floor_y - 80 + i * 25
         # Neck
         pygame.draw.rect(surface, (80, 60, 40), (rack_x + 8, gy, 20, 4))
         # Body
         pygame.draw.ellipse(surface, gc, (rack_x + 5, gy + 2, 12, 18))
         pygame.draw.ellipse(surface, gc, (rack_x + 12, gy + 2, 14, 20))
+        # Reflection/shine
+        pygame.draw.ellipse(surface, tuple(min(255, c + 40) for c in gc), (rack_x + 14, gy + 6, 6, 8))
+
+    # === MIRROR WITH MAKEUP LIGHTS ===
+    mirror_x, mirror_y = 155, 35
+    pygame.draw.rect(surface, (70, 60, 50), (mirror_x, mirror_y, 35, 40))
+    pygame.draw.rect(surface, (200, 190, 180), (mirror_x + 3, mirror_y + 3, 29, 34))
+    # Reflection
+    pygame.draw.rect(surface, (180, 170, 160), (mirror_x + 5, mirror_y + 5, 12, 15))
+    # Makeup lights around mirror
+    for i in range(4):
+        light_pos = [(mirror_x + 2, mirror_y + 8 + i * 8), (mirror_x + 30, mirror_y + 8 + i * 8)]
+        for lx, ly in light_pos:
+            pygame.draw.circle(surface, (255, 240, 200), (lx, ly), 2)
+            pygame.draw.circle(surface, (255, 240, 180), (lx, ly), 3)
+
+    # === VINTAGE REFRIGERATOR HUMMING ===
+    fridge_x, fridge_y = 270, floor_y - 70
+    pygame.draw.rect(surface, (220, 220, 230), (fridge_x, fridge_y, 30, 70))
+    pygame.draw.rect(surface, (200, 200, 210), (fridge_x + 2, fridge_y + 2, 26, 66))
+    # Fridge handle
+    pygame.draw.rect(surface, (180, 180, 190), (fridge_x + 25, fridge_y + 30, 3, 15))
+    # Freezer compartment
+    pygame.draw.line(surface, (180, 180, 190), (fridge_x + 2, fridge_y + 25), (fridge_x + 28, fridge_y + 25), 1)
+    # Fridge magnets
+    magnet_colors = [(255, 100, 100), (100, 255, 100), (100, 100, 255)]
+    for i, mcolor in enumerate(magnet_colors):
+        pygame.draw.rect(surface, mcolor, (fridge_x + 8 + i * 6, fridge_y + 10, 4, 4))
+
+    # === WILTING FLOWERS FROM FANS ===
+    flower_x, flower_y = 115, floor_y - 60
+    # Vase
+    pygame.draw.rect(surface, (180, 160, 140), (flower_x, flower_y + 35, 12, 15))
+    pygame.draw.rect(surface, (200, 180, 160), (flower_x + 1, flower_y + 36, 10, 12))
+    # Wilting flowers
+    flower_colors = [(200, 100, 150), (255, 200, 100), (150, 100, 200)]
+    for i, fcolor in enumerate(flower_colors):
+        stem_x = flower_x + 4 + i * 3
+        # Drooping stem
+        pygame.draw.line(surface, (80, 120, 60), (stem_x, flower_y + 35), (stem_x - 2, flower_y + 15), 2)
+        # Wilted flower head
+        pygame.draw.circle(surface, fcolor, (stem_x - 2, flower_y + 15), 3)
+        pygame.draw.circle(surface, tuple(c - 40 for c in fcolor), (stem_x - 2, flower_y + 15), 2)
 
     # === RECORD CRATE ===
     crate_x = 180
@@ -683,6 +1145,8 @@ def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.S
     for i in range(6):
         r_color = random.choice([(30, 30, 30), (40, 35, 35), (35, 35, 40)])
         pygame.draw.rect(surface, r_color, (crate_x + 5 + i * 7, floor_y - 26, 5, 22))
+        # Album spine detail
+        pygame.draw.line(surface, (200, 200, 220), (crate_x + 6 + i * 7, floor_y - 24), (crate_x + 6 + i * 7, floor_y - 20), 1)
 
     # === DOOR TO BACKSTAGE ===
     door_x = w - 35
@@ -691,8 +1155,14 @@ def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.S
     # Door handle
     pygame.draw.circle(surface, (150, 130, 100), (door_x + 22, floor_y - 40), 3)
 
-    # === LAMP ===
+    # === LAMP WITH WARM GLOW HALO ===
     lamp_x = 130
+    # ENHANCED WARM GLOW HALO
+    for i in range(6):
+        glow_size = 18 + i * 6
+        glow_intensity = 255 - i * 35
+        pygame.draw.circle(surface, (glow_intensity, int(glow_intensity * 0.94), int(glow_intensity * 0.78)),
+                         (lamp_x + 7, floor_y - 67), glow_size)
     # Lamp base
     pygame.draw.rect(surface, (60, 50, 40), (lamp_x, floor_y - 15, 15, 15))
     # Lamp pole
@@ -704,17 +1174,27 @@ def create_green_room_background(size: Tuple[int, int] = (320, 200)) -> pygame.S
         (lamp_x + 15, floor_y - 75),
         (lamp_x, floor_y - 75),
     ])
-    # Light glow
-    for i in range(3):
-        pygame.draw.circle(surface, (255, 240, 200), (lamp_x + 7, floor_y - 55), 10 + i * 5)
+    # Inner shade glow
+    pygame.draw.polygon(surface, (255, 240, 200), [
+        (lamp_x - 2, floor_y - 62),
+        (lamp_x + 17, floor_y - 62),
+        (lamp_x + 14, floor_y - 73),
+        (lamp_x + 1, floor_y - 73),
+    ])
 
     # === CABLES AND CLUTTER ===
     cable_points = [(50, h - 20), (90, h - 25), (130, h - 18)]
     pygame.draw.lines(surface, (30, 35, 30), False, cable_points, 2)
 
-    # Magazines on floor
-    pygame.draw.rect(surface, (200, 180, 160), (95, floor_y - 5, 12, 8))
-    pygame.draw.rect(surface, (180, 160, 200), (100, floor_y - 3, 12, 8))
+    # Magazines on floor (MORE!)
+    magazines = [
+        (95, floor_y - 5, 12, 8, (200, 180, 160)),
+        (100, floor_y - 3, 12, 8, (180, 160, 200)),
+        (92, floor_y - 8, 14, 9, (255, 200, 150)),
+    ]
+    for mx, my, mw, mh, mcolor in magazines:
+        pygame.draw.rect(surface, mcolor, (mx, my, mw, mh))
+        pygame.draw.rect(surface, tuple(c - 40 for c in mcolor), (mx + 1, my + 1, mw - 2, 2))
 
     return surface
 

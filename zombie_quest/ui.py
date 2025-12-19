@@ -250,8 +250,8 @@ class VerbBar:
                 self.hovered_verb = verb
                 break
 
-    def draw(self, surface: pygame.Surface, hero_health: int = 3) -> None:
-        """Draw the verb bar."""
+    def draw(self, surface: pygame.Surface, hero_health: int = 3, infection_level: float = 0.0) -> None:
+        """Draw the verb bar with health and infection displays."""
         # Gradient background
         gradient = pygame.Surface(self.rect.size, pygame.SRCALPHA)
         for y in range(self.rect.height):
@@ -300,6 +300,60 @@ class VerbBar:
 
         # Health display
         self.health_display.draw(surface, hero_health)
+
+        # Infection meter (below health hearts)
+        self._draw_infection_meter(surface, infection_level)
+
+    def _draw_infection_meter(self, surface: pygame.Surface, infection_level: float) -> None:
+        """Draw infection meter bar.
+
+        Args:
+            surface: Surface to draw on
+            infection_level: Infection percentage (0-100)
+        """
+        if infection_level <= 0:
+            return
+
+        meter_width = 60
+        meter_height = 6
+        meter_x = self.rect.width // 2 - meter_width // 2
+        meter_y = (self.rect.height - 14) // 2 + 16  # Below hearts
+
+        # Background
+        bg_rect = pygame.Rect(meter_x, meter_y, meter_width, meter_height)
+        pygame.draw.rect(surface, (40, 20, 50), bg_rect)
+        pygame.draw.rect(surface, (100, 60, 120), bg_rect, 1)
+
+        # Infection fill
+        fill_width = int(meter_width * (infection_level / 100.0))
+        if fill_width > 0:
+            # Color changes based on infection level
+            if infection_level >= 80:
+                color = COLORS.INFECTION_CRITICAL
+            elif infection_level >= 60:
+                color = COLORS.INFECTION_HIGH
+            elif infection_level >= 30:
+                color = COLORS.INFECTION_MED
+            else:
+                color = COLORS.INFECTION_LOW
+
+            fill_rect = pygame.Rect(meter_x, meter_y, fill_width, meter_height)
+            pygame.draw.rect(surface, color, fill_rect)
+
+            # Pulsing glow at high infection
+            if infection_level >= 70:
+                import math
+                pulse = (math.sin(pygame.time.get_ticks() / 200.0) + 1) / 2
+                glow_alpha = int(100 * pulse)
+                glow_surf = pygame.Surface((fill_width, meter_height), pygame.SRCALPHA)
+                glow_surf.fill((*color, glow_alpha))
+                surface.blit(glow_surf, (meter_x, meter_y))
+
+        # Label
+        if infection_level > 5:
+            label = self.font.render("INFECTED", True, (180, 140, 200))
+            label_x = meter_x + meter_width + 4
+            surface.blit(label, (label_x, meter_y - 2))
 
     def handle_click(self, position: Tuple[int, int]) -> Optional[str]:
         """Handle mouse click on verb bar."""

@@ -804,3 +804,823 @@ def create_verb_icon(verb: str, size: Tuple[int, int] = (28, 28)) -> pygame.Surf
     pygame.draw.rect(surface, (40, 40, 50), (2, 2, w - 4, h - 4), 2, border_radius=4)
 
     return surface
+
+
+# ============================================================================
+# NEW CORE CHARACTER SPRITES (24x48 pixels)
+# ============================================================================
+
+
+class MayaPalette:
+    """Color palette for Maya - The Lost Bandmate (half-transformed)."""
+    # Human side
+    SKIN_HUMAN = (245, 210, 185)
+    SKIN_HUMAN_SHADOW = (210, 175, 150)
+
+    # Zombie side
+    SKIN_ZOMBIE = (140, 180, 140)
+    SKIN_ZOMBIE_SHADOW = (100, 140, 100)
+
+    # Infected veins
+    VEIN_COLOR = (120, 255, 120)
+    VEIN_GLOW = (180, 255, 180)
+
+    # Eyes
+    EYE_HUMAN = (80, 60, 50)
+    EYE_ZOMBIE_GLOW = (180, 255, 160)
+
+    # Hair - wild rocker hair
+    HAIR = (40, 10, 60)
+    HAIR_HIGHLIGHT = (80, 30, 100)
+
+    # Torn band t-shirt
+    SHIRT = (140, 30, 160)
+    SHIRT_SHADOW = (100, 20, 120)
+    SHIRT_TEAR = (80, 15, 90)
+
+    # Leather pants
+    PANTS = (30, 25, 35)
+    PANTS_HIGHLIGHT = (50, 45, 55)
+
+    # Bass guitar
+    BASS_BODY = (150, 80, 40)
+    BASS_NECK = (90, 50, 25)
+    BASS_STRINGS = (200, 200, 210)
+
+
+def create_maya_sprite(frame: int = 0) -> pygame.Surface:
+    """Create Maya - The Lost Bandmate sprite (24x48 pixels).
+
+    Half-transformed zombie bassist with visible transformation.
+
+    Frames:
+    0 - Idle (breathing)
+    1 - Walking
+    2 - Playing bass
+    3 - Transforming (veins glowing)
+    """
+    size = (24, 48)
+    surface = pygame.Surface(size, pygame.SRCALPHA)
+    w, h = size
+    p = MayaPalette
+
+    def draw_pixel(x: int, y: int, color: Color) -> None:
+        if 0 <= x < w and 0 <= y < h:
+            surface.set_at((x, y), color)
+
+    def draw_rect(x: int, y: int, rw: int, rh: int, color: Color) -> None:
+        for dy in range(rh):
+            for dx in range(rw):
+                draw_pixel(x + dx, y + dy, color)
+
+    # Animation variables
+    bob = [0, -1, 0, -1][frame % 4]
+    breathe = [0, 1, 0, -1][frame % 4]
+    vein_pulse = [0, 1, 2, 1][frame % 4]
+
+    # BOOTS
+    draw_rect(6, h - 4, 4, 4, (20, 20, 25))
+    draw_rect(14, h - 4, 4, 4, (20, 20, 25))
+
+    # LEATHER PANTS
+    draw_rect(6, h - 14, 4, 10, p.PANTS)
+    draw_rect(14, h - 14, 4, 10, p.PANTS)
+    draw_pixel(7, h - 12, p.PANTS_HIGHLIGHT)
+    draw_pixel(15, h - 12, p.PANTS_HIGHLIGHT)
+
+    # BASS GUITAR (strapped across back)
+    if frame == 2:  # Playing bass
+        # Bass in playing position
+        draw_rect(4, h - 22, 3, 12, p.BASS_NECK)
+        draw_rect(3, h - 16, 5, 8, p.BASS_BODY)
+        draw_pixel(4, h - 14, p.BASS_STRINGS)
+        draw_pixel(5, h - 13, p.BASS_STRINGS)
+    else:
+        # Bass on back
+        draw_rect(16, h - 26, 2, 10, p.BASS_NECK)
+        draw_rect(15, h - 20, 4, 6, p.BASS_BODY)
+
+    # TORSO - torn band t-shirt
+    torso_y = h - 26 + bob
+    draw_rect(7, torso_y, 10, 12, p.SHIRT)
+    # Tears in shirt
+    draw_pixel(9, torso_y + 3, p.SHIRT_TEAR)
+    draw_pixel(10, torso_y + 5, p.SHIRT_TEAR)
+    draw_pixel(14, torso_y + 4, p.SHIRT_TEAR)
+    # Shadow
+    draw_rect(8, torso_y + 8, 8, 3, p.SHIRT_SHADOW)
+
+    # ARMS
+    arm_y = torso_y + 2
+    # Left arm (zombie side - infected)
+    draw_rect(4, arm_y, 3, 10, p.SKIN_ZOMBIE)
+    draw_rect(4, arm_y + 8, 3, 3, p.SKIN_ZOMBIE_SHADOW)
+    # Infected veins on zombie arm
+    if vein_pulse > 0:
+        draw_pixel(5, arm_y + 2, p.VEIN_GLOW if vein_pulse == 2 else p.VEIN_COLOR)
+        draw_pixel(5, arm_y + 4, p.VEIN_GLOW if vein_pulse == 2 else p.VEIN_COLOR)
+        draw_pixel(4, arm_y + 6, p.VEIN_COLOR)
+
+    # Right arm (human side)
+    draw_rect(17, arm_y, 3, 10, p.SKIN_HUMAN)
+    draw_rect(17, arm_y + 8, 3, 3, p.SKIN_HUMAN_SHADOW)
+
+    # HEAD
+    head_y = h - 34 + bob + breathe
+    # Split down the middle - human left, zombie right
+    # Left side (human)
+    draw_rect(8, head_y, 4, 8, p.SKIN_HUMAN)
+    draw_pixel(8, head_y + 6, p.SKIN_HUMAN_SHADOW)
+
+    # Right side (zombie)
+    draw_rect(12, head_y, 4, 8, p.SKIN_ZOMBIE)
+    draw_pixel(15, head_y + 6, p.SKIN_ZOMBIE_SHADOW)
+
+    # EYES
+    # Human eye (left)
+    draw_pixel(9, head_y + 3, p.EYE_HUMAN)
+    draw_pixel(9, head_y + 2, (255, 255, 255))  # Highlight
+
+    # Zombie eye (right) - glowing
+    draw_rect(13, head_y + 3, 2, 2, (20, 25, 20))
+    draw_pixel(13, head_y + 3, p.EYE_ZOMBIE_GLOW)
+    if vein_pulse == 2:  # Extra glow when transforming
+        draw_pixel(12, head_y + 3, p.VEIN_GLOW)
+        draw_pixel(15, head_y + 3, p.VEIN_GLOW)
+
+    # MOUTH
+    draw_rect(10, head_y + 6, 4, 1, (100, 60, 70))
+
+    # WILD ROCKER HAIR
+    hair_y = head_y - 6
+    # Big volume on top
+    draw_rect(6, hair_y, 12, 8, p.HAIR)
+    # Side spikes
+    draw_rect(5, hair_y + 2, 2, 6, p.HAIR)
+    draw_rect(17, hair_y + 2, 2, 6, p.HAIR)
+    # Top spikes
+    draw_rect(8, hair_y - 2, 3, 3, p.HAIR)
+    draw_rect(13, hair_y - 1, 3, 2, p.HAIR)
+    # Highlights
+    draw_pixel(9, hair_y + 1, p.HAIR_HIGHLIGHT)
+    draw_pixel(14, hair_y + 2, p.HAIR_HIGHLIGHT)
+
+    # TRANSFORMATION EFFECT (frame 3)
+    if frame == 3:
+        # Glowing veins across body
+        for i in range(0, 8, 2):
+            draw_pixel(10 + i % 4, torso_y + i, p.VEIN_GLOW)
+            draw_pixel(11 + i % 3, torso_y + i + 1, p.VEIN_COLOR)
+
+    return surface
+
+
+class JohnnyChrommePalette:
+    """Color palette for Johnny Chrome - The Friendly Zombie."""
+    # Vintage 1950s suit
+    SUIT = (140, 150, 160)
+    SUIT_SHADOW = (100, 110, 120)
+    SUIT_HIGHLIGHT = (180, 190, 200)
+
+    # Shirt and tie
+    SHIRT = (220, 220, 230)
+    TIE = (60, 70, 80)
+
+    # Zombie skin (but well-maintained)
+    SKIN = (130, 160, 135)
+    SKIN_SHADOW = (100, 130, 105)
+
+    # Slicked hair (patchy)
+    HAIR = (50, 55, 60)
+    HAIR_SHINE = (100, 105, 110)
+
+    # Sunglasses
+    SHADES = (20, 20, 25)
+    SHADES_GLINT = (180, 180, 200)
+
+    # Shoes
+    SHOES = (30, 30, 35)
+    SHOES_SHINE = (80, 80, 90)
+
+    # Cigarette
+    CIGARETTE = (240, 240, 245)
+    CIGARETTE_TIP = (200, 100, 50)
+
+
+def create_johnny_chrome_sprite(frame: int = 0) -> pygame.Surface:
+    """Create Johnny Chrome - The Friendly Zombie sprite (24x48 pixels).
+
+    Lucid zombie in vintage 1950s suit with dignity despite decomposition.
+
+    Frames:
+    0 - Standing (dignified)
+    1 - Gesturing
+    2 - Contemplating
+    3 - Grooving
+    """
+    size = (24, 48)
+    surface = pygame.Surface(size, pygame.SRCALPHA)
+    w, h = size
+    p = JohnnyChrommePalette
+
+    def draw_pixel(x: int, y: int, color: Color) -> None:
+        if 0 <= x < w and 0 <= y < h:
+            surface.set_at((x, y), color)
+
+    def draw_rect(x: int, y: int, rw: int, rh: int, color: Color) -> None:
+        for dy in range(rh):
+            for dx in range(rw):
+                draw_pixel(x + dx, y + dy, color)
+
+    # Animation variables
+    sway = [0, -1, 0, 1][frame % 4] if frame == 3 else 0
+    gesture_arm = [0, -3, -5, -3][frame % 4] if frame == 1 else 0
+
+    # POLISHED SHOES
+    draw_rect(7, h - 4, 4, 4, p.SHOES)
+    draw_rect(13, h - 4, 4, 4, p.SHOES)
+    draw_pixel(8, h - 3, p.SHOES_SHINE)
+    draw_pixel(14, h - 3, p.SHOES_SHINE)
+
+    # PANTS (vintage suit)
+    draw_rect(7, h - 14, 4, 10, p.SUIT)
+    draw_rect(13, h - 14, 4, 10, p.SUIT)
+    # Crease
+    draw_pixel(9, h - 12, p.SUIT_HIGHLIGHT)
+    draw_pixel(15, h - 12, p.SUIT_HIGHLIGHT)
+    draw_pixel(7, h - 10, p.SUIT_SHADOW)
+    draw_pixel(13, h - 10, p.SUIT_SHADOW)
+
+    # SUIT JACKET
+    jacket_y = h - 26 + sway
+    draw_rect(6, jacket_y, 12, 12, p.SUIT)
+    # Lapels
+    draw_rect(7, jacket_y, 2, 6, p.SUIT_SHADOW)
+    draw_rect(15, jacket_y, 2, 6, p.SUIT_SHADOW)
+    # Shirt and tie visible
+    draw_rect(9, jacket_y + 1, 6, 8, p.SHIRT)
+    draw_rect(11, jacket_y + 1, 2, 8, p.TIE)
+    # Jacket highlights
+    draw_pixel(6, jacket_y + 1, p.SUIT_HIGHLIGHT)
+    draw_pixel(17, jacket_y + 1, p.SUIT_HIGHLIGHT)
+
+    # ARMS
+    arm_y = jacket_y + 3
+    # Left arm (gesturing in frame 1)
+    left_arm_y = arm_y + gesture_arm
+    draw_rect(3, left_arm_y, 3, 8, p.SUIT)
+    draw_rect(3, left_arm_y + 6, 3, 3, p.SKIN)
+
+    # Right arm
+    draw_rect(18, arm_y, 3, 8, p.SUIT)
+    draw_rect(18, arm_y + 6, 3, 3, p.SKIN)
+
+    # HEAD
+    head_y = h - 36 + sway
+    draw_rect(8, head_y, 8, 9, p.SKIN)
+    # Sunken cheeks (zombie trait)
+    draw_pixel(8, head_y + 5, p.SKIN_SHADOW)
+    draw_pixel(15, head_y + 5, p.SKIN_SHADOW)
+
+    # SUNGLASSES (hiding hollow eyes)
+    draw_rect(8, head_y + 3, 8, 3, p.SHADES)
+    draw_pixel(9, head_y + 3, p.SHADES_GLINT)
+    draw_pixel(14, head_y + 3, p.SHADES_GLINT)
+
+    # MOUTH (dignified, closed)
+    draw_rect(10, head_y + 7, 4, 1, (80, 90, 85))
+
+    # CIGARETTE (unlit - he's undead, doesn't need to inhale)
+    draw_rect(7, head_y + 7, 3, 1, p.CIGARETTE)
+    draw_pixel(6, head_y + 7, p.CIGARETTE_TIP)
+
+    # SLICKED BACK HAIR (now patchy)
+    hair_y = head_y - 4
+    draw_rect(7, hair_y, 10, 6, p.HAIR)
+    # Patches missing
+    draw_pixel(9, hair_y + 2, p.SKIN)
+    draw_pixel(13, hair_y + 3, p.SKIN)
+    # Shine (still tries to maintain it)
+    draw_pixel(10, hair_y + 1, p.HAIR_SHINE)
+    draw_pixel(14, hair_y + 1, p.HAIR_SHINE)
+
+    # CONTEMPLATING GESTURE (frame 2)
+    if frame == 2:
+        # Hand to chin
+        draw_rect(16, head_y + 6, 3, 2, p.SKIN)
+
+    return surface
+
+
+class PromoterPalette:
+    """Color palette for The Promoter - The Villain."""
+    # Power suit (80s excess)
+    SUIT = (140, 20, 30)
+    SUIT_SHADOW = (100, 10, 20)
+    SUIT_HIGHLIGHT = (180, 40, 50)
+
+    # Shoulder pads (MASSIVE)
+    SHOULDER_PAD = (160, 30, 40)
+
+    # Shirt
+    SHIRT = (240, 230, 235)
+
+    # Tie with occult symbols
+    TIE = (20, 20, 25)
+    OCCULT_SYMBOL = (200, 50, 60)
+
+    # Skin (sinister)
+    SKIN = (240, 220, 200)
+    SKIN_SHADOW = (200, 180, 160)
+
+    # Slicked hair
+    HAIR = (30, 25, 30)
+    HAIR_PRODUCT = (60, 55, 60)
+
+    # Gold chains
+    GOLD = (255, 215, 0)
+    GOLD_SHADOW = (200, 170, 0)
+
+    # Pants
+    PANTS = (25, 20, 30)
+    PANTS_HIGHLIGHT = (45, 40, 50)
+
+    # Shoes (expensive)
+    SHOES = (20, 15, 25)
+    SHOES_SHINE = (100, 90, 110)
+
+    # Contracts
+    PAPER = (250, 245, 240)
+    INK = (30, 30, 40)
+
+
+def create_promoter_sprite(frame: int = 0) -> pygame.Surface:
+    """Create The Promoter - The Villain sprite (24x48 pixels).
+
+    Sleazy 80s music industry executive with hidden occult power.
+
+    Frames:
+    0 - Intimidating stance
+    1 - Scheming
+    2 - Ritual casting
+    3 - Transforming (revealing true nature)
+    """
+    size = (24, 48)
+    surface = pygame.Surface(size, pygame.SRCALPHA)
+    w, h = size
+    p = PromoterPalette
+
+    def draw_pixel(x: int, y: int, color: Color) -> None:
+        if 0 <= x < w and 0 <= y < h:
+            surface.set_at((x, y), color)
+
+    def draw_rect(x: int, y: int, rw: int, rh: int, color: Color) -> None:
+        for dy in range(rh):
+            for dx in range(rw):
+                draw_pixel(x + dx, y + dy, color)
+
+    # Animation variables
+    ritual_glow = [0, 1, 2, 3][frame % 4] if frame == 2 else 0
+    transform_intensity = [0, 0, 0, 3][frame % 4]
+
+    # EXPENSIVE SHOES
+    draw_rect(7, h - 4, 4, 4, p.SHOES)
+    draw_rect(13, h - 4, 4, 4, p.SHOES)
+    draw_pixel(8, h - 3, p.SHOES_SHINE)
+    draw_pixel(14, h - 3, p.SHOES_SHINE)
+
+    # PANTS (black, expensive)
+    draw_rect(7, h - 14, 4, 10, p.PANTS)
+    draw_rect(13, h - 14, 4, 10, p.PANTS)
+    draw_pixel(9, h - 11, p.PANTS_HIGHLIGHT)
+    draw_pixel(15, h - 11, p.PANTS_HIGHLIGHT)
+
+    # POWER SUIT JACKET
+    jacket_y = h - 28
+    draw_rect(5, jacket_y, 14, 14, p.SUIT)
+
+    # MASSIVE 80s SHOULDER PADS
+    draw_rect(3, jacket_y, 4, 5, p.SHOULDER_PAD)
+    draw_rect(17, jacket_y, 4, 5, p.SHOULDER_PAD)
+    draw_pixel(3, jacket_y, p.SUIT_HIGHLIGHT)
+    draw_pixel(20, jacket_y, p.SUIT_HIGHLIGHT)
+
+    # Shirt and tie visible
+    draw_rect(9, jacket_y + 2, 6, 10, p.SHIRT)
+    draw_rect(11, jacket_y + 2, 2, 10, p.TIE)
+
+    # OCCULT SYMBOLS on tie
+    draw_pixel(11, jacket_y + 5, p.OCCULT_SYMBOL)
+    draw_pixel(12, jacket_y + 7, p.OCCULT_SYMBOL)
+    if ritual_glow > 1:
+        # Symbols glow during ritual
+        draw_pixel(11, jacket_y + 5, (255, 100, 120))
+        draw_pixel(12, jacket_y + 7, (255, 100, 120))
+
+    # GOLD CHAINS (multiple)
+    draw_rect(9, jacket_y + 1, 6, 1, p.GOLD)
+    draw_pixel(10, jacket_y + 2, p.GOLD)
+    draw_pixel(13, jacket_y + 2, p.GOLD_SHADOW)
+
+    # ARMS
+    arm_y = jacket_y + 4
+    draw_rect(2, arm_y, 3, 10, p.SUIT)
+    draw_rect(19, arm_y, 3, 10, p.SUIT)
+
+    # HANDS
+    # Left hand holding contracts (frame 0, 1)
+    if frame < 2:
+        draw_rect(2, arm_y + 8, 3, 4, p.SKIN)
+        # Contracts
+        draw_rect(0, arm_y + 6, 4, 6, p.PAPER)
+        draw_pixel(1, arm_y + 7, p.INK)
+        draw_pixel(2, arm_y + 8, p.INK)
+    elif frame == 2:
+        # Hands raised for ritual
+        draw_rect(1, arm_y - 4, 3, 4, p.SKIN)
+        draw_rect(20, arm_y - 4, 3, 4, p.SKIN)
+        # Ritual energy
+        draw_pixel(2, arm_y - 5, (255, 50, 80))
+        draw_pixel(21, arm_y - 5, (255, 50, 80))
+    else:
+        draw_rect(2, arm_y + 8, 3, 4, p.SKIN)
+
+    # Right hand
+    draw_rect(19, arm_y + 8, 3, 4, p.SKIN)
+
+    # HEAD
+    head_y = h - 38
+    draw_rect(8, head_y, 8, 10, p.SKIN)
+    draw_pixel(8, head_y + 7, p.SKIN_SHADOW)
+    draw_pixel(15, head_y + 7, p.SKIN_SHADOW)
+
+    # SINISTER SMILE
+    draw_rect(9, head_y + 7, 6, 2, (120, 80, 90))
+    draw_pixel(10, head_y + 8, (255, 255, 255))  # Tooth glint
+
+    # EYES (scheming)
+    if frame == 1:
+        # Narrowed eyes (scheming)
+        draw_rect(9, head_y + 4, 2, 1, (40, 30, 35))
+        draw_rect(13, head_y + 4, 2, 1, (40, 30, 35))
+    elif transform_intensity > 0:
+        # Eyes glow red when transforming
+        draw_rect(9, head_y + 4, 2, 2, (255, 50, 50))
+        draw_rect(13, head_y + 4, 2, 2, (255, 50, 50))
+    else:
+        draw_pixel(9, head_y + 4, (40, 30, 35))
+        draw_pixel(13, head_y + 4, (40, 30, 35))
+
+    # SLICKED HAIR
+    hair_y = head_y - 4
+    draw_rect(7, hair_y, 10, 6, p.HAIR)
+    # Product shine
+    draw_rect(9, hair_y, 6, 2, p.HAIR_PRODUCT)
+
+    # TRANSFORMATION EFFECT (frame 3)
+    if transform_intensity > 0:
+        # Dark aura
+        for i in range(4):
+            draw_pixel(6 - i, jacket_y + i * 3, (80, 20, 30))
+            draw_pixel(17 + i, jacket_y + i * 3, (80, 20, 30))
+
+    return surface
+
+
+class ClerkPalette:
+    """Color palette for Record Store Clerk."""
+    # Flannel shirt (grunge aesthetic)
+    FLANNEL_BASE = (140, 60, 50)
+    FLANNEL_CHECK = (100, 40, 35)
+    FLANNEL_LIGHT = (180, 90, 75)
+
+    # Band tee underneath
+    BAND_TEE = (30, 30, 35)
+    BAND_LOGO = (200, 180, 100)
+
+    # Jeans
+    JEANS = (60, 70, 90)
+    JEANS_SHADOW = (40, 50, 70)
+    JEANS_HIGHLIGHT = (80, 90, 110)
+
+    # Skin
+    SKIN = (240, 210, 190)
+    SKIN_SHADOW = (200, 170, 150)
+
+    # Hair (messy)
+    HAIR = (70, 50, 40)
+    HAIR_SHADOW = (50, 35, 25)
+
+    # Thick-rimmed glasses
+    GLASSES_FRAME = (30, 30, 35)
+    GLASSES_LENS = (180, 200, 220, 100)
+    GLASSES_GLINT = (255, 255, 255)
+
+    # Sneakers
+    SNEAKERS = (200, 200, 210)
+    SNEAKERS_SOLE = (240, 240, 250)
+
+    # Vinyl record
+    VINYL = (20, 20, 25)
+    VINYL_LABEL = (180, 50, 80)
+
+    # Coffee cup
+    COFFEE_CUP = (240, 230, 220)
+    COFFEE = (80, 60, 50)
+
+
+def create_clerk_sprite(frame: int = 0) -> pygame.Surface:
+    """Create Record Store Clerk sprite (24x48 pixels).
+
+    Knowledgeable music nerd with impeccable taste.
+
+    Frames:
+    0 - Flipping through records
+    1 - Nodding to music
+    2 - Talking (recommending)
+    3 - Pointing (showing you something)
+    """
+    size = (24, 48)
+    surface = pygame.Surface(size, pygame.SRCALPHA)
+    w, h = size
+    p = ClerkPalette
+
+    def draw_pixel(x: int, y: int, color: Color) -> None:
+        if 0 <= x < w and 0 <= y < h:
+            surface.set_at((x, y), color)
+
+    def draw_rect(x: int, y: int, rw: int, rh: int, color: Color) -> None:
+        for dy in range(rh):
+            for dx in range(rw):
+                draw_pixel(x + dx, y + dy, color)
+
+    # Animation variables
+    nod = [0, -2, 0, 0][frame % 4] if frame == 1 else 0
+
+    # SNEAKERS
+    draw_rect(7, h - 4, 4, 4, p.SNEAKERS)
+    draw_rect(13, h - 4, 4, 4, p.SNEAKERS)
+    draw_rect(7, h - 2, 4, 2, p.SNEAKERS_SOLE)
+    draw_rect(13, h - 2, 4, 2, p.SNEAKERS_SOLE)
+
+    # JEANS
+    draw_rect(7, h - 14, 4, 10, p.JEANS)
+    draw_rect(13, h - 14, 4, 10, p.JEANS)
+    draw_pixel(7, h - 12, p.JEANS_SHADOW)
+    draw_pixel(9, h - 10, p.JEANS_HIGHLIGHT)
+    draw_pixel(13, h - 12, p.JEANS_SHADOW)
+    draw_pixel(15, h - 10, p.JEANS_HIGHLIGHT)
+
+    # FLANNEL SHIRT (slightly hunched crate-digger posture)
+    shirt_y = h - 26
+    draw_rect(6, shirt_y, 12, 12, p.FLANNEL_BASE)
+    # Plaid pattern
+    for i in range(0, 12, 3):
+        draw_rect(6, shirt_y + i, 12, 1, p.FLANNEL_CHECK)
+    for i in range(0, 12, 4):
+        draw_rect(6 + i, shirt_y, 1, 12, p.FLANNEL_CHECK)
+    # Lighter stripes
+    draw_rect(6, shirt_y + 5, 12, 1, p.FLANNEL_LIGHT)
+
+    # Band tee visible at collar
+    draw_rect(10, shirt_y, 4, 3, p.BAND_TEE)
+    draw_pixel(11, shirt_y + 1, p.BAND_LOGO)
+    draw_pixel(12, shirt_y + 1, p.BAND_LOGO)
+
+    # ARMS
+    arm_y = shirt_y + 3
+    # Left arm - holding vinyl record (frame 0) or pointing (frame 3)
+    if frame == 3:
+        # Pointing
+        draw_rect(2, arm_y - 2, 3, 8, p.FLANNEL_BASE)
+        draw_rect(1, arm_y + 4, 4, 2, p.SKIN)
+        draw_pixel(0, arm_y + 4, p.SKIN)  # Pointing finger
+    else:
+        draw_rect(3, arm_y, 3, 8, p.FLANNEL_BASE)
+        draw_rect(3, arm_y + 6, 3, 4, p.SKIN)
+        if frame == 0:
+            # Vinyl record in hand
+            draw_rect(1, arm_y + 4, 5, 5, p.VINYL)
+            draw_rect(2, arm_y + 5, 3, 3, p.VINYL_LABEL)
+
+    # Right arm
+    draw_rect(18, arm_y, 3, 8, p.FLANNEL_BASE)
+    draw_rect(18, arm_y + 6, 3, 4, p.SKIN)
+
+    # COFFEE CUP (always nearby)
+    draw_rect(20, shirt_y + 10, 3, 4, p.COFFEE_CUP)
+    draw_rect(20, shirt_y + 11, 3, 3, p.COFFEE)
+
+    # HEAD
+    head_y = h - 36 + nod
+    draw_rect(8, head_y, 8, 9, p.SKIN)
+    draw_pixel(8, head_y + 6, p.SKIN_SHADOW)
+    draw_pixel(15, head_y + 6, p.SKIN_SHADOW)
+
+    # THICK-RIMMED GLASSES
+    draw_rect(8, head_y + 3, 3, 4, p.GLASSES_FRAME)
+    draw_rect(13, head_y + 3, 3, 4, p.GLASSES_FRAME)
+    # Lenses (with transparency)
+    draw_rect(9, head_y + 4, 2, 3, p.GLASSES_LENS)
+    draw_rect(14, head_y + 4, 2, 3, p.GLASSES_LENS)
+    # Glint
+    draw_pixel(9, head_y + 4, p.GLASSES_GLINT)
+
+    # Bridge of glasses
+    draw_rect(11, head_y + 5, 2, 1, p.GLASSES_FRAME)
+
+    # MOUTH (talking in frame 2)
+    if frame == 2:
+        draw_rect(10, head_y + 7, 4, 2, (120, 90, 80))
+    else:
+        draw_rect(11, head_y + 7, 2, 1, (120, 90, 80))
+
+    # MESSY HAIR
+    hair_y = head_y - 4
+    draw_rect(7, hair_y, 10, 6, p.HAIR)
+    # Messy tufts
+    draw_rect(6, hair_y + 1, 2, 3, p.HAIR)
+    draw_rect(16, hair_y + 2, 2, 3, p.HAIR)
+    draw_rect(10, hair_y - 1, 3, 2, p.HAIR)
+    # Shadow
+    draw_pixel(8, hair_y + 4, p.HAIR_SHADOW)
+    draw_pixel(14, hair_y + 3, p.HAIR_SHADOW)
+
+    return surface
+
+
+class DJRottenPalette:
+    """Color palette for DJ Rotten."""
+    # Leather jacket (punk rock)
+    LEATHER = (30, 25, 35)
+    LEATHER_SHADOW = (20, 15, 25)
+    LEATHER_HIGHLIGHT = (50, 45, 55)
+
+    # Band patches on jacket
+    PATCH_1 = (200, 50, 80)
+    PATCH_2 = (100, 200, 100)
+    PATCH_3 = (220, 180, 50)
+
+    # T-shirt underneath
+    SHIRT = (50, 50, 60)
+
+    # Tight pants
+    PANTS = (40, 40, 50)
+    PANTS_HIGHLIGHT = (60, 60, 70)
+
+    # Skin (zombie but still rocking)
+    SKIN = (140, 170, 145)
+    SKIN_SHADOW = (100, 130, 105)
+
+    # Punk mohawk
+    MOHAWK = (180, 50, 90)
+    MOHAWK_SHADOW = (140, 30, 70)
+    MOHAWK_TIP = (220, 100, 140)
+
+    # Headphones
+    HEADPHONE_BAND = (40, 40, 50)
+    HEADPHONE_CUP = (60, 60, 75)
+    HEADPHONE_FOAM = (80, 80, 95)
+
+    # Microphone
+    MIC_HANDLE = (120, 130, 140)
+    MIC_HEAD = (100, 110, 120)
+    MIC_GRILLE = (140, 150, 160)
+
+    # Boots (combat style)
+    BOOTS = (25, 25, 30)
+    BOOTS_LACES = (200, 200, 210)
+
+
+def create_dj_rotten_sprite(frame: int = 0) -> pygame.Surface:
+    """Create DJ Rotten sprite (24x48 pixels).
+
+    Punk rock radio DJ zombie who won't let death stop the music.
+
+    Frames:
+    0 - Spinning records (hands on turntables)
+    1 - Announcing (mic to mouth)
+    2 - Headbanging
+    3 - Pointing at listener
+    """
+    size = (24, 48)
+    surface = pygame.Surface(size, pygame.SRCALPHA)
+    w, h = size
+    p = DJRottenPalette
+
+    def draw_pixel(x: int, y: int, color: Color) -> None:
+        if 0 <= x < w and 0 <= y < h:
+            surface.set_at((x, y), color)
+
+    def draw_rect(x: int, y: int, rw: int, rh: int, color: Color) -> None:
+        for dy in range(rh):
+            for dx in range(rw):
+                draw_pixel(x + dx, y + dy, color)
+
+    # Animation variables
+    headbang = [0, -3, -1, 0][frame % 4] if frame == 2 else 0
+    mohawk_sway = [-1, 0, 1, 0][frame % 4] if frame == 2 else 0
+
+    # COMBAT BOOTS
+    draw_rect(7, h - 5, 4, 5, p.BOOTS)
+    draw_rect(13, h - 5, 4, 5, p.BOOTS)
+    # Laces
+    draw_pixel(8, h - 4, p.BOOTS_LACES)
+    draw_pixel(9, h - 3, p.BOOTS_LACES)
+    draw_pixel(14, h - 4, p.BOOTS_LACES)
+    draw_pixel(15, h - 3, p.BOOTS_LACES)
+
+    # TIGHT PANTS
+    draw_rect(7, h - 15, 4, 10, p.PANTS)
+    draw_rect(13, h - 15, 4, 10, p.PANTS)
+    draw_pixel(9, h - 13, p.PANTS_HIGHLIGHT)
+    draw_pixel(15, h - 13, p.PANTS_HIGHLIGHT)
+
+    # LEATHER JACKET
+    jacket_y = h - 28
+    draw_rect(5, jacket_y, 14, 13, p.LEATHER)
+    # Highlights
+    draw_pixel(6, jacket_y + 1, p.LEATHER_HIGHLIGHT)
+    draw_pixel(17, jacket_y + 1, p.LEATHER_HIGHLIGHT)
+    # Shadow
+    draw_rect(7, jacket_y + 9, 10, 3, p.LEATHER_SHADOW)
+
+    # BAND PATCHES on jacket
+    draw_rect(6, jacket_y + 3, 3, 3, p.PATCH_1)
+    draw_rect(15, jacket_y + 5, 3, 3, p.PATCH_2)
+    draw_pixel(10, jacket_y + 2, p.PATCH_3)
+    draw_pixel(11, jacket_y + 2, p.PATCH_3)
+
+    # T-shirt visible at collar
+    draw_rect(10, jacket_y, 4, 3, p.SHIRT)
+
+    # ARMS
+    arm_y = jacket_y + 4
+    # Left arm
+    if frame == 0:
+        # Hands on turntables
+        draw_rect(2, arm_y + 2, 3, 8, p.LEATHER)
+        draw_rect(2, arm_y + 8, 3, 3, p.SKIN)
+    elif frame == 1:
+        # Holding microphone
+        draw_rect(3, arm_y - 2, 3, 10, p.LEATHER)
+        draw_rect(3, arm_y + 6, 3, 4, p.SKIN)
+        # Microphone
+        draw_rect(4, arm_y - 4, 2, 4, p.MIC_HANDLE)
+        draw_rect(3, arm_y - 6, 4, 3, p.MIC_HEAD)
+        draw_pixel(4, arm_y - 5, p.MIC_GRILLE)
+        draw_pixel(5, arm_y - 5, p.MIC_GRILLE)
+    elif frame == 3:
+        # Pointing
+        draw_rect(2, arm_y - 1, 3, 8, p.LEATHER)
+        draw_rect(1, arm_y + 5, 4, 3, p.SKIN)
+        draw_pixel(0, arm_y + 5, p.SKIN)  # Pointing finger
+    else:
+        draw_rect(3, arm_y, 3, 9, p.LEATHER)
+        draw_rect(3, arm_y + 7, 3, 3, p.SKIN)
+
+    # Right arm
+    draw_rect(18, arm_y, 3, 9, p.LEATHER)
+    draw_rect(18, arm_y + 7, 3, 3, p.SKIN)
+
+    # HEAD
+    head_y = h - 38 + headbang
+    draw_rect(8, head_y, 8, 9, p.SKIN)
+    draw_pixel(8, head_y + 6, p.SKIN_SHADOW)
+    draw_pixel(15, head_y + 6, p.SKIN_SHADOW)
+
+    # EYES (intense)
+    draw_pixel(9, head_y + 4, (40, 35, 40))
+    draw_pixel(14, head_y + 4, (40, 35, 40))
+
+    # MOUTH (shouting in frame 1)
+    if frame == 1:
+        draw_rect(10, head_y + 6, 4, 3, (80, 70, 75))
+    else:
+        draw_rect(10, head_y + 7, 4, 1, (80, 70, 75))
+
+    # HEADPHONES (one cup on ear, one off)
+    # Headband
+    draw_rect(7, head_y - 2, 10, 2, p.HEADPHONE_BAND)
+    # Left cup (on ear)
+    draw_rect(6, head_y + 1, 3, 5, p.HEADPHONE_CUP)
+    draw_rect(7, head_y + 2, 2, 4, p.HEADPHONE_FOAM)
+    # Right cup (around neck area)
+    draw_rect(17, head_y + 6, 3, 4, p.HEADPHONE_CUP)
+    draw_rect(18, head_y + 7, 2, 3, p.HEADPHONE_FOAM)
+
+    # PUNK MOHAWK (slightly wilted)
+    mohawk_x = 10 + mohawk_sway
+    # Base
+    draw_rect(mohawk_x, head_y - 8, 4, 10, p.MOHAWK)
+    # Spikes
+    draw_rect(mohawk_x + 1, head_y - 10, 2, 3, p.MOHAWK)
+    draw_rect(mohawk_x, head_y - 7, 4, 2, p.MOHAWK_SHADOW)
+    # Tips (lighter)
+    draw_pixel(mohawk_x + 1, head_y - 10, p.MOHAWK_TIP)
+    draw_pixel(mohawk_x + 2, head_y - 9, p.MOHAWK_TIP)
+    # Sides (shaved)
+    draw_rect(7, head_y - 1, 2, 3, p.SKIN_SHADOW)
+    draw_rect(15, head_y - 1, 2, 3, p.SKIN_SHADOW)
+
+    return surface

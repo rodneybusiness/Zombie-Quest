@@ -566,6 +566,7 @@
             174
           ],
           "talk_target": "clerk",
+          "character_sprite": "clerk",
           "verbs": {
             "look": "A clerk polishes seven-inches with ritual precision.",
             "talk": "\"Scene kids only,\" the clerk grins. \"What have you got?\"",
@@ -832,6 +833,7 @@
             172
           ],
           "talk_target": "dj",
+          "character_sprite": "dj_rotten",
           "verbs": {
             "look": "Stacks of cassettes teeter beside a flickering console.",
             "talk": "\"Got anything raw for the airwaves?\" the DJ rasps.",
@@ -1447,6 +1449,46 @@
           "give_item_triggers": [
             "use"
           ]
+        },
+        {
+          "name": "Maya - The Lost Bandmate",
+          "rect": [
+            100,
+            85,
+            50,
+            95
+          ],
+          "walk_position": [
+            125,
+            172
+          ],
+          "talk_target": "maya",
+          "character_sprite": "maya",
+          "verbs": {
+            "look": "Maya tunes her bass, half her face human, half transformed. The veins on her zombie arm pulse with eerie light.",
+            "talk": "\"I can still feel the music,\" she says, her voice shifting between human and otherworldly. \"Even like this.\"",
+            "use": "You offer her a guitar pick. She takes it with her human hand, tears forming in her one human eye."
+          }
+        },
+        {
+          "name": "Johnny Chrome",
+          "rect": [
+            200,
+            90,
+            45,
+            90
+          ],
+          "walk_position": [
+            222,
+            172
+          ],
+          "talk_target": "johnny_chrome",
+          "character_sprite": "johnny_chrome",
+          "verbs": {
+            "look": "A dignified zombie in a vintage 1950s suit adjusts his sunglasses. An unlit cigarette dangles from his lips.",
+            "talk": "\"Death is merely a key change, friend,\" Johnny muses philosophically. \"The song goes on.\"",
+            "use": "You try to light his cigarette. He waves you off. \"Don't need to breathe anymore. Just keeping up appearances.\""
+          }
         }
       ],
       "zombies": [
@@ -2178,6 +2220,26 @@
             "look": "City lights twinkle below. Minneapolis glows like a circuit board.",
             "talk": "From up here, you can see the neon spreading like an infection.",
             "use": "You press your hand to the cold glass. The city needs saving."
+          }
+        },
+        {
+          "name": "The Promoter",
+          "rect": [
+            150,
+            85,
+            55,
+            95
+          ],
+          "walk_position": [
+            177,
+            172
+          ],
+          "talk_target": "promoter",
+          "character_sprite": "promoter",
+          "verbs": {
+            "look": "The Promoter sits behind his massive desk, power suit gleaming. Gold chains catch the light as he shuffles contracts with a sinister smile.",
+            "talk": "\"Looking for stardom?\" he purrs, sliding a contract across the desk. \"Just sign on the dotted line. Everyone does, eventually.\"",
+            "use": "You try to read the contract. The text seems to writhe and shift, revealing glimpses of occult symbols and binding clauses that freeze your blood."
           }
         },
         {

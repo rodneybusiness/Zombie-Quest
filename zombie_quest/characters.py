@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 import random
 from typing import Dict, List, Optional, Tuple
 
@@ -32,6 +33,15 @@ class ZombieMusicState(Enum):
     ENTRANCED = "entranced"      # Frozen in place, listening to music
     DANCING = "dancing"          # Swaying rhythmically, harmless
     REMEMBERING = "remembering"  # Brief lucidity, may even help player
+
+
+class ZombieAlertness(Enum):
+    """Alertness states for zombie threat system."""
+    DORMANT = "dormant"          # Barely moving, ignores player
+    WANDERING = "wandering"      # Normal random behavior
+    SUSPICIOUS = "suspicious"    # Heard something, investigating
+    HUNTING = "hunting"          # Actively chasing player
+    FRENZIED = "frenzied"        # Group attack mode, very aggressive
 
 
 @dataclass
@@ -147,6 +157,11 @@ class Hero(Character):
         self.is_invincible: bool = False
         self.flash_timer: float = 0.0
 
+        # Infection system
+        self.infection: float = 0.0  # 0-100%
+        self.max_infection: float = GAMEPLAY.INFECTION_TRANSFORMATION_THRESHOLD
+        self.infection_visual_stage: int = 0  # 0=none, 1=mild, 2=severe, 3=critical
+
         # Keyboard movement
         self.keyboard_velocity = pygame.Vector2(0, 0)
         self.using_keyboard = False
@@ -211,6 +226,9 @@ class Hero(Character):
             if self.invincibility_timer <= 0:
                 self.is_invincible = False
                 self.invincibility_timer = 0
+
+        # Update infection (passive decay)
+        self.update_infection_decay(dt)
 
         # Keyboard movement takes priority
         if self.using_keyboard and self.keyboard_velocity.length_squared() > 0:
@@ -320,6 +338,63 @@ class Hero(Character):
         """Check if hero is dead."""
         return self.health <= 0
 
+    def add_infection(self, amount: float) -> bool:
+        """Add infection. Returns True if fully infected (transformation)."""
+        self.infection = min(self.max_infection, self.infection + amount)
+        self._update_infection_visual_stage()
+        return self.infection >= self.max_infection
+
+    def reduce_infection(self, amount: float) -> None:
+        """Reduce infection (from items, music, etc.)."""
+        self.infection = max(0.0, self.infection - amount)
+        self._update_infection_visual_stage()
+
+    def update_infection_decay(self, dt: float) -> None:
+        """Passive infection decay over time."""
+        if self.infection > 0:
+            self.reduce_infection(GAMEPLAY.INFECTION_DECAY_RATE * dt)
+
+    def _update_infection_visual_stage(self) -> None:
+        """Update visual stage based on infection level."""
+        if self.infection >= GAMEPLAY.INFECTION_HIGH_THRESHOLD:
+            self.infection_visual_stage = 3  # Critical
+        elif self.infection >= GAMEPLAY.INFECTION_VISUAL_THRESHOLD:
+            self.infection_visual_stage = 2  # Severe
+        elif self.infection >= 20.0:
+            self.infection_visual_stage = 1  # Mild
+        else:
+            self.infection_visual_stage = 0  # None
+
+    def get_infection_flags(self) -> Dict[str, bool]:
+        """Get infection-related flags for consequences."""
+        return {
+            'infection_low': self.infection < 30.0,
+            'infection_medium': 30.0 <= self.infection < 60.0,
+            'infection_high': 60.0 <= self.infection < 80.0,
+            'infection_critical': self.infection >= 80.0,
+            'infection_free': self.infection < 5.0,
+        }
+
+    def get_infection_percentage(self) -> float:
+        """Get infection as a percentage (0-100)."""
+        return self.infection
+
+    def is_fully_infected(self) -> bool:
+        """Check if hero is fully infected (game over condition)."""
+        return self.infection >= self.max_infection
+
+    def get_infection_color(self) -> Tuple[int, int, int]:
+        """Get UI color for infection level."""
+        from .config import COLORS
+        if self.infection >= 80.0:
+            return COLORS.INFECTION_CRITICAL
+        elif self.infection >= 60.0:
+            return COLORS.INFECTION_HIGH
+        elif self.infection >= 30.0:
+            return COLORS.INFECTION_MED
+        else:
+            return COLORS.INFECTION_LOW
+
     def emit_footstep(self) -> None:
         """Emit footstep effect (sound/dust particles)."""
         if self.footstep_callback:
@@ -404,6 +479,13 @@ class Zombie(Character):
 
         # Music preferences by zombie type
         self.music_affinities = self._get_music_affinities()
+
+        # Alertness system
+        self.alertness: ZombieAlertness = ZombieAlertness.WANDERING
+        self.alertness_timer: float = 0.0  # Timer for temporary states
+        self.last_known_player_pos: Optional[pygame.Vector2] = None
+        self.group_id: Optional[int] = None  # For coordinated behavior
+        self.alerted_by_sound: bool = False
 
     def _get_music_affinities(self) -> Dict[str, float]:
         """Get music type affinities for this zombie type.
@@ -512,10 +594,14 @@ class Zombie(Character):
             ZombieMusicState.REMEMBERING
         ]
 
-    def update(self, dt: float, hero_position: WorldPos, room_rect: pygame.Rect) -> bool:
+    def update(self, dt: float, hero_position: WorldPos, room_rect: pygame.Rect,
+               can_see_hero: bool = True) -> bool:
         """Update zombie movement. Returns True if zombie touched hero."""
         # Update music state first
         self.update_music_state(dt)
+
+        # Update alertness state machine
+        self.update_alertness(dt, hero_position, can_see_hero)
 
         self.wander_timer -= dt
         self.groan_timer -= dt
@@ -525,7 +611,10 @@ class Zombie(Character):
         offset = pygame.Vector2(hero_position) - self.position
         distance_to_hero = offset.length()
 
-        # Music state affects behavior
+        # Get speed based on alertness
+        effective_speed = self.get_effective_speed()
+
+        # Music state affects behavior (overrides alertness)
         if self.music_state == ZombieMusicState.ENTRANCED:
             # Frozen in place, listening
             moving = False
@@ -551,22 +640,43 @@ class Zombie(Character):
             moving = True
             self.is_chasing = False
         else:
-            # Normal hostile behavior
+            # Behavior based on alertness state
             if self.wander_timer <= 0:
                 self.wander_timer = GAMEPLAY.ZOMBIE_WANDER_INTERVAL
 
-                if distance_to_hero < self.detection_radius:
-                    # Chase the hero
-                    self.wander_direction = offset.normalize() if distance_to_hero > 0 else pygame.Vector2(0, 0)
-                    self.is_chasing = True
-                else:
+                if self.alertness == ZombieAlertness.DORMANT:
+                    # Barely moving
+                    angle = random.uniform(0, 360)
+                    self.wander_direction = pygame.Vector2(1, 0).rotate(angle) * 0.2
+
+                elif self.alertness == ZombieAlertness.WANDERING:
                     # Random wandering
                     angle = random.uniform(0, 360)
                     self.wander_direction = pygame.Vector2(1, 0).rotate(angle)
-                    self.is_chasing = False
+
+                elif self.alertness == ZombieAlertness.SUSPICIOUS:
+                    # Move toward last known sound
+                    if self.last_known_player_pos:
+                        to_target = self.last_known_player_pos - self.position
+                        if to_target.length() > 10:
+                            self.wander_direction = to_target.normalize()
+                        else:
+                            # Reached the spot, look around
+                            angle = random.uniform(0, 360)
+                            self.wander_direction = pygame.Vector2(1, 0).rotate(angle) * 0.5
+                    else:
+                        angle = random.uniform(0, 360)
+                        self.wander_direction = pygame.Vector2(1, 0).rotate(angle) * 0.7
+
+                elif self.alertness in [ZombieAlertness.HUNTING, ZombieAlertness.FRENZIED]:
+                    # Chase the hero aggressively
+                    if distance_to_hero > 0:
+                        self.wander_direction = offset.normalize()
+                    else:
+                        self.wander_direction = pygame.Vector2(0, 0)
 
         if self.wander_direction.length_squared() > 0:
-            self.position += self.wander_direction * self.speed * dt
+            self.position += self.wander_direction * effective_speed * dt
             self.position.x = max(room_rect.left + 10, min(room_rect.right - 10, self.position.x))
             self.position.y = max(room_rect.top + 10, min(room_rect.bottom - 10, self.position.y))
             self._update_direction(self.wander_direction)
@@ -587,6 +697,160 @@ class Zombie(Character):
             self.groan_timer = random.uniform(3.0, 8.0)
             return True
         return False
+
+    def get_effective_speed(self) -> float:
+        """Get speed modified by alertness state."""
+        base_speed = GAMEPLAY.ZOMBIE_SPEED
+        if self.alertness == ZombieAlertness.HUNTING:
+            return base_speed * GAMEPLAY.ZOMBIE_HUNTING_SPEED_MULT
+        elif self.alertness == ZombieAlertness.FRENZIED:
+            return base_speed * GAMEPLAY.ZOMBIE_FRENZIED_SPEED_MULT
+        elif self.alertness == ZombieAlertness.DORMANT:
+            return base_speed * 0.3
+        elif self.alertness == ZombieAlertness.SUSPICIOUS:
+            return base_speed * 0.7
+        return base_speed
+
+    def set_alertness(self, new_alertness: ZombieAlertness, duration: float = 0.0) -> None:
+        """Set zombie alertness level."""
+        self.alertness = new_alertness
+        self.alertness_timer = duration
+
+    def become_suspicious(self, sound_pos: pygame.Vector2) -> None:
+        """Zombie heard something and becomes suspicious."""
+        if self.alertness in [ZombieAlertness.DORMANT, ZombieAlertness.WANDERING]:
+            self.alertness = ZombieAlertness.SUSPICIOUS
+            self.alertness_timer = GAMEPLAY.ZOMBIE_SUSPICIOUS_TIME
+            self.last_known_player_pos = sound_pos
+            self.alerted_by_sound = True
+
+    def become_hunting(self, player_pos: pygame.Vector2) -> None:
+        """Zombie sees player and starts hunting."""
+        self.alertness = ZombieAlertness.HUNTING
+        self.last_known_player_pos = player_pos.copy()
+        self.is_chasing = True
+        self.alerted_by_sound = False
+
+    def become_frenzied(self) -> None:
+        """Zombie enters group frenzy mode."""
+        if self.alertness != ZombieAlertness.FRENZIED:
+            self.alertness = ZombieAlertness.FRENZIED
+            self.is_chasing = True
+
+    def calm_down(self) -> None:
+        """Return to wandering state."""
+        self.alertness = ZombieAlertness.WANDERING
+        self.is_chasing = False
+        self.last_known_player_pos = None
+        self.alerted_by_sound = False
+
+    def update_alertness(self, dt: float, hero_pos: WorldPos, can_see_hero: bool) -> None:
+        """Update alertness state machine."""
+        # Music overrides alertness (calming effect)
+        if self.music_state in [ZombieMusicState.DANCING, ZombieMusicState.REMEMBERING]:
+            if self.alertness != ZombieAlertness.DORMANT:
+                self.alertness = ZombieAlertness.DORMANT
+            return
+
+        # Update timers
+        if self.alertness_timer > 0:
+            self.alertness_timer -= dt
+
+        hero_vec = pygame.Vector2(hero_pos)
+        distance_to_hero = (hero_vec - self.position).length()
+
+        # State transitions
+        if self.alertness == ZombieAlertness.DORMANT:
+            # Can wake up if player is very close
+            if can_see_hero and distance_to_hero < 40:
+                self.become_hunting(hero_vec)
+
+        elif self.alertness == ZombieAlertness.WANDERING:
+            # Detect player
+            if can_see_hero and distance_to_hero < self.detection_radius:
+                self.become_hunting(hero_vec)
+
+        elif self.alertness == ZombieAlertness.SUSPICIOUS:
+            if can_see_hero and distance_to_hero < self.detection_radius * 1.2:
+                # Found the player!
+                self.become_hunting(hero_vec)
+            elif self.alertness_timer <= 0:
+                # Didn't find anything, go back to wandering
+                self.calm_down()
+
+        elif self.alertness == ZombieAlertness.HUNTING:
+            if can_see_hero:
+                # Keep tracking
+                self.last_known_player_pos = hero_vec.copy()
+            elif distance_to_hero > self.detection_radius * 1.5:
+                # Lost sight and player is far
+                self.calm_down()
+
+        elif self.alertness == ZombieAlertness.FRENZIED:
+            # Frenzy only ends if player is very far or music calms them
+            if distance_to_hero > self.detection_radius * 2.0:
+                self.alertness = ZombieAlertness.HUNTING
+
+    def can_alert_nearby_zombies(self) -> bool:
+        """Check if this zombie should alert others."""
+        return self.alertness in [ZombieAlertness.HUNTING, ZombieAlertness.FRENZIED] and not self.is_harmless()
+
+    def get_flanking_position(self, target_pos: pygame.Vector2, other_zombie_positions: List[pygame.Vector2]) -> Optional[pygame.Vector2]:
+        """Calculate a flanking position around the target.
+
+        Args:
+            target_pos: Position of the player
+            other_zombie_positions: Positions of other zombies in the group
+
+        Returns:
+            Desired position for flanking, or None if no flanking needed
+        """
+        if not other_zombie_positions:
+            return None
+
+        # Calculate angle to target from this zombie
+        to_target = target_pos - self.position
+        if to_target.length() < 10:
+            return None
+
+        my_angle = math.atan2(to_target.y, to_target.x)
+
+        # Find angles of other zombies
+        other_angles = []
+        for other_pos in other_zombie_positions:
+            other_to_target = target_pos - other_pos
+            if other_to_target.length() > 10:
+                angle = math.atan2(other_to_target.y, other_to_target.x)
+                other_angles.append(angle)
+
+        if not other_angles:
+            return None
+
+        # Try to spread out around the target
+        # Find the biggest gap in the circle around target
+        other_angles.sort()
+        biggest_gap = 0
+        best_angle = my_angle
+
+        for i in range(len(other_angles)):
+            next_i = (i + 1) % len(other_angles)
+            gap = other_angles[next_i] - other_angles[i]
+            if gap < 0:
+                gap += 2 * math.pi
+
+            if gap > biggest_gap:
+                biggest_gap = gap
+                # Aim for middle of gap
+                best_angle = other_angles[i] + gap / 2
+                if best_angle > math.pi:
+                    best_angle -= 2 * math.pi
+
+        # Calculate position at desired angle
+        flank_distance = 60  # Distance from target to flank from
+        flank_x = target_pos.x + flank_distance * math.cos(best_angle)
+        flank_y = target_pos.y + flank_distance * math.sin(best_angle)
+
+        return pygame.Vector2(flank_x, flank_y)
 
 
 class ZombieSpawner:

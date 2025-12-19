@@ -121,6 +121,11 @@ def run_headless_validation(engine: GameEngine, verbose: bool = False) -> None:
 
 
 def main() -> None:
+    # Set headless mode environment before pygame init
+    if "--headless" in sys.argv:
+        os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
+        os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+
     base_path = os.path.dirname(os.path.abspath(__file__))
     engine = GameEngine(base_path)
 

@@ -182,6 +182,8 @@ class KnockbackEffect:
             return None
 
         self.elapsed += dt
+        if self.duration <= 0:
+            return None
         progress = min(1.0, self.elapsed / self.duration)
 
         # Ease out the knockback (starts strong, fades quickly)
@@ -291,6 +293,8 @@ class FlashEffect:
             return 0.0
 
         # Flash intensity fades quickly
+        if self.duration <= 0:
+            return 0.0
         progress = self.elapsed / self.duration
         return 1.0 - ease_out_quad(progress)
 
@@ -714,3 +718,207 @@ class BobbingCamera:
         self.current_offset += (self.target_offset - self.current_offset) * self.smoothness * dt
 
         return (self.current_offset.x, self.current_offset.y)
+
+
+# ============================================================================
+# INFECTION VISUAL EFFECTS
+# ============================================================================
+
+class InfectionVisualEffect:
+    """Visual effects for infection progression.
+
+    Creates screen distortion, color desaturation, vein overlay, and
+    heartbeat pulsing based on infection level.
+    """
+
+    def __init__(self) -> None:
+        self.infection_level: float = 0.0  # 0-100
+        self.heartbeat_time: float = 0.0
+        self.pulse_intensity: float = 0.0
+        self.vein_pulse: float = 0.0
+
+    def update(self, dt: float, infection_level: float) -> None:
+        """Update infection visual effects.
+
+        Args:
+            dt: Delta time
+            infection_level: Current infection (0-100)
+        """
+        self.infection_level = infection_level
+
+        # Heartbeat gets faster as infection increases
+        # At 0% infection: 60 BPM (1.0s per beat)
+        # At 100% infection: 140 BPM (0.43s per beat)
+        base_rate = 1.0  # 60 BPM
+        infected_rate = 0.43  # 140 BPM
+        heartbeat_rate = base_rate - (base_rate - infected_rate) * (infection_level / 100.0)
+
+        self.heartbeat_time += dt
+        if self.heartbeat_time >= heartbeat_rate:
+            self.heartbeat_time -= heartbeat_rate
+            # Trigger pulse
+            self.pulse_intensity = 1.0
+
+        # Decay pulse
+        if self.pulse_intensity > 0:
+            self.pulse_intensity = max(0.0, self.pulse_intensity - dt * 4.0)
+
+        # Vein pulse (slower, sinusoidal)
+        self.vein_pulse = (math.sin(self.heartbeat_time * math.pi * 2) + 1) / 2
+
+    def get_desaturation(self) -> float:
+        """Get color desaturation amount (0-1).
+
+        At high infection, colors fade to grayscale.
+        """
+        if self.infection_level < 40:
+            return 0.0
+        elif self.infection_level < 70:
+            # Gradual desaturation from 40-70%
+            return (self.infection_level - 40) / 30 * 0.3
+        else:
+            # Heavy desaturation at 70%+
+            return 0.3 + (self.infection_level - 70) / 30 * 0.5
+
+    def get_screen_pulse_scale(self) -> float:
+        """Get screen pulse scale multiplier (1.0 = normal).
+
+        Heartbeat causes slight zoom pulse at high infection.
+        """
+        if self.infection_level < 60:
+            return 1.0
+
+        pulse_strength = (self.infection_level - 60) / 40 * 0.015
+        return 1.0 + self.pulse_intensity * pulse_strength
+
+    def get_vignette_intensity(self) -> float:
+        """Get vignette/edge darkening intensity (0-1)."""
+        if self.infection_level < 50:
+            return 0.0
+        return (self.infection_level - 50) / 50 * 0.6
+
+    def get_distortion_offset(self, x: float, y: float, width: int, height: int) -> Tuple[int, int]:
+        """Get pixel offset for screen distortion.
+
+        Args:
+            x, y: Pixel coordinates
+            width, height: Screen dimensions
+
+        Returns:
+            (dx, dy) offset for this pixel
+        """
+        if self.infection_level < 70:
+            return (0, 0)
+
+        # Radial distortion from edges
+        center_x, center_y = width / 2, height / 2
+        if center_x <= 0 or center_y <= 0:
+            return (0, 0)
+        dx = (x - center_x) / center_x
+        dy = (y - center_y) / center_y
+        dist = math.sqrt(dx*dx + dy*dy)
+
+        distortion_strength = (self.infection_level - 70) / 30 * 3.0
+        offset_x = int(dx * dist * distortion_strength * self.pulse_intensity)
+        offset_y = int(dy * dist * distortion_strength * self.pulse_intensity)
+
+        return (offset_x, offset_y)
+
+    def apply_desaturation(self, surface: pygame.Surface) -> pygame.Surface:
+        """Apply color desaturation to a surface.
+
+        Args:
+            surface: Surface to desaturate
+
+        Returns:
+            Desaturated surface
+        """
+        desaturation = self.get_desaturation()
+        if desaturation <= 0:
+            return surface
+
+        # Create a copy
+        result = surface.copy()
+
+        # Get pixel array (expensive but necessary for color manipulation)
+        # For performance, we'll use a blend approach instead
+        gray_surf = pygame.Surface(surface.get_size())
+        gray_surf.fill((128, 128, 128))
+
+        # Blend with gray based on desaturation amount
+        alpha = int(255 * desaturation)
+        gray_overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
+        gray_overlay.fill((128, 128, 128, alpha))
+
+        result.blit(gray_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        return result
+
+    def draw_vein_overlay(self, surface: pygame.Surface, infection_level: float) -> None:
+        """Draw purple vein overlay at high infection.
+
+        Args:
+            surface: Surface to draw on
+            infection_level: Infection level (0-100)
+        """
+        if infection_level < 60:
+            return
+
+        width, height = surface.get_size()
+
+        # Vein intensity increases with infection
+        vein_alpha = int((infection_level - 60) / 40 * 120 * self.vein_pulse)
+
+        if vein_alpha <= 0:
+            return
+
+        # Create vein pattern overlay
+        vein_overlay = pygame.Surface((width, height), pygame.SRCALPHA)
+
+        # Draw vein-like lines (simplified - radiating from corners)
+        vein_color = (80, 40, 100, vein_alpha)
+
+        # Random vein pattern (deterministic based on position)
+        for i in range(8):
+            angle = i * math.pi / 4
+            for radius in range(0, max(width, height), 30):
+                x1 = int(width/2 + radius * math.cos(angle))
+                y1 = int(height/2 + radius * math.sin(angle))
+                x2 = int(width/2 + (radius + 20) * math.cos(angle))
+                y2 = int(height/2 + (radius + 20) * math.sin(angle))
+
+                # Vary thickness with pulse
+                thickness = max(1, int(2 * self.vein_pulse))
+
+                if 0 <= x1 < width and 0 <= y1 < height and 0 <= x2 < width and 0 <= y2 < height:
+                    pygame.draw.line(vein_overlay, vein_color, (x1, y1), (x2, y2), thickness)
+
+        surface.blit(vein_overlay, (0, 0))
+
+    def draw_vignette(self, surface: pygame.Surface) -> None:
+        """Draw vignette (darkened edges) effect.
+
+        Args:
+            surface: Surface to draw on
+        """
+        intensity = self.get_vignette_intensity()
+        if intensity <= 0:
+            return
+
+        width, height = surface.get_size()
+        vignette = pygame.Surface((width, height), pygame.SRCALPHA)
+
+        # Draw radial gradient
+        center_x, center_y = width // 2, height // 2
+        max_radius = math.sqrt(center_x**2 + center_y**2)
+
+        # Draw concentric circles with increasing opacity
+        steps = 20
+        for i in range(steps):
+            progress = i / steps
+            radius = int(max_radius * (1 - progress * 0.7))
+            alpha = int(255 * intensity * progress)
+            color = (0, 0, 0, alpha)
+
+            pygame.draw.circle(vignette, color, (center_x, center_y), radius)
+
+        surface.blit(vignette, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
