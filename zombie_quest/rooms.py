@@ -189,15 +189,25 @@ class Room:
         x, y = int(position[0]), int(position[1])
         if not self.bounds.collidepoint(x, y):
             return False
-        color = self.walkable_mask.get_at((x, y))
-        return color[0] > 0 or color[1] > 0 or color[2] > 0
+        if not self.walkable_mask:
+            return True  # Default to walkable if mask missing
+        try:
+            color = self.walkable_mask.get_at((x, y))
+            return color[0] > 0 or color[1] > 0 or color[2] > 0
+        except IndexError:
+            return True
 
     def is_behind(self, position: Tuple[float, float]) -> bool:
         x, y = int(position[0]), int(position[1])
         if not self.bounds.collidepoint(x, y):
             return False
-        color = self.priority_mask.get_at((x, y))
-        return color[0] > 200 and color[1] > 200 and color[2] > 200
+        if not self.priority_mask:
+            return False  # Default to not behind if mask missing
+        try:
+            color = self.priority_mask.get_at((x, y))
+            return color[0] > 200 and color[1] > 200 and color[2] > 200
+        except IndexError:
+            return False
 
     def find_hotspot(self, position: Tuple[int, int]) -> Optional[Hotspot]:
         for hotspot in self.hotspots:
