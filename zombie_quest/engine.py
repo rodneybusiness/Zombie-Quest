@@ -33,6 +33,12 @@ ROOM_WIDTH = DISPLAY.ROOM_WIDTH
 ROOM_HEIGHT = DISPLAY.ROOM_HEIGHT
 UI_BAR_HEIGHT = DISPLAY.UI_BAR_HEIGHT
 MESSAGE_HEIGHT = DISPLAY.MESSAGE_HEIGHT
+SCALE_FACTOR = DISPLAY.SCALE_FACTOR
+# Internal size (native resolution for rendering)
+INTERNAL_WIDTH = DISPLAY.INTERNAL_WIDTH
+INTERNAL_HEIGHT = DISPLAY.INTERNAL_HEIGHT
+INTERNAL_SIZE = (INTERNAL_WIDTH, INTERNAL_HEIGHT)
+# Window size (scaled for modern displays)
 WINDOW_SIZE = (DISPLAY.WINDOW_WIDTH, DISPLAY.WINDOW_HEIGHT)
 
 
@@ -41,9 +47,14 @@ class GameEngine:
 
     def __init__(self, base_path: str) -> None:
         pygame.init()
+        # Create scaled window for modern displays
         self.screen = pygame.display.set_mode(WINDOW_SIZE)
         pygame.display.set_caption("Neon Dead Quest: Minneapolis '82")
         self.clock = pygame.time.Clock()
+
+        # Internal surface for native resolution rendering (320x276)
+        # This gets scaled up to the window when displayed
+        self.internal_surface = pygame.Surface(INTERNAL_SIZE)
 
         # Load game data
         data = load_game_data(base_path)
@@ -65,17 +76,17 @@ class GameEngine:
         # Room surface
         self.room_surface = pygame.Surface((ROOM_WIDTH, ROOM_HEIGHT), pygame.SRCALPHA)
 
-        # UI components
-        self.verb_bar = VerbBar(WINDOW_SIZE[0], UI_BAR_HEIGHT)
-        self.message_box = MessageBox(WINDOW_SIZE[0], MESSAGE_HEIGHT)
-        self.message_box.rect.topleft = (0, WINDOW_SIZE[1] - MESSAGE_HEIGHT)
-        self.pause_menu = PauseMenu(WINDOW_SIZE[0], WINDOW_SIZE[1])
+        # UI components (use internal size for native resolution rendering)
+        self.verb_bar = VerbBar(INTERNAL_WIDTH, UI_BAR_HEIGHT)
+        self.message_box = MessageBox(INTERNAL_WIDTH, MESSAGE_HEIGHT)
+        self.message_box.rect.topleft = (0, INTERNAL_HEIGHT - MESSAGE_HEIGHT)
+        self.pause_menu = PauseMenu(INTERNAL_WIDTH, INTERNAL_HEIGHT)
 
         # Inventory
         self.inventory = Inventory()
         self.inventory_window = InventoryWindow(
             self.inventory,
-            pygame.Rect(40, UI_BAR_HEIGHT + 20, WINDOW_SIZE[0] - 80, 140),
+            pygame.Rect(40, UI_BAR_HEIGHT + 20, INTERNAL_WIDTH - 80, 140),
         )
 
         # Items catalog
@@ -165,10 +176,15 @@ class GameEngine:
             pygame.display.flip()
         pygame.quit()
 
+    def _screen_to_internal(self, pos: Tuple[int, int]) -> Tuple[int, int]:
+        """Convert screen coordinates to internal surface coordinates."""
+        return (pos[0] // SCALE_FACTOR, pos[1] // SCALE_FACTOR)
+
     def handle_events(self) -> None:
         """Handle all input events."""
-        # Update hover states
-        mouse_pos = pygame.mouse.get_pos()
+        # Update hover states (convert to internal coordinates)
+        raw_mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = self._screen_to_internal(raw_mouse_pos)
         self.verb_bar.update_hover(mouse_pos)
         if self.inventory_window.visible:
             self.inventory_window.update_hover(mouse_pos)
@@ -317,17 +333,22 @@ class GameEngine:
     def _handle_mouse_click(self, event: pygame.event.Event) -> None:
         """Handle mouse click."""
         if event.button == 1:  # Left click
+            # Convert screen coordinates to internal coordinates
+            internal_pos = self._screen_to_internal(event.pos)
+
             # Check inventory window first
             if self.inventory_window.visible:
-                selected = self.inventory_window.handle_event(event)
+                # Create a modified event with internal coordinates
+                modified_event = pygame.event.Event(event.type, pos=internal_pos, button=event.button)
+                selected = self.inventory_window.handle_event(modified_event)
                 if selected:
                     self.message_box.show(f"Selected {selected.name}.")
                     self.audio.play("ui_select")
                 return
 
             # Check verb bar
-            if self.verb_bar.rect.collidepoint(event.pos):
-                action = self.verb_bar.handle_click(event.pos)
+            if self.verb_bar.rect.collidepoint(internal_pos):
+                action = self.verb_bar.handle_click(internal_pos)
                 if action == "inventory":
                     self.inventory_window.toggle()
                     self.audio.play("ui_click")
@@ -340,7 +361,7 @@ class GameEngine:
                 return
 
             # Room click
-            self.handle_room_click(event.pos)
+            self.handle_room_click(internal_pos)
 
         elif event.button == 3:  # Right click - cycle verbs
             verb = self.verb_bar.cycle_next()
@@ -946,8 +967,8 @@ class GameEngine:
         # Get shake offset
         shake_x, shake_y = self.screen_shake.update(0)
 
-        # Clear screen
-        self.screen.fill((0, 0, 0))
+        # Clear internal surface (native resolution)
+        self.internal_surface.fill((0, 0, 0))
 
         # Draw room
         self.current_room.draw(self.room_surface, self.hero)
@@ -955,42 +976,46 @@ class GameEngine:
         # Draw particles on room surface
         self.particles.draw(self.room_surface)
 
-        # Blit room to screen with shake offset
-        self.screen.blit(self.room_surface, (shake_x, UI_BAR_HEIGHT + shake_y))
+        # Blit room to internal surface with shake offset
+        self.internal_surface.blit(self.room_surface, (shake_x, UI_BAR_HEIGHT + shake_y))
 
-        # Apply infection visual effects to room surface
+        # Apply infection visual effects to internal surface
         if self.hero.get_infection_percentage() > 0:
             # Vein overlay
-            self.infection_visuals.draw_vein_overlay(self.screen, self.hero.get_infection_percentage())
+            self.infection_visuals.draw_vein_overlay(self.internal_surface, self.hero.get_infection_percentage())
 
             # Vignette
-            self.infection_visuals.draw_vignette(self.screen)
+            self.infection_visuals.draw_vignette(self.internal_surface)
 
-        # Draw UI
-        self.verb_bar.draw(self.screen, self.hero.health, self.hero.get_infection_percentage())
-        self.message_box.draw(self.screen)
+        # Draw UI to internal surface
+        self.verb_bar.draw(self.internal_surface, self.hero.health, self.hero.get_infection_percentage())
+        self.message_box.draw(self.internal_surface)
 
         # Draw inventory window
         if self.inventory_window.visible:
-            self.inventory_window.draw(self.screen)
+            self.inventory_window.draw(self.internal_surface)
 
         # Draw dialogue
         if self.dialogue_manager.active:
             self.dialogue_manager.draw(
-                self.screen,
+                self.internal_surface,
                 self.inventory.get_item_names(),
                 self.game_flags
             )
 
         # Draw pause menu
         if self.state == GameState.PAUSED:
-            self.pause_menu.draw(self.screen)
+            self.pause_menu.draw(self.internal_surface)
 
         # Draw transition effect last
-        self.transition.draw(self.screen)
+        self.transition.draw(self.internal_surface)
 
         # Scanline overlay for retro feel
-        self.scanlines.draw(self.screen)
+        self.scanlines.draw(self.internal_surface)
+
+        # Scale up internal surface to window (crisp pixel scaling)
+        scaled = pygame.transform.scale(self.internal_surface, WINDOW_SIZE)
+        self.screen.blit(scaled, (0, 0))
 
     def _try_item_combination(self, item_name: str, hotspot: Hotspot) -> bool:
         """

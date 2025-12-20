@@ -14,15 +14,27 @@ class DisplayConfig:
     ROOM_HEIGHT: int = 200
     UI_BAR_HEIGHT: int = 40
     MESSAGE_HEIGHT: int = 36
-    SCALE_FACTOR: int = 2  # For modern displays
+    SCALE_FACTOR: int = 3  # For modern displays - 3x gives 960x828 window
 
     @property
-    def WINDOW_WIDTH(self) -> int:
+    def INTERNAL_WIDTH(self) -> int:
+        """Internal render width (unscaled)."""
         return self.ROOM_WIDTH
 
     @property
-    def WINDOW_HEIGHT(self) -> int:
+    def INTERNAL_HEIGHT(self) -> int:
+        """Internal render height (unscaled)."""
         return self.ROOM_HEIGHT + self.UI_BAR_HEIGHT + self.MESSAGE_HEIGHT
+
+    @property
+    def WINDOW_WIDTH(self) -> int:
+        """Actual window width (scaled for modern displays)."""
+        return self.ROOM_WIDTH * self.SCALE_FACTOR
+
+    @property
+    def WINDOW_HEIGHT(self) -> int:
+        """Actual window height (scaled for modern displays)."""
+        return (self.ROOM_HEIGHT + self.UI_BAR_HEIGHT + self.MESSAGE_HEIGHT) * self.SCALE_FACTOR
 
     @property
     def WINDOW_SIZE(self) -> Tuple[int, int]:
