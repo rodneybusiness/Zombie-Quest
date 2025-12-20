@@ -101,7 +101,7 @@ class GameEngine:
         self.transition = ScreenTransition()
         self.glow = GlowEffect()
         self.screen_shake = ScreenShake()
-        self.scanlines = ScanlineOverlay(WINDOW_SIZE, intensity=0.08)
+        self.scanlines = ScanlineOverlay(INTERNAL_SIZE, intensity=0.08)
         self.infection_visuals = InfectionVisualEffect()
 
         # Audio
@@ -111,7 +111,7 @@ class GameEngine:
         self.diegetic_audio = get_diegetic_audio()
 
         # Dialogue system
-        self.dialogue_manager = DialogueManager(WINDOW_SIZE[0], WINDOW_SIZE[1])
+        self.dialogue_manager = DialogueManager(INTERNAL_WIDTH, INTERNAL_HEIGHT)
         self.dialogue_trees: Dict[str, object] = {
             "clerk": create_clerk_dialogue(),
             "dj": create_dj_dialogue(),
