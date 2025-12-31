@@ -14,15 +14,15 @@ class DisplayConfig:
     ROOM_HEIGHT: int = 200
     UI_BAR_HEIGHT: int = 40
     MESSAGE_HEIGHT: int = 36
-    SCALE_FACTOR: int = 2  # For modern displays
+    SCALE_FACTOR: int = 3  # For modern displays
 
     @property
     def WINDOW_WIDTH(self) -> int:
-        return self.ROOM_WIDTH
+        return self.ROOM_WIDTH * self.SCALE_FACTOR
 
     @property
     def WINDOW_HEIGHT(self) -> int:
-        return self.ROOM_HEIGHT + self.UI_BAR_HEIGHT + self.MESSAGE_HEIGHT
+        return (self.ROOM_HEIGHT + self.UI_BAR_HEIGHT + self.MESSAGE_HEIGHT) * self.SCALE_FACTOR
 
     @property
     def WINDOW_SIZE(self) -> Tuple[int, int]:
