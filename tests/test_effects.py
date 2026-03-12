@@ -7,6 +7,7 @@ pygame.init()
 
 
 from zombie_quest.effects import (
+    CinematicPostFX,
     Particle,
     ParticleSystem,
     ScreenTransition,
@@ -157,3 +158,23 @@ class TestScreenShake:
         shake.update(0.2)  # Past duration
         offset = shake.update(0.0)
         assert offset == (0, 0)
+
+
+class TestCinematicPostFX:
+    """Test cinematic post-processing pass."""
+
+    def test_postfx_creation(self):
+        fx = CinematicPostFX((320, 240))
+        assert fx.size == (320, 240)
+
+    def test_postfx_draw_runs(self):
+        fx = CinematicPostFX((320, 240))
+        surface = pygame.Surface((320, 240), pygame.SRCALPHA)
+        surface.fill((80, 90, 140))
+
+        fx.update(0.16)
+        fx.draw(surface, infection=0.5)
+
+        # Surface should remain valid and non-empty after processing.
+        assert surface.get_size() == (320, 240)
+        assert surface.get_at((10, 10)).a >= 0
