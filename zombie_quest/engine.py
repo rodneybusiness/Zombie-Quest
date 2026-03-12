@@ -21,7 +21,14 @@ from .config import DISPLAY, GAMEPLAY, COLORS, GameState
 from .data_loader import build_items, build_rooms, load_game_data
 from .rooms import Hotspot, Room
 from .ui import Inventory, InventoryWindow, MessageBox, Verb, VerbBar, PauseMenu, VERB_KEYS
-from .effects import ParticleSystem, ScreenTransition, GlowEffect, ScreenShake, ScanlineOverlay
+from .effects import (
+    ParticleSystem,
+    ScreenTransition,
+    GlowEffect,
+    ScreenShake,
+    ScanlineOverlay,
+    CinematicPostFX,
+)
 from .audio import get_audio_manager
 from .dialogue import DialogueManager, DialogueEffect, create_clerk_dialogue, create_dj_dialogue, create_maya_dialogue
 from .backgrounds import get_room_background
@@ -91,6 +98,7 @@ class GameEngine:
         self.glow = GlowEffect()
         self.screen_shake = ScreenShake()
         self.scanlines = ScanlineOverlay(WINDOW_SIZE, intensity=0.08)
+        self.cinematic_postfx = CinematicPostFX(WINDOW_SIZE)
         self.infection_visuals = InfectionVisualEffect()
 
         # Audio
@@ -415,6 +423,7 @@ class GameEngine:
 
         # Update effects
         self.glow.update(dt)
+        self.cinematic_postfx.update(dt)
         self.particles.update(dt)
         self.transition.update(dt)
         shake_offset = self.screen_shake.update(dt)
@@ -988,6 +997,9 @@ class GameEngine:
 
         # Draw transition effect last
         self.transition.draw(self.screen)
+
+        # Cinematic grade and bloom pass
+        self.cinematic_postfx.draw(self.screen, self.hero.get_infection_percentage())
 
         # Scanline overlay for retro feel
         self.scanlines.draw(self.screen)

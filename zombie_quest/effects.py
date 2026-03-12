@@ -389,6 +389,68 @@ class ScanlineOverlay:
         surface.blit(self.overlay, (0, 0))
 
 
+class CinematicPostFX:
+    """High-impact post processing pass for dramatic neon visuals."""
+
+    def __init__(self, size: Tuple[int, int]) -> None:
+        self.size = size
+        self.time = 0.0
+
+    def update(self, dt: float) -> None:
+        """Animate subtle screen-space pulses."""
+        self.time += dt
+
+    def draw(self, surface: pygame.Surface, infection: float = 0.0) -> None:
+        """Apply bloom, color grade, and subtle chromatic split."""
+        self._draw_bloom(surface, infection)
+        self._draw_grade(surface, infection)
+        self._draw_chromatic_split(surface, infection)
+
+    def _draw_bloom(self, surface: pygame.Surface, infection: float) -> None:
+        """Add soft additive glow around bright pixels."""
+        w, h = self.size
+        quarter = pygame.transform.smoothscale(surface, (max(1, w // 4), max(1, h // 4)))
+        bloom = pygame.transform.smoothscale(quarter, (w, h))
+
+        bloom_strength = 70 + int(55 * infection)
+        bloom_overlay = pygame.Surface((w, h), pygame.SRCALPHA)
+        bloom_overlay.blit(bloom, (0, 0))
+        bloom_overlay.fill((255, 235, 255, bloom_strength), special_flags=pygame.BLEND_RGBA_MULT)
+
+        surface.blit(bloom_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+
+    def _draw_grade(self, surface: pygame.Surface, infection: float) -> None:
+        """Cinematic magenta/cyan grade with living pulse."""
+        pulse = 0.65 + 0.35 * (0.5 + 0.5 * math.sin(self.time * 1.5))
+
+        grade = pygame.Surface(self.size, pygame.SRCALPHA)
+        cyan = int(24 * pulse)
+        magenta = int(30 * pulse)
+
+        # Slightly bias toward red as infection rises.
+        red_push = int(40 * infection)
+        grade.fill((20 + red_push, cyan, magenta, 24 + int(20 * pulse)))
+        surface.blit(grade, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+
+    def _draw_chromatic_split(self, surface: pygame.Surface, infection: float) -> None:
+        """Subtle RGB split at screen edges for stylized grit."""
+        split_px = 1 + int(infection * 2)
+        if split_px <= 0:
+            return
+
+        source = surface.copy()
+        red_layer = source.copy()
+        red_layer.fill((255, 0, 0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        blue_layer = source.copy()
+        blue_layer.fill((0, 0, 255, 0), special_flags=pygame.BLEND_RGBA_MULT)
+
+        # Low alpha keeps effect premium instead of noisy.
+        red_layer.set_alpha(26)
+        blue_layer.set_alpha(26)
+        surface.blit(red_layer, (split_px, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        surface.blit(blue_layer, (-split_px, 0), special_flags=pygame.BLEND_RGBA_ADD)
+
+
 class VignetteOverlay:
     """Vignette effect for atmospheric edges."""
 
