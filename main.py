@@ -10,12 +10,20 @@ from zombie_quest.config import GameState
 
 
 def dump_room_screenshots(engine: GameEngine, out_dir: str) -> None:
-    """Render every room through the full draw path and save a frame each."""
+    """Render every room through the full draw path and save a frame each.
+
+    Infection is zeroed so review artifacts show the rooms rather than the
+    high-infection blackout overlays (those branches are already exercised
+    by the forced-infection frame in the validation loop).
+    """
     os.makedirs(out_dir, exist_ok=True)
+    engine.hero.infection = 0.0
+    engine.hero.health = engine.hero.max_health
     for room_id in engine.rooms:
         engine.change_room(room_id, announce=False)
         for _ in range(5):
             engine.update(1 / 60)
+            engine.hero.infection = 0.0
         engine.draw()
         pygame.image.save(engine.screen, os.path.join(out_dir, f"{room_id}.png"))
     print(f"Saved {len(engine.rooms)} room screenshots to {out_dir}")

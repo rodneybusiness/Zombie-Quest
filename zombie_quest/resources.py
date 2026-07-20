@@ -14,11 +14,14 @@ def ensure_font_initialized() -> None:
 
 
 def load_serif_font(size: int) -> pygame.font.Font:
+    """UI font: pygame's bundled font, identical on every OS and CI runner.
+
+    System-font matching made text render differently per machine, which
+    breaks golden-frame testing; rendered with antialias=False everywhere
+    so text stays two-color and palette-safe. (Name kept for existing
+    call sites; a period bitmap font replaces this in the UI art pass.)
+    """
     ensure_font_initialized()
-    preferred = ["Times New Roman", "Georgia", "Book Antiqua", "serif"]
-    font_path = pygame.font.match_font(preferred)
-    if font_path:
-        return pygame.font.Font(font_path, size)
     return pygame.font.Font(None, size)
 
 

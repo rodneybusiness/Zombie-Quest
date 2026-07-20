@@ -161,7 +161,8 @@ class TestEngineInitialization:
         assert engine.transition is not None
         assert engine.glow is not None
         assert engine.screen_shake is not None
-        assert engine.scanlines is not None
+        # Scanlines are owned by the presenter and drawn post-scale.
+        assert engine.presenter.scanlines_enabled
 
     def test_dialogue_system_created(self, engine):
         """Dialogue system is initialized."""

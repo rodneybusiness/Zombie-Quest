@@ -275,14 +275,14 @@ class DialogueManager:
 
         # Draw speaker name
         if node.speaker:
-            name_surf = self.name_font.render(node.speaker, True, COLORS.HOT_MAGENTA)
+            name_surf = self.name_font.render(node.speaker, False, COLORS.HOT_MAGENTA)
             box_surf.blit(name_surf, (10, 8))
 
         # Draw text
         y_offset = 28
         text_lines = self._wrap_text(self.displayed_text, self.box_rect.width - 20)
         for line in text_lines[:3]:  # Max 3 lines
-            text_surf = self.text_font.render(line, True, COLORS.UI_TEXT)
+            text_surf = self.text_font.render(line, False, COLORS.UI_TEXT)
             box_surf.blit(text_surf, (10, y_offset))
             y_offset += 16
 
@@ -295,12 +295,12 @@ class DialogueManager:
             for i, choice in enumerate(available_choices):
                 prefix = "> " if i == self.selected_choice else "  "
                 color = COLORS.NEON_GOLD if i == self.selected_choice else COLORS.UI_TEXT
-                choice_surf = self.choice_font.render(prefix + choice.text, True, color)
+                choice_surf = self.choice_font.render(prefix + choice.text, False, color)
                 box_surf.blit(choice_surf, (10, choice_y))
                 choice_y += 14
         elif self.text_complete and not node.choices:
             # Show continue prompt
-            prompt = self.choice_font.render("[Press SPACE to continue]", True, (150, 150, 170))
+            prompt = self.choice_font.render("[Press SPACE to continue]", False, (150, 150, 170))
             box_surf.blit(prompt, (self.box_rect.width - prompt.get_width() - 10,
                                    self.box_rect.height - 20))
 

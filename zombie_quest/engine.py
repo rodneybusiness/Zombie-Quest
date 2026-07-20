@@ -26,9 +26,9 @@ from .effects import (
     ScreenTransition,
     GlowEffect,
     ScreenShake,
-    ScanlineOverlay,
     CinematicPostFX,
 )
+from .presenter import Presenter
 from .audio import get_audio_manager
 from .dialogue import DialogueManager, DialogueEffect, create_clerk_dialogue, create_dj_dialogue, create_maya_dialogue
 from .backgrounds import get_room_background
@@ -48,7 +48,10 @@ class GameEngine:
 
     def __init__(self, base_path: str) -> None:
         pygame.init()
-        self.screen = pygame.display.set_mode(WINDOW_SIZE)
+        # The presenter owns the OS window; everything composes on the
+        # native 320x276 canvas and is integer-scaled once per frame.
+        self.presenter = Presenter()
+        self.screen = self.presenter.native
         pygame.display.set_caption("Neon Dead Quest: Minneapolis '82")
         self.clock = pygame.time.Clock()
 
@@ -74,17 +77,18 @@ class GameEngine:
         # Room surface
         self.room_surface = pygame.Surface((ROOM_WIDTH, ROOM_HEIGHT), pygame.SRCALPHA)
 
-        # UI components
-        self.verb_bar = VerbBar(WINDOW_SIZE[0], UI_BAR_HEIGHT)
-        self.message_box = MessageBox(WINDOW_SIZE[0], MESSAGE_HEIGHT)
-        self.message_box.rect.topleft = (0, WINDOW_SIZE[1] - MESSAGE_HEIGHT)
-        self.pause_menu = PauseMenu(WINDOW_SIZE[0], WINDOW_SIZE[1])
+        # UI components - all in native 320x276 coordinates.
+        native_size = Presenter.NATIVE_SIZE
+        self.verb_bar = VerbBar(native_size[0], UI_BAR_HEIGHT)
+        self.message_box = MessageBox(native_size[0], MESSAGE_HEIGHT)
+        self.message_box.rect.topleft = (0, native_size[1] - MESSAGE_HEIGHT)
+        self.pause_menu = PauseMenu(native_size[0], native_size[1])
 
         # Inventory
         self.inventory = Inventory()
         self.inventory_window = InventoryWindow(
             self.inventory,
-            pygame.Rect(40, UI_BAR_HEIGHT + 20, WINDOW_SIZE[0] - 80, 140),
+            pygame.Rect(16, UI_BAR_HEIGHT + 8, native_size[0] - 32, 140),
         )
 
         # Items catalog
@@ -99,8 +103,7 @@ class GameEngine:
         self.transition = ScreenTransition()
         self.glow = GlowEffect()
         self.screen_shake = ScreenShake()
-        self.scanlines = ScanlineOverlay(WINDOW_SIZE, intensity=0.08)
-        self.cinematic_postfx = CinematicPostFX(WINDOW_SIZE)
+        self.cinematic_postfx = CinematicPostFX(native_size)
         self.infection_visuals = InfectionVisualEffect()
 
         # Audio
@@ -110,7 +113,7 @@ class GameEngine:
         self.diegetic_audio = get_diegetic_audio()
 
         # Dialogue system
-        self.dialogue_manager = DialogueManager(WINDOW_SIZE[0], WINDOW_SIZE[1])
+        self.dialogue_manager = DialogueManager(native_size[0], native_size[1])
         self.dialogue_trees: Dict[str, object] = {
             "clerk": create_clerk_dialogue(),
             "dj": create_dj_dialogue(),
@@ -177,16 +180,34 @@ class GameEngine:
 
     def handle_events(self) -> None:
         """Handle all input events."""
-        # Update hover states
-        mouse_pos = pygame.mouse.get_pos()
-        self.verb_bar.update_hover(mouse_pos)
-        if self.inventory_window.visible:
-            self.inventory_window.update_hover(mouse_pos)
+        # Update hover states (native coordinates)
+        mouse_native = self.presenter.window_to_native(pygame.mouse.get_pos())
+        if mouse_native is not None:
+            self.verb_bar.update_hover(mouse_native)
+            if self.inventory_window.visible:
+                self.inventory_window.update_hover(mouse_native)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
                 continue
+
+            if event.type == pygame.VIDEORESIZE:
+                self.presenter.handle_resize(event.size)
+                continue
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                self.presenter.toggle_fullscreen()
+                continue
+
+            # Translate mouse events into native coordinates once, here;
+            # everything downstream works in 320x276 space. Clicks in the
+            # letterbox are dropped.
+            if hasattr(event, "pos"):
+                native_pos = self.presenter.window_to_native(event.pos)
+                if native_pos is None:
+                    continue
+                event.pos = native_pos
 
             # Handle based on current state
             if self.state == GameState.PAUSED:
@@ -975,8 +996,13 @@ class GameEngine:
         # Draw particles on room surface
         self.particles.draw(self.room_surface)
 
-        # Blit room to screen with shake offset
+        # Blit room to screen with shake offset, clipped to the room band
+        # so shake never smears over the verb bar or message strip.
+        shake_x = max(-4, min(4, shake_x))
+        shake_y = max(-4, min(4, shake_y))
+        self.screen.set_clip(pygame.Rect(0, UI_BAR_HEIGHT, ROOM_WIDTH, ROOM_HEIGHT))
         self.screen.blit(self.room_surface, (shake_x, UI_BAR_HEIGHT + shake_y))
+        self.screen.set_clip(None)
 
         # Apply infection visual effects to room surface
         if self.hero.get_infection_percentage() > 0:
@@ -1009,11 +1035,13 @@ class GameEngine:
         # Draw transition effect last
         self.transition.draw(self.screen)
 
-        # Cinematic grade and bloom pass
+        # Cinematic grade and bloom pass (native res; replaced by the
+        # ZQ-32 palette-remap grade once rooms migrate to painted assets)
         self.cinematic_postfx.draw(self.screen, self.hero.get_infection_percentage())
 
-        # Scanline overlay for retro feel
-        self.scanlines.draw(self.screen)
+        # One integer scale to the window; CRT scanlines are drawn
+        # post-scale by the presenter so line pitch matches the scale.
+        self.presenter.present()
 
     def _try_item_combination(self, item_name: str, hotspot: Hotspot) -> bool:
         """
