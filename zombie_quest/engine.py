@@ -29,7 +29,7 @@ from .effects import (
     ScreenTransition,
     GlowEffect,
     ScreenShake,
-    CinematicPostFX,
+    PaletteGrade,
 )
 from .presenter import Presenter
 from .audio import get_audio_manager
@@ -107,7 +107,7 @@ class GameEngine:
         self.transition = ScreenTransition()
         self.glow = GlowEffect()
         self.screen_shake = ScreenShake()
-        self.cinematic_postfx = CinematicPostFX(native_size)
+        self.palette_grade = PaletteGrade()
         self.infection_visuals = InfectionVisualEffect()
 
         # Audio
@@ -459,7 +459,7 @@ class GameEngine:
 
         # Update effects
         self.glow.update(dt)
-        self.cinematic_postfx.update(dt)
+        self.palette_grade.update(dt)
         self.particles.update(dt)
         self.transition.update(dt)
         shake_offset = self.screen_shake.update(dt)
@@ -1048,9 +1048,8 @@ class GameEngine:
         # Draw transition effect last
         self.transition.draw(self.screen)
 
-        # Cinematic grade and bloom pass (native res; replaced by the
-        # ZQ-32 palette-remap grade once rooms migrate to painted assets)
-        self.cinematic_postfx.draw(self.screen, self.hero.get_infection_percentage())
+        # Infection mood grading: ZQ-32 palette remap, zero new colors.
+        self.palette_grade.draw(self.screen, self.hero.get_infection_percentage())
 
         # One integer scale to the window; CRT scanlines are drawn
         # post-scale by the presenter so line pitch matches the scale.

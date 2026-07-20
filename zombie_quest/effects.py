@@ -392,6 +392,42 @@ class ScanlineOverlay:
         surface.blit(self.overlay, (0, 0))
 
 
+class PaletteGrade:
+    """Infection mood grading as a palette remap - zero new colors.
+
+    Precomputed ZQ32->ZQ32 LUT stages shift the world's ramps toward
+    sick-green and magenta as infection rises; applied in place on the
+    native canvas. The authentic VGA-era technique.
+    """
+
+    STAGES = (30.0, 60.0, 85.0)
+
+    def __init__(self) -> None:
+        from .palette import RAMPS, make_lut
+        night, sick = RAMPS["night"], RAMPS["sick"]
+        bone, magenta = RAMPS["bone"], RAMPS["neon_magenta"]
+        skin, brick = RAMPS["skin"], RAMPS["brick"]
+        stage1 = make_lut({bone[2]: sick[3], bone[1]: sick[2]})
+        stage2 = dict(stage1)
+        stage2.update(make_lut({skin[2]: sick[2], skin[3]: sick[3],
+                                night[3]: magenta[0], bone[3]: sick[3]}))
+        stage3 = dict(stage2)
+        stage3.update(make_lut({brick[2]: magenta[1], brick[1]: magenta[0],
+                                night[2]: magenta[0], skin[1]: sick[1]}))
+        self._luts = (stage1, stage2, stage3)
+
+    def draw(self, surface: pygame.Surface, infection: float = 0.0) -> None:
+        """Apply the grade for the current 0-100 infection level."""
+        stage = sum(1 for threshold in self.STAGES if infection >= threshold)
+        if stage == 0:
+            return
+        from .palette import apply_lut
+        apply_lut(surface, self._luts[stage - 1])
+
+    def update(self, dt: float) -> None:
+        pass
+
+
 class CinematicPostFX:
     """High-impact post processing pass for dramatic neon visuals."""
 
