@@ -139,6 +139,7 @@ class Room:
         else:
             self.background = create_placeholder_background(data.get("background_label", self.name), self.size)
         self.priority_mask = create_priority_mask(self.size, data.get("priority_regions", []))
+        self.emissive: Optional[pygame.Surface] = None  # authored neon/lamp layer
         self.walkable_mask = create_walkable_mask(self.size, data.get("walkable_zones", []))
         self.priority_overlay = extract_priority_overlay(self.background, self.priority_mask)
         self.pathfinder = GridPathfinder(self.walkable_mask)
@@ -185,6 +186,18 @@ class Room:
             alternate_access=bool(data.get("alternate_access", False)),
             alternate_access_to=data.get("alternate_access_to"),
         )
+
+    def set_background(self, background: pygame.Surface,
+                       priority_mask: Optional[pygame.Surface] = None) -> None:
+        """Swap the background and re-derive the walk-behind overlay from it.
+
+        The overlay must always be extracted from the surface actually drawn;
+        assigning .background directly leaves stale overlay pixels behind.
+        """
+        self.background = background
+        if priority_mask is not None:
+            self.priority_mask = priority_mask
+        self.priority_overlay = extract_priority_overlay(self.background, self.priority_mask)
 
     def update(self, dt: float, hero: Hero) -> None:
         hero_position = hero.foot_position

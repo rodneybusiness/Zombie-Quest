@@ -18,8 +18,11 @@ from typing import Dict, List, Optional, Tuple
 
 import pygame
 
+import os
+
 from .config import GAMEPLAY, ANIMATION
 from .pathfinding import GridPathfinder
+from .resources import load_character_set
 from .sprites import create_hero_animations, create_zombie_animations
 from .juice import SquashStretch
 
@@ -52,6 +55,48 @@ class AnimationState:
     frame_time: float = 0.0
 
 
+ASSETS_ROOT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
+
+
+class ScaledAnimationSet:
+    """Pre-scaled integer-size variants of an authored animation set.
+
+    Perspective scaling snaps to fixed steps (e.g. 16x32 -> 10x20..20x40)
+    so depth never produces fractional pixel sizes; variants are built
+    once at load, making draw a plain cached blit.
+    """
+
+    def __init__(self, animations: Dict[str, List[pygame.Surface]],
+                 steps: Tuple[float, ...]) -> None:
+        self.steps = steps
+        self.variants: List[Dict[str, List[pygame.Surface]]] = []
+        for step in steps:
+            per_direction: Dict[str, List[pygame.Surface]] = {}
+            for direction, frames in animations.items():
+                scaled_frames = []
+                for frame in frames:
+                    w = max(1, round(frame.get_width() * step))
+                    h = max(1, round(frame.get_height() * step))
+                    scaled_frames.append(pygame.transform.scale(frame, (w, h)))
+                per_direction[direction] = scaled_frames
+            self.variants.append(per_direction)
+
+    def step_for_scale(self, scale: float, last_index: Optional[int]) -> int:
+        """Nearest step index, with hysteresis so a character standing on
+        a band boundary doesn't flicker between sizes."""
+        nearest = min(range(len(self.steps)), key=lambda i: abs(self.steps[i] - scale))
+        if last_index is None or nearest == last_index:
+            return nearest
+        if abs(self.steps[last_index] - scale) - abs(self.steps[nearest] - scale) > 0.03:
+            return nearest
+        return last_index
+
+    def frame(self, step_index: int, direction: str, frame_index: int) -> pygame.Surface:
+        frames = self.variants[step_index][direction]
+        return frames[min(frame_index, len(frames) - 1)]
+
+
 class Character:
     """Base class for all characters with sprite animation."""
 
@@ -61,11 +106,19 @@ class Character:
         position: WorldPos,
         animations: Dict[Direction, List[pygame.Surface]],
         speed: float = 60.0,
+        scaled_set: Optional[ScaledAnimationSet] = None,
     ) -> None:
         self.name = name
         self.position = pygame.Vector2(position)
         self.speed = speed
         self.animations = animations
+        self.scaled_set = scaled_set
+        self._step_index: Optional[int] = None
+        # Authored sheets carry 6 walk frames + a neutral standing frame;
+        # procedural fallback sheets cycle everything and idle on frame 0.
+        frame_count = len(self.animations["down"])
+        self.walk_frame_count = 6 if frame_count >= 7 else frame_count
+        self.idle_frame = 6 if frame_count >= 7 else 0
         self.animation_state = AnimationState()
         self.current_frame: pygame.Surface = self.animations[self.animation_state.direction][0]
         self.idle = True
@@ -91,22 +144,37 @@ class Character:
             frame_duration = ANIMATION.FRAME_DURATION
             if self.animation_state.frame_time >= frame_duration:
                 self.animation_state.frame_time -= frame_duration
-                self.animation_state.frame_index = (self.animation_state.frame_index + 1) % len(frames)
+                self.animation_state.frame_index = (
+                    (self.animation_state.frame_index + 1) % self.walk_frame_count)
         else:
-            self.animation_state.frame_index = 0
+            self.animation_state.frame_index = self.idle_frame
             self.animation_state.frame_time = 0
 
         index = min(self.animation_state.frame_index, len(frames) - 1)
         self.current_frame = frames[index]
         self.idle = not moving
 
-    def draw(self, surface: pygame.Surface, room_height: int) -> pygame.Rect:
-        """Draw character with perspective scaling."""
-        frame = self.current_frame
+    def _perspective_frame(self, room_height: int) -> pygame.Surface:
+        """Current frame at the quantized perspective size for this depth."""
         scale = self.compute_scale(room_height)
+        if self.scaled_set is not None:
+            self._step_index = self.scaled_set.step_for_scale(scale, self._step_index)
+            return self.scaled_set.frame(
+                self._step_index,
+                self.animation_state.direction,
+                min(self.animation_state.frame_index,
+                    len(self.animations[self.animation_state.direction]) - 1),
+            )
+        # Procedural fallback: continuous scaling of the legacy frames.
+        frame = self.current_frame
         width = max(1, int(frame.get_width() * scale))
         height = max(1, int(frame.get_height() * scale))
-        scaled = pygame.transform.scale(frame, (width, height))
+        return pygame.transform.scale(frame, (width, height))
+
+    def draw(self, surface: pygame.Surface, room_height: int) -> pygame.Rect:
+        """Draw character anchored at the feet, with perspective scaling."""
+        scaled = self._perspective_frame(room_height)
+        width, height = scaled.get_size()
         draw_pos = (int(self.position.x - width // 2), int(self.position.y - height))
         surface.blit(scaled, draw_pos)
         return pygame.Rect(draw_pos, (width, height))
@@ -140,9 +208,16 @@ class Hero(Character):
     """The player character - an 80s punk rocker navigating the zombie-infested scene."""
 
     def __init__(self, position: WorldPos) -> None:
-        # Use detailed pixel art sprites
-        animations = create_hero_animations(scale=2.5)
-        super().__init__("Frontperson", position, animations, speed=GAMEPLAY.HERO_SPEED)
+        # Authored 16x32 sprites from assets/, procedural fallback.
+        charset = load_character_set(ASSETS_ROOT, "hero")
+        if charset is not None:
+            animations = charset.animations
+            scaled_set = ScaledAnimationSet(animations, charset.perspective_steps)
+        else:
+            animations = create_hero_animations(scale=2.5)
+            scaled_set = None
+        super().__init__("Frontperson", position, animations,
+                         speed=GAMEPLAY.HERO_SPEED, scaled_set=scaled_set)
 
         # Pathfinding
         self.path: List[pygame.Vector2] = []
@@ -405,50 +480,24 @@ class Hero(Character):
         self.footstep_callback = callback
 
     def draw(self, surface: pygame.Surface, room_height: int) -> pygame.Rect:
-        """Draw hero with AMPLIFIED invincibility visual and squash/stretch."""
-        # Update squash/stretch and get deformation
-        scale_x, scale_y = self.squash_stretch.update(1/60.0, self.current_velocity)
+        """Draw hero; invincibility reads as a classic sprite blink.
 
-        # Get base frame
-        frame = self.current_frame
-        scale = self.compute_scale(room_height)
-
-        # Apply squash/stretch deformation
-        width = max(1, int(frame.get_width() * scale * scale_x))
-        height = max(1, int(frame.get_height() * scale * scale_y))
-        scaled = pygame.transform.scale(frame, (width, height))
-
-        # AMPLIFIED INVINCIBILITY VISUAL: Color overlay instead of strobe
-        if self.is_invincible:
-            # Create glowing outline overlay
-            glow_intensity = abs((self.flash_timer * 4) % 1.0 - 0.5) * 2  # Smooth pulse
-
-            # Create cyan glow overlay
-            glow_surf = pygame.Surface((width + 8, height + 8), pygame.SRCALPHA)
-            alpha = int(180 * glow_intensity)
-
-            # Draw multiple glow layers for outline effect
-            for i in range(3):
-                offset = 2 + i * 2
-                glow_color = (100, 200, 255, alpha // (i + 1))
-                # Draw scaled sprite with glow tint
-                temp_surf = pygame.transform.scale(frame, (width + offset, height + offset))
-                temp_overlay = pygame.Surface((width + offset, height + offset), pygame.SRCALPHA)
-                temp_overlay.fill(glow_color)
-                temp_surf.blit(temp_overlay, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                glow_surf.blit(temp_surf, (4 - offset // 2, 4 - offset // 2))
-
-            # Draw main sprite on top of glow
-            glow_surf.blit(scaled, (4, 4))
-
-            draw_pos = (int(self.position.x - width // 2 - 4), int(self.position.y - height - 4))
-            surface.blit(glow_surf, draw_pos)
-            return pygame.Rect(draw_pos, (width + 8, height + 8))
-
-        # Normal drawing with squash/stretch
+        The blink skips the blit on alternating windows but still returns
+        the exact-bounds rect, which the walk-behind overlay clipping in
+        Room.draw depends on.
+        """
+        scaled = self._perspective_frame(room_height)
+        width, height = scaled.get_size()
         draw_pos = (int(self.position.x - width // 2), int(self.position.y - height))
+        rect = pygame.Rect(draw_pos, (width, height))
+
+        if self.is_invincible and int(self.flash_timer * 8) % 2 == 1:
+            self.flash_timer += 1 / 60.0
+            return rect
+        self.flash_timer += 1 / 60.0
+
         surface.blit(scaled, draw_pos)
-        return pygame.Rect(draw_pos, (width, height))
+        return rect
 
 
 class Zombie(Character):
@@ -459,9 +508,16 @@ class Zombie(Character):
     """
 
     def __init__(self, position: WorldPos, zombie_type: str = "scene") -> None:
-        # Use detailed pixel art sprites with type variation
-        animations = create_zombie_animations(zombie_type=zombie_type, scale=2.5)
-        super().__init__(f"{zombie_type.title()} Zombie", position, animations, speed=GAMEPLAY.ZOMBIE_SPEED)
+        # Authored 16x32 sprites from assets/, procedural fallback.
+        charset = load_character_set(ASSETS_ROOT, f"zombie_{zombie_type}")
+        if charset is not None:
+            animations = charset.animations
+            scaled_set = ScaledAnimationSet(animations, charset.perspective_steps)
+        else:
+            animations = create_zombie_animations(zombie_type=zombie_type, scale=2.5)
+            scaled_set = None
+        super().__init__(f"{zombie_type.title()} Zombie", position, animations,
+                         speed=GAMEPLAY.ZOMBIE_SPEED, scaled_set=scaled_set)
 
         self.zombie_type = zombie_type
         self.wander_timer: float = 0.0

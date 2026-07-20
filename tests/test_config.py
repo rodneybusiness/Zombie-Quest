@@ -11,9 +11,14 @@ class TestDisplayConfig:
         assert DISPLAY.ROOM_WIDTH == 320
         assert DISPLAY.ROOM_HEIGHT == 200
 
+    def test_native_dimensions(self):
+        # The 1x canvas the game composes on before integer scaling.
+        assert DISPLAY.NATIVE_WIDTH == 320
+        assert DISPLAY.NATIVE_HEIGHT == 276
+
     def test_window_dimensions(self):
-        assert DISPLAY.WINDOW_WIDTH == 320
-        assert DISPLAY.WINDOW_HEIGHT == 276
+        assert DISPLAY.WINDOW_WIDTH == DISPLAY.NATIVE_WIDTH * DISPLAY.SCALE_FACTOR
+        assert DISPLAY.WINDOW_HEIGHT == DISPLAY.NATIVE_HEIGHT * DISPLAY.SCALE_FACTOR
 
     def test_ui_dimensions(self):
         assert DISPLAY.UI_BAR_HEIGHT == 40

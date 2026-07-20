@@ -109,7 +109,8 @@ class MessageBox:
 
     def __init__(self, width: int, height: int) -> None:
         self.rect = pygame.Rect(0, 0, width, height)
-        self.font = load_serif_font(16)
+        self.font = load_serif_font(14)
+        self.max_lines = 2
         self.full_message = ""
         self.displayed_message = ""
         self.duration = ANIMATION.MESSAGE_DISPLAY_TIME
@@ -165,19 +166,53 @@ class MessageBox:
         inner_rect = pygame.Rect(2, 2, self.rect.width - 4, self.rect.height - 4)
         pygame.draw.rect(box_surface, (*COLORS.HOT_MAGENTA, 30), inner_rect, 1)
 
-        # Text
-        text_surface = self.font.render(self.displayed_message, True, COLORS.UI_TEXT)
-        text_rect = text_surface.get_rect(center=(self.rect.width // 2, self.rect.height // 2))
-        box_surface.blit(text_surface, text_rect)
+        # Text, word-wrapped to at most max_lines within the strip width.
+        lines = self._wrap(self.displayed_message, self.rect.width - 16)
+        line_height = self.font.get_linesize()
+        total_height = line_height * len(lines)
+        text_rect = None
+        for index, line in enumerate(lines):
+            text_surface = self.font.render(line, False, COLORS.UI_TEXT)
+            text_rect = text_surface.get_rect(
+                centerx=self.rect.width // 2,
+                top=(self.rect.height - total_height) // 2 + index * line_height,
+            )
+            box_surface.blit(text_surface, text_rect)
 
         # Typing indicator
-        if self.is_typing:
+        if self.is_typing and text_rect is not None:
             cursor_x = text_rect.right + 2
             if int(self.char_timer * 2) % 2 == 0:
                 pygame.draw.rect(box_surface, COLORS.UI_TEXT,
                                (min(cursor_x, self.rect.width - 10), text_rect.top, 2, text_rect.height))
 
         surface.blit(box_surface, self.rect)
+
+    def _wrap(self, text: str, max_width: int) -> List[str]:
+        """Greedy word-wrap into at most max_lines; the final line is
+        ellipsized if the text still doesn't fit."""
+        words = text.split()
+        if not words:
+            return []
+        lines: List[str] = []
+        current = words[0]
+        for word in words[1:]:
+            candidate = f"{current} {word}"
+            if self.font.size(candidate)[0] <= max_width:
+                current = candidate
+            else:
+                lines.append(current)
+                current = word
+                if len(lines) == self.max_lines:
+                    break
+        lines.append(current)
+        if len(lines) > self.max_lines:
+            lines = lines[:self.max_lines]
+            last = lines[-1]
+            while last and self.font.size(last + "...")[0] > max_width:
+                last = last[:-1]
+            lines[-1] = last + "..."
+        return lines
 
 
 class HealthDisplay:
@@ -285,7 +320,7 @@ class VerbBar:
 
             # Keyboard shortcut hint
             key_num = list(VERB_KEYS.keys())[list(VERB_KEYS.values()).index(verb)]
-            key_text = self.font.render(str(key_num - pygame.K_0), True, (200, 200, 220))
+            key_text = self.font.render(str(key_num - pygame.K_0), False, (200, 200, 220))
             surface.blit(key_text, (icon_rect.right - 8, icon_rect.bottom - 10))
 
         # Inventory and options
@@ -293,8 +328,8 @@ class VerbBar:
         surface.blit(self.options_icon, self.options_rect)
 
         # Labels
-        inv_label = self.font.render("I", True, (200, 200, 220))
-        opt_label = self.font.render("P", True, (200, 200, 220))
+        inv_label = self.font.render("I", False, (200, 200, 220))
+        opt_label = self.font.render("P", False, (200, 200, 220))
         surface.blit(inv_label, (self.inventory_rect.right - 8, self.inventory_rect.bottom - 10))
         surface.blit(opt_label, (self.options_rect.right - 8, self.options_rect.bottom - 10))
 
@@ -351,7 +386,7 @@ class VerbBar:
 
         # Label
         if infection_level > 5:
-            label = self.font.render("INFECTED", True, (180, 140, 200))
+            label = self.font.render("INFECTED", False, (180, 140, 200))
             label_x = meter_x + meter_width + 4
             surface.blit(label, (label_x, meter_y - 2))
 
@@ -463,7 +498,7 @@ class InventoryWindow:
         pygame.draw.rect(window, COLORS.UI_BORDER, window.get_rect(), 2, border_radius=8)
 
         # Title
-        title = self.title_font.render("INVENTORY", True, COLORS.HOT_MAGENTA)
+        title = self.title_font.render("INVENTORY", False, COLORS.HOT_MAGENTA)
         window.blit(title, (self.rect.width // 2 - title.get_width() // 2, 8))
 
         # Item grid
@@ -508,7 +543,7 @@ class InventoryWindow:
                 window.blit(hover, icon_rect)
 
             # Item name
-            name_surface = self.font.render(item.name, True, COLORS.UI_TEXT)
+            name_surface = self.font.render(item.name, False, COLORS.UI_TEXT)
             name_x = x + icon_size // 2 - name_surface.get_width() // 2
             window.blit(name_surface, (max(2, name_x), y + icon_size + 2))
 
@@ -525,11 +560,11 @@ class InventoryWindow:
 
         if display_item:
             desc_text = display_item.description[:50] + "..." if len(display_item.description) > 50 else display_item.description
-            desc = self.font.render(desc_text, True, (180, 180, 200))
+            desc = self.font.render(desc_text, False, (180, 180, 200))
             window.blit(desc, (padding, self.rect.height - 25))
 
         # Keyboard hints
-        hints = self.font.render("Arrows: Navigate | Enter: Select | I/Esc: Close", True, (120, 120, 140))
+        hints = self.font.render("Arrows: Navigate | Enter: Select | I/Esc: Close", False, (120, 120, 140))
         window.blit(hints, (self.rect.width // 2 - hints.get_width() // 2, self.rect.height - 12))
 
         surface.blit(window, self.rect)
@@ -609,13 +644,13 @@ class PauseMenu:
         pygame.draw.rect(surface, COLORS.UI_BORDER, (box_x, box_y, box_width, box_height), 2, border_radius=8)
 
         # Title
-        title = self.title_font.render("PAUSED", True, COLORS.HOT_MAGENTA)
+        title = self.title_font.render("PAUSED", False, COLORS.HOT_MAGENTA)
         surface.blit(title, (self.screen_width // 2 - title.get_width() // 2, box_y + 15))
 
         # Options
         for i, option in enumerate(self.options):
             color = COLORS.NEON_GOLD if i == self.selected_option else COLORS.UI_TEXT
-            text = self.option_font.render(option, True, color)
+            text = self.option_font.render(option, False, color)
             y = box_y + 55 + i * 30
             surface.blit(text, (self.screen_width // 2 - text.get_width() // 2, y))
 
@@ -626,3 +661,72 @@ class PauseMenu:
                     (box_x + 30, y + 3),
                     (box_x + 30, y + 13),
                 ])
+
+
+class EndingScreen:
+    """Full-screen ending card: dither-dimmed scene, wrapped story text.
+
+    ENTER quits, R restarts from checkpoint. MessageBox can't render the
+    multi-line ending prose, so endings route here instead.
+    """
+
+    def __init__(self, size) -> None:
+        from .dither import dim_overlay
+        self.size = size
+        self.dim = dim_overlay(size, coverage=0.75)
+        self.title_font = load_serif_font(22)
+        self.body_font = load_serif_font(14)
+        self.title = ""
+        self.lines = []
+        self.tone_line = ""
+        self.visible = False
+
+    def show(self, name: str, text: str, theme: str = "") -> None:
+        self.title = name.upper()
+        self.lines = self._wrap(text, self.size[0] - 48)
+        self.tone_line = theme
+        self.visible = True
+
+    def hide(self) -> None:
+        self.visible = False
+
+    def _wrap(self, text: str, max_width: int):
+        lines = []
+        for paragraph in text.split("\n"):
+            words = paragraph.split()
+            if not words:
+                lines.append("")
+                continue
+            current = words[0]
+            for word in words[1:]:
+                candidate = f"{current} {word}"
+                if self.body_font.size(candidate)[0] <= max_width:
+                    current = candidate
+                else:
+                    lines.append(current)
+                    current = word
+            lines.append(current)
+        return lines
+
+    def draw(self, surface: pygame.Surface) -> None:
+        if not self.visible:
+            return
+        surface.blit(self.dim, (0, 0))
+        center_x = self.size[0] // 2
+        y = 42
+        title_surface = self.title_font.render(self.title, False, COLORS.NEON_GOLD)
+        surface.blit(title_surface, (center_x - title_surface.get_width() // 2, y))
+        y += title_surface.get_height() + 12
+        for line in self.lines:
+            if line:
+                line_surface = self.body_font.render(line, False, COLORS.UI_TEXT)
+                surface.blit(line_surface, (center_x - line_surface.get_width() // 2, y))
+            y += self.body_font.get_linesize()
+        if self.tone_line:
+            y += 8
+            tone_surface = self.body_font.render(self.tone_line, False, COLORS.UI_BORDER)
+            surface.blit(tone_surface, (center_x - tone_surface.get_width() // 2, y))
+            y += tone_surface.get_height()
+        y += 16
+        prompt = self.body_font.render("ENTER - quit    R - back to checkpoint", False, COLORS.UI_TEXT)
+        surface.blit(prompt, (center_x - prompt.get_width() // 2, min(y, self.size[1] - 24)))

@@ -1,0 +1,43 @@
+{
+  "frame_size": [
+    16,
+    32
+  ],
+  "anchor": [
+    8,
+    31
+  ],
+  "directions": [
+    "down",
+    "up",
+    "left",
+    "right"
+  ],
+  "animations": {
+    "walk": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "fps": 9.0
+    },
+    "idle": {
+      "frames": [
+        6
+      ],
+      "fps": 1.0
+    }
+  },
+  "perspective_steps": [
+    0.625,
+    0.75,
+    0.875,
+    1.0,
+    1.125,
+    1.25
+  ]
+}

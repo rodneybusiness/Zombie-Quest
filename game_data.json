@@ -357,15 +357,15 @@
       "zombies": [
         {
           "position": [
-            100,
-            164
+            262,
+            168
           ],
           "type": "bouncer"
         },
         {
           "position": [
-            222,
-            160
+            176,
+            158
           ],
           "type": "scene"
         }
@@ -2486,5 +2486,79 @@
         }
       ]
     }
-  ]
+  ],
+  "protagonist": {
+    "selected_backstory": "purist",
+    "backstories": {
+      "purist": {
+        "flags": [
+          "backstory_purist"
+        ]
+      },
+      "sellout": {
+        "flags": [
+          "backstory_sellout"
+        ]
+      },
+      "burnout": {
+        "flags": [
+          "backstory_burnout"
+        ]
+      }
+    }
+  },
+  "endings": {
+    "redemption": {
+      "name": "One More Song",
+      "required_flags": [
+        "redemption_achieved"
+      ],
+      "forbidden_flags": [],
+      "text": "You take the stage together one last time. The zombies stop shambling and start swaying - somewhere under the rot, they remember the music. Maya's voice cuts through the feedback like it's 1980 again, and for three minutes the whole scene is alive.",
+      "thematic_message": "The song outlives the singer",
+      "emotional_tone": "triumphant cathartic"
+    },
+    "transcendence": {
+      "name": "What Eternity Sounds Like",
+      "required_flags": [
+        "transcendence_ending"
+      ],
+      "forbidden_flags": [],
+      "text": "Maya smiles with what's left of her face and steps into the crowd of dancers. They fold around her like a chord resolving. You leave First Avenue alone, but the music follows you out - it always will.",
+      "thematic_message": "Some encores never end",
+      "emotional_tone": "transcendent strange"
+    },
+    "bittersweet": {
+      "name": "The Last Show",
+      "required_flags": [
+        "bittersweet_ending"
+      ],
+      "forbidden_flags": [
+        "redemption_achieved"
+      ],
+      "text": "You play the set for both of you. The room is full of the dead and none of them dance, but you finish every song. When the amps go quiet, you understand: the scene didn't survive, but the show happened, and that has to be enough.",
+      "thematic_message": "The show goes on, and then it doesn't",
+      "emotional_tone": "bittersweet"
+    },
+    "alone": {
+      "name": "She Chose the Night",
+      "required_flags": [
+        "maya_lost"
+      ],
+      "forbidden_flags": [],
+      "text": "Maya turns away, back toward the throbbing dark of the club. You walk up Hennepin alone as the marquee gutters out behind you. Some people you cannot bring back; some don't want to come.",
+      "thematic_message": "You can't save everyone",
+      "emotional_tone": "hollow"
+    },
+    "hollow": {
+      "name": "Hollow Victory",
+      "required_flags": [
+        "hollow_victory_ending"
+      ],
+      "forbidden_flags": [],
+      "text": "You get out clean. Contract in hand, tape in pocket, alive. On the bus out of Minneapolis you realize you can't remember how any of Maya's songs went, and you suspect you never will.",
+      "thematic_message": "What you save isn't always worth what it costs",
+      "emotional_tone": "hollow"
+    }
+  }
 }

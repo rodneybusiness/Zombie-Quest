@@ -14,21 +14,24 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
+import os
+
 import pygame
 
 from .characters import Hero, ZombieSpawner, ZombieMusicState, ZombieAlertness
 from .config import DISPLAY, GAMEPLAY, COLORS, GameState
 from .data_loader import build_items, build_rooms, load_game_data
+from .resources import load_room_assets
 from .rooms import Hotspot, Room
-from .ui import Inventory, InventoryWindow, MessageBox, Verb, VerbBar, PauseMenu, VERB_KEYS
+from .ui import EndingScreen, Inventory, InventoryWindow, MessageBox, Verb, VerbBar, PauseMenu, VERB_KEYS
 from .effects import (
     ParticleSystem,
     ScreenTransition,
     GlowEffect,
     ScreenShake,
-    ScanlineOverlay,
-    CinematicPostFX,
+    PaletteGrade,
 )
+from .presenter import Presenter
 from .audio import get_audio_manager
 from .dialogue import DialogueManager, DialogueEffect, create_clerk_dialogue, create_dj_dialogue, create_maya_dialogue
 from .backgrounds import get_room_background
@@ -48,11 +51,15 @@ class GameEngine:
 
     def __init__(self, base_path: str) -> None:
         pygame.init()
-        self.screen = pygame.display.set_mode(WINDOW_SIZE)
+        # The presenter owns the OS window; everything composes on the
+        # native 320x276 canvas and is integer-scaled once per frame.
+        self.presenter = Presenter()
+        self.screen = self.presenter.native
         pygame.display.set_caption("Neon Dead Quest: Minneapolis '82")
         self.clock = pygame.time.Clock()
 
         # Load game data
+        self.base_path = base_path
         data = load_game_data(base_path)
         self.rooms = build_rooms(data.get("rooms", []))
         hero_data = data.get("hero", {})
@@ -68,21 +75,25 @@ class GameEngine:
         self.current_room: Room = self.rooms[start_room_id]
         hero_start = tuple(hero_data.get("position", (ROOM_WIDTH // 2, int(ROOM_HEIGHT * 0.8))))
         self.hero = Hero(hero_start)
+        self.hero.is_invincible = True
+        self.hero.invincibility_timer = GAMEPLAY.ROOM_ENTRY_GRACE_TIME
 
         # Room surface
         self.room_surface = pygame.Surface((ROOM_WIDTH, ROOM_HEIGHT), pygame.SRCALPHA)
 
-        # UI components
-        self.verb_bar = VerbBar(WINDOW_SIZE[0], UI_BAR_HEIGHT)
-        self.message_box = MessageBox(WINDOW_SIZE[0], MESSAGE_HEIGHT)
-        self.message_box.rect.topleft = (0, WINDOW_SIZE[1] - MESSAGE_HEIGHT)
-        self.pause_menu = PauseMenu(WINDOW_SIZE[0], WINDOW_SIZE[1])
+        # UI components - all in native 320x276 coordinates.
+        native_size = Presenter.NATIVE_SIZE
+        self.verb_bar = VerbBar(native_size[0], UI_BAR_HEIGHT)
+        self.message_box = MessageBox(native_size[0], MESSAGE_HEIGHT)
+        self.message_box.rect.topleft = (0, native_size[1] - MESSAGE_HEIGHT)
+        self.pause_menu = PauseMenu(native_size[0], native_size[1])
+        self.ending_screen = EndingScreen(native_size)
 
         # Inventory
         self.inventory = Inventory()
         self.inventory_window = InventoryWindow(
             self.inventory,
-            pygame.Rect(40, UI_BAR_HEIGHT + 20, WINDOW_SIZE[0] - 80, 140),
+            pygame.Rect(16, UI_BAR_HEIGHT + 8, native_size[0] - 32, 140),
         )
 
         # Items catalog
@@ -97,8 +108,7 @@ class GameEngine:
         self.transition = ScreenTransition()
         self.glow = GlowEffect()
         self.screen_shake = ScreenShake()
-        self.scanlines = ScanlineOverlay(WINDOW_SIZE, intensity=0.08)
-        self.cinematic_postfx = CinematicPostFX(WINDOW_SIZE)
+        self.palette_grade = PaletteGrade()
         self.infection_visuals = InfectionVisualEffect()
 
         # Audio
@@ -108,7 +118,11 @@ class GameEngine:
         self.diegetic_audio = get_diegetic_audio()
 
         # Dialogue system
-        self.dialogue_manager = DialogueManager(WINDOW_SIZE[0], WINDOW_SIZE[1])
+        self.dialogue_manager = DialogueManager(native_size[0], native_size[1])
+        # Node-entry effects (where the ending flags are set) must reach
+        # game_flags; without this callback they were silently dropped.
+        self.dialogue_manager.effect_callback = (
+            lambda effect, value: self._apply_dialogue_effects([(effect, value)]))
         self.dialogue_trees: Dict[str, object] = {
             "clerk": create_clerk_dialogue(),
             "dj": create_dj_dialogue(),
@@ -157,11 +171,20 @@ class GameEngine:
         self.diegetic_audio.set_room(start_room_id)
 
     def _generate_room_backgrounds(self) -> None:
-        """Generate detailed backgrounds for all rooms."""
+        """Load painted room art where it exists; fall back to the
+        procedural generators. Rooms migrate one at a time by dropping
+        bg.png (+ optional priority.png/emissive.png) into assets/rooms/<id>/.
+        """
+        assets_root = os.path.join(self.base_path, "assets")
         for room_id, room in self.rooms.items():
+            assets = load_room_assets(assets_root, room_id, room.size)
+            if assets:
+                room.set_background(assets.background, assets.priority_mask)
+                room.emissive = assets.emissive
+                continue
             bg = get_room_background(room_id, room.size)
             if bg:
-                room.background = bg
+                room.set_background(bg)
 
     def run(self) -> None:
         """Main game loop."""
@@ -175,19 +198,46 @@ class GameEngine:
 
     def handle_events(self) -> None:
         """Handle all input events."""
-        # Update hover states
-        mouse_pos = pygame.mouse.get_pos()
-        self.verb_bar.update_hover(mouse_pos)
-        if self.inventory_window.visible:
-            self.inventory_window.update_hover(mouse_pos)
+        # Update hover states (native coordinates)
+        mouse_native = self.presenter.window_to_native(pygame.mouse.get_pos())
+        if mouse_native is not None:
+            self.verb_bar.update_hover(mouse_native)
+            if self.inventory_window.visible:
+                self.inventory_window.update_hover(mouse_native)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
                 continue
 
+            if event.type == pygame.VIDEORESIZE:
+                self.presenter.handle_resize(event.size)
+                continue
+
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                self.presenter.toggle_fullscreen()
+                continue
+
+            # Translate mouse events into native coordinates once, here;
+            # everything downstream works in 320x276 space. Clicks in the
+            # letterbox are dropped.
+            if hasattr(event, "pos"):
+                native_pos = self.presenter.window_to_native(event.pos)
+                if native_pos is None:
+                    continue
+                event.pos = native_pos
+
             # Handle based on current state
-            if self.state == GameState.PAUSED:
+            if self.state == GameState.GAME_OVER:
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_ESCAPE):
+                        self.running = False
+                    elif event.key == pygame.K_r:
+                        self.ending_screen.hide()
+                        self.game_flags = {flag: value for flag, value in self.game_flags.items()
+                                           if not flag.endswith("_ending") and flag != "maya_lost"}
+                        self._respawn_at_checkpoint()
+            elif self.state == GameState.PAUSED:
                 self._handle_pause_event(event)
             elif self.dialogue_manager.active:
                 self._handle_dialogue_event(event)
@@ -227,6 +277,16 @@ class GameEngine:
         )
         if effects:
             self._apply_dialogue_effects(effects)
+
+        # A conversation can conclude the story: check endings when the
+        # dialogue closes (terminal Maya nodes set the deciding flags).
+        if not self.dialogue_manager.active:
+            if self.state == GameState.DIALOGUE:
+                self.state = GameState.PLAYING
+            if self.state == GameState.PLAYING:
+                ending_id = self.check_ending_conditions()
+                if ending_id:
+                    self.trigger_ending(ending_id)
 
     def _apply_dialogue_effects(self, effects: List[Tuple[DialogueEffect, str]]) -> None:
         """Apply effects from dialogue choices."""
@@ -415,6 +475,8 @@ class GameEngine:
 
     def update(self, dt: float) -> None:
         """Update game state."""
+        if self.state == GameState.GAME_OVER:
+            return
         # Update audio (music layers, etc.)
         self.audio.update_music(dt)
 
@@ -423,7 +485,7 @@ class GameEngine:
 
         # Update effects
         self.glow.update(dt)
-        self.cinematic_postfx.update(dt)
+        self.palette_grade.update(dt)
         self.particles.update(dt)
         self.transition.update(dt)
         shake_offset = self.screen_shake.update(dt)
@@ -620,6 +682,11 @@ class GameEngine:
 
     def _damage_hero(self, amount: int) -> None:
         """Apply damage to hero."""
+        # Invincibility frames gate infection as well as health; without this,
+        # a zombie standing on the hero stacks INFECTION_PER_HIT every frame.
+        if self.hero.is_invincible:
+            return
+
         # Add infection on zombie hit
         transformed = self.hero.add_infection(GAMEPLAY.INFECTION_PER_HIT)
 
@@ -938,6 +1005,11 @@ class GameEngine:
         self.hero.using_keyboard = False
         self.pending_interaction = None
 
+        # Entry grace period: the player gets a beat to read the room before
+        # nearby zombies can land a hit.
+        self.hero.is_invincible = True
+        self.hero.invincibility_timer = GAMEPLAY.ROOM_ENTRY_GRACE_TIME
+
         # Trigger room ambience change
         if self.audio.event_system:
             self.audio.event_system.trigger('room_enter', {'room_id': room_id})
@@ -952,8 +1024,7 @@ class GameEngine:
 
     def draw(self) -> None:
         """Render the game."""
-        # Get shake offset
-        shake_x, shake_y = self.screen_shake.update(0)
+        shake_x, shake_y = self.screen_shake.offset
 
         # Clear screen
         self.screen.fill((0, 0, 0))
@@ -964,8 +1035,13 @@ class GameEngine:
         # Draw particles on room surface
         self.particles.draw(self.room_surface)
 
-        # Blit room to screen with shake offset
+        # Blit room to screen with shake offset, clipped to the room band
+        # so shake never smears over the verb bar or message strip.
+        shake_x = max(-4, min(4, shake_x))
+        shake_y = max(-4, min(4, shake_y))
+        self.screen.set_clip(pygame.Rect(0, UI_BAR_HEIGHT, ROOM_WIDTH, ROOM_HEIGHT))
         self.screen.blit(self.room_surface, (shake_x, UI_BAR_HEIGHT + shake_y))
+        self.screen.set_clip(None)
 
         # Apply infection visual effects to room surface
         if self.hero.get_infection_percentage() > 0:
@@ -995,14 +1071,18 @@ class GameEngine:
         if self.state == GameState.PAUSED:
             self.pause_menu.draw(self.screen)
 
+        # Ending card over the frozen scene
+        self.ending_screen.draw(self.screen)
+
         # Draw transition effect last
         self.transition.draw(self.screen)
 
-        # Cinematic grade and bloom pass
-        self.cinematic_postfx.draw(self.screen, self.hero.get_infection_percentage())
+        # Infection mood grading: ZQ-32 palette remap, zero new colors.
+        self.palette_grade.draw(self.screen, self.hero.get_infection_percentage())
 
-        # Scanline overlay for retro feel
-        self.scanlines.draw(self.screen)
+        # One integer scale to the window; CRT scanlines are drawn
+        # post-scale by the presenter so line pitch matches the scale.
+        self.presenter.present()
 
     def _try_item_combination(self, item_name: str, hotspot: Hotspot) -> bool:
         """
@@ -1097,12 +1177,7 @@ class GameEngine:
         ending_text = ending_data.get("text", "The story ends here.")
         ending_theme = ending_data.get("thematic_message", "")
 
-        # Create a comprehensive ending message
-        full_ending = f"=== {ending_name.upper()} ===\n\n{ending_text}"
-        if ending_theme:
-            full_ending += f"\n\n--- {ending_theme} ---"
-
-        self.message_box.show(full_ending)
+        self.ending_screen.show(ending_name, ending_text, ending_theme)
 
         # Play appropriate ending sound
         emotional_tone = ending_data.get("emotional_tone", "")
@@ -1121,7 +1196,11 @@ class GameEngine:
     def _trigger_infection_ending(self) -> None:
         """Trigger the transformation ending due to full infection."""
         self.state = GameState.GAME_OVER
-        self.message_box.show("=== TRANSFORMATION ===\n\nThe infection consumes you. Your humanity fades as you join the neon dead, shambling through the Minneapolis night forever.\n\n--- Sometimes the scene claims us all ---")
+        self.ending_screen.show(
+            "Transformation",
+            "The infection consumes you. Your humanity fades as you join the "
+            "neon dead, shambling through the Minneapolis night forever.",
+            "Sometimes the scene claims us all")
         self.audio.play("death", volume=0.8)
         self.glow.pulse(COLORS.INFECTION_VEIN, 3.0)
 
@@ -1143,11 +1222,10 @@ class GameEngine:
             announce=True
         )
 
-        # Restore hero state
+        # Restore hero state; change_room already granted the entry grace
+        # period, which a fresh respawn needs most of all.
         self.hero.health = GAMEPLAY.HERO_MAX_HEALTH
         self.hero.infection = GAMEPLAY.CHECKPOINT_INFECTION_RESTORE
-        self.hero.is_invincible = False
-        self.hero.invincibility_timer = 0.0
 
         # Clear paths
         self.hero.path = []

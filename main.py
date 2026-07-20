@@ -3,11 +3,34 @@ from __future__ import annotations
 import os
 import sys
 
+import pygame
+
 from zombie_quest.engine import GameEngine
 from zombie_quest.config import GameState
 
 
-def run_headless_validation(engine: GameEngine, verbose: bool = False) -> None:
+def dump_room_screenshots(engine: GameEngine, out_dir: str) -> None:
+    """Render every room through the full draw path and save a frame each.
+
+    Infection is zeroed so review artifacts show the rooms rather than the
+    high-infection blackout overlays (those branches are already exercised
+    by the forced-infection frame in the validation loop).
+    """
+    os.makedirs(out_dir, exist_ok=True)
+    engine.hero.infection = 0.0
+    engine.hero.health = engine.hero.max_health
+    for room_id in engine.rooms:
+        engine.change_room(room_id, announce=False)
+        for _ in range(5):
+            engine.update(1 / 60)
+            engine.hero.infection = 0.0
+        engine.draw()
+        pygame.image.save(engine.screen, os.path.join(out_dir, f"{room_id}.png"))
+    print(f"Saved {len(engine.rooms)} room screenshots to {out_dir}")
+
+
+def run_headless_validation(engine: GameEngine, verbose: bool = False,
+                            screenshot_dir: str | None = None) -> None:
     """Run comprehensive headless validation with assertions.
 
     This mode runs 100+ frames and validates:
@@ -15,7 +38,7 @@ def run_headless_validation(engine: GameEngine, verbose: bool = False) -> None:
     - Zombie AI updates
     - Particle system bounds
     - State machine validity
-    - No crashes during normal gameplay
+    - No crashes during normal gameplay or rendering (draw runs every frame)
     """
     print("Starting headless validation (100+ frames)...")
 
@@ -33,6 +56,16 @@ def run_headless_validation(engine: GameEngine, verbose: bool = False) -> None:
     for frame in range(frame_count):
         # Update game
         engine.update(dt)
+
+        # Exercise infection-driven render paths (veins, vignette, post-fx)
+        # partway through the run; rendering bugs in those branches otherwise
+        # only surface after a zombie hit in live play.
+        if frame == 60:
+            engine.hero.add_infection(55.0)
+
+        # Render every frame - a draw crash must fail validation.
+        engine.draw()
+        pygame.display.flip()
 
         # Periodic validations
         if frame % 20 == 0:
@@ -113,6 +146,9 @@ def run_headless_validation(engine: GameEngine, verbose: bool = False) -> None:
     print(f"Active particles: {len(engine.particles.particles)}")
     print(f"Zombies in room: {len(engine.current_room.zombies)}")
 
+    if screenshot_dir:
+        dump_room_screenshots(engine, screenshot_dir)
+
     if validations_passed == validations_total:
         print("\n✓ All validations passed successfully!")
     else:
@@ -132,7 +168,12 @@ def main() -> None:
     if "--headless" in sys.argv:
         # Enhanced headless mode with comprehensive validation
         verbose = "--verbose" in sys.argv or "-v" in sys.argv
-        run_headless_validation(engine, verbose=verbose)
+        screenshot_dir = None
+        if "--screenshot-dir" in sys.argv:
+            flag_index = sys.argv.index("--screenshot-dir")
+            if flag_index + 1 < len(sys.argv):
+                screenshot_dir = sys.argv[flag_index + 1]
+        run_headless_validation(engine, verbose=verbose, screenshot_dir=screenshot_dir)
         return
 
     engine.run()
