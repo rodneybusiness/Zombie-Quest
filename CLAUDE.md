@@ -1,6 +1,6 @@
 # Zombie Quest
 
-1982 LA Sunset Strip adventure game. Solve puzzles, survive zombies, explore multiple endings. Uses procedurally generated sprites and audio—no external assets.
+1982 Minneapolis adventure game (Hennepin Ave, First Avenue club). Solve puzzles, survive zombies, explore multiple endings. Sprites and audio are currently procedurally generated; the art pipeline is migrating to checked-in PNG assets under `assets/` (no runtime downloads).
 
 ## Commands
 
@@ -52,7 +52,6 @@ zombie_quest/
 │   ├── config.py           # Frozen dataclasses (speeds, colors, timings)
 │   ├── rooms.py            # Room, Hotspot classes
 │   ├── characters.py       # Hero, Zombie, spawner
-│   ├── characters_enhanced.py  # Enhanced movement (Hero alias)
 │   ├── pathfinding.py      # A* grid navigation
 │   ├── data_loader.py      # JSON parsing
 │   └── resources.py        # Asset loading utilities
@@ -69,34 +68,25 @@ zombie_quest/
 │
 ├── VISUALS
 │   ├── sprites.py          # Procedural sprite generation
-│   ├── sprite_cache.py     # LRU cache for sprites
 │   ├── sprite_config.py    # Character definitions
-│   ├── backgrounds.py      # Procedural room backgrounds
-│   ├── parallax_backgrounds.py # Layered scrolling
-│   ├── neon_lighting.py    # Additive glow lights
-│   ├── shadow_renderer.py  # Drop shadows
-│   ├── crt_shader.py       # Scanlines, barrel distortion, bloom
+│   ├── backgrounds.py      # Procedural room backgrounds (being replaced by assets/)
+│   ├── neon_lighting.py    # Additive glow lights (not yet wired into engine)
 │   └── ui.py               # VerbBar, MessageBox, menus
 │
 ├── EFFECTS
-│   ├── effects.py          # Particles, transitions, screen shake
+│   ├── effects.py          # Particles, transitions, screen shake, post-fx
 │   ├── juice.py            # Hitstop, knockback, infection visuals
-│   ├── feedback_juice.py   # Camera trauma, squash/stretch
-│   ├── idle_animation.py   # Idle poses
-│   └── eight_direction.py  # 8-dir sprite support
+│   ├── idle_animation.py   # Idle poses (not yet wired into engine)
+│   └── eight_direction.py  # 8-dir sprite support (not yet wired into engine)
 │
 ├── AUDIO
 │   ├── audio.py            # Procedural synth, music layers, SFX
 │   ├── diegetic_audio.py   # In-world music sources (affect zombies)
 │   └── movement.py         # Movement sound triggers
 │
-├── UX
-│   ├── accessibility.py    # Colorblind, font size, screen shake toggle
-│   ├── hotspot_highlight.py # Interactive object highlighting
-│   └── radial_menu.py      # Radial verb selection
-│
-└── DEMO
-    └── visual_demo.py      # Visual system showcase
+└── UX
+    ├── accessibility.py    # Colorblind, font size, screen shake toggle
+    └── hotspot_highlight.py # Interactive object highlighting
 ```
 
 ## Key Data Files
@@ -171,13 +161,13 @@ All magic numbers in `config.py` frozen dataclasses:
 
 2. **String-Based Flags** - `game_flags` dict uses string keys. Typos won't error—flags just won't match. Check existing flags in `dialogue.py` and `engine.py`.
 
-3. **Enhanced Character Alias** - `characters.py` imports `EnhancedHero` as `Hero`. The enhanced version lives in `characters_enhanced.py`.
+3. **Background Ownership** - Never assign `room.background` directly; use `Room.set_background()` so the walk-behind priority overlay is re-derived from the surface actually drawn.
 
-4. **Legacy Monoliths** - `zombie_quest.py` and `zombie_quest_fixed.py` are deprecated. Use `zombie_quest/` module.
+4. **Legacy Monoliths** - `zombie_quest.py` and `zombie_quest_fixed.py` are deprecated. Use `zombie_quest/` module. Exclude them from refactor sweeps.
 
 5. **No JSON Validation** - `game_data.json` is trusted. Malformed data may cause cryptic errors.
 
-6. **Headless Limitations** - `--headless` mode validates game logic but not rendering. Uses SDL dummy drivers.
+6. **Headless Rendering** - `--headless` calls `engine.draw()` every frame under SDL dummy drivers (rendering crashes fail CI) and `--screenshot-dir DIR` dumps a frame per room for visual review.
 
 7. **Test Mocking** - Tests heavily mock pygame. Some integration tests run 200+ frames but don't test actual rendering.
 
