@@ -466,8 +466,8 @@ class TestDialogueIntegration:
 class TestCombatIntegration:
     """Test combat mechanics integration."""
 
-    def test_hero_death_triggers_game_over(self, integration_engine):
-        """Hero death transitions to game over state."""
+    def test_hero_death_respawns_at_checkpoint(self, integration_engine):
+        """Hero death is fail-forward: respawn at checkpoint, keep playing."""
         engine = integration_engine
 
         # Set hero to low health
@@ -477,8 +477,11 @@ class TestCombatIntegration:
         # Deal fatal damage
         engine._damage_hero(1)
 
-        assert engine.state == GameState.GAME_OVER
-        assert engine.hero.is_dead()
+        assert engine.state == GameState.PLAYING
+        assert not engine.hero.is_dead()
+        assert engine.current_room.id == engine.checkpoint_room
+        # Respawn arrives with the room-entry grace window active.
+        assert engine.hero.is_invincible
 
     def test_invincibility_frames_prevent_damage(self, integration_engine):
         """Invincibility frames prevent rapid damage."""

@@ -17,12 +17,26 @@ class DisplayConfig:
     SCALE_FACTOR: int = 3  # For modern displays
 
     @property
+    def NATIVE_WIDTH(self) -> int:
+        """Width of the internal 1x canvas everything is composed on."""
+        return self.ROOM_WIDTH
+
+    @property
+    def NATIVE_HEIGHT(self) -> int:
+        """Height of the internal 1x canvas: room + verb bar + message strip."""
+        return self.ROOM_HEIGHT + self.UI_BAR_HEIGHT + self.MESSAGE_HEIGHT
+
+    @property
+    def NATIVE_SIZE(self) -> Tuple[int, int]:
+        return (self.NATIVE_WIDTH, self.NATIVE_HEIGHT)
+
+    @property
     def WINDOW_WIDTH(self) -> int:
-        return self.ROOM_WIDTH * self.SCALE_FACTOR
+        return self.NATIVE_WIDTH * self.SCALE_FACTOR
 
     @property
     def WINDOW_HEIGHT(self) -> int:
-        return (self.ROOM_HEIGHT + self.UI_BAR_HEIGHT + self.MESSAGE_HEIGHT) * self.SCALE_FACTOR
+        return self.NATIVE_HEIGHT * self.SCALE_FACTOR
 
     @property
     def WINDOW_SIZE(self) -> Tuple[int, int]:

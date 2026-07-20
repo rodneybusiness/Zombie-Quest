@@ -208,15 +208,17 @@ class TestStateTransitions:
         assert engine.state == GameState.PLAYING
         assert engine.pause_menu.visible is False
 
-    def test_game_over_on_death(self, engine):
-        """State transitions to GAME_OVER when hero dies."""
+    def test_death_respawns_at_checkpoint(self, engine):
+        """Death is fail-forward: hero respawns at checkpoint, play continues."""
         engine.hero.health = 1
         engine.hero.is_invincible = False
 
         engine._damage_hero(1)
 
-        assert engine.state == GameState.GAME_OVER
-        assert engine.hero.is_dead()
+        assert engine.state == GameState.PLAYING
+        assert not engine.hero.is_dead()
+        assert engine.hero.health == engine.hero.max_health
+        assert engine.current_room.id == engine.checkpoint_room
 
     def test_pause_key_toggles_state(self, engine):
         """P key toggles pause state."""
@@ -588,14 +590,15 @@ class TestDamageAndHealing:
 
         mock_audio.play.assert_called_with('hit')
 
-    def test_fatal_damage_triggers_game_over(self, engine):
-        """Fatal damage transitions to game over."""
+    def test_fatal_damage_triggers_respawn(self, engine):
+        """Fatal damage respawns at checkpoint with restored health."""
         engine.hero.health = 1
         engine.hero.is_invincible = False
 
         engine._damage_hero(1)
 
-        assert engine.state == GameState.GAME_OVER
+        assert engine.state == GameState.PLAYING
+        assert engine.hero.health == engine.hero.max_health
 
     def test_fatal_damage_plays_error_sound(self, engine):
         """Fatal damage triggers error sound through audio system."""

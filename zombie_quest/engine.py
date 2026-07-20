@@ -1154,11 +1154,10 @@ class GameEngine:
             announce=True
         )
 
-        # Restore hero state
+        # Restore hero state; change_room already granted the entry grace
+        # period, which a fresh respawn needs most of all.
         self.hero.health = GAMEPLAY.HERO_MAX_HEALTH
         self.hero.infection = GAMEPLAY.CHECKPOINT_INFECTION_RESTORE
-        self.hero.is_invincible = False
-        self.hero.invincibility_timer = 0.0
 
         # Clear paths
         self.hero.path = []
