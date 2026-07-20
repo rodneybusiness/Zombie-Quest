@@ -357,15 +357,15 @@
       "zombies": [
         {
           "position": [
-            100,
-            164
+            262,
+            168
           ],
           "type": "bouncer"
         },
         {
           "position": [
-            222,
-            160
+            176,
+            158
           ],
           "type": "scene"
         }

@@ -68,6 +68,8 @@ class GameEngine:
         self.current_room: Room = self.rooms[start_room_id]
         hero_start = tuple(hero_data.get("position", (ROOM_WIDTH // 2, int(ROOM_HEIGHT * 0.8))))
         self.hero = Hero(hero_start)
+        self.hero.is_invincible = True
+        self.hero.invincibility_timer = GAMEPLAY.ROOM_ENTRY_GRACE_TIME
 
         # Room surface
         self.room_surface = pygame.Surface((ROOM_WIDTH, ROOM_HEIGHT), pygame.SRCALPHA)
@@ -620,6 +622,11 @@ class GameEngine:
 
     def _damage_hero(self, amount: int) -> None:
         """Apply damage to hero."""
+        # Invincibility frames gate infection as well as health; without this,
+        # a zombie standing on the hero stacks INFECTION_PER_HIT every frame.
+        if self.hero.is_invincible:
+            return
+
         # Add infection on zombie hit
         transformed = self.hero.add_infection(GAMEPLAY.INFECTION_PER_HIT)
 
@@ -937,6 +944,11 @@ class GameEngine:
         self.hero.current_target = None
         self.hero.using_keyboard = False
         self.pending_interaction = None
+
+        # Entry grace period: the player gets a beat to read the room before
+        # nearby zombies can land a hit.
+        self.hero.is_invincible = True
+        self.hero.invincibility_timer = GAMEPLAY.ROOM_ENTRY_GRACE_TIME
 
         # Trigger room ambience change
         if self.audio.event_system:

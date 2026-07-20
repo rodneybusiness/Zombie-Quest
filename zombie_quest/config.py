@@ -39,6 +39,7 @@ class GameplayConfig:
     ZOMBIE_DAMAGE: int = 1
     HERO_MAX_HEALTH: int = 3
     HERO_INVINCIBILITY_TIME: float = 1.5  # After taking damage
+    ROOM_ENTRY_GRACE_TIME: float = 2.0  # No-hit window after entering a room
     ARRIVAL_TOLERANCE: float = 2.0
 
     # Infection system
