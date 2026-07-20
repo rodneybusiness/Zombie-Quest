@@ -2,7 +2,7 @@
 
 ![Zombie Quest Banner](https://via.placeholder.com/800x200/1E0A3C/FF69B4?text=Zombie+Quest:+Neon+Dead)
 
-A retro point-and-click adventure game set in 1982 Minneapolis during a zombie apocalypse on the Sunset Strip. Navigate the legendary music venues of Hennepin Avenue, solve puzzles, and use the power of music to pacify the undead while uncovering the truth behind the outbreak.
+A retro point-and-click adventure game set in 1982 Minneapolis during a zombie apocalypse. Navigate the legendary music venues of Hennepin Avenue, solve puzzles, and use the power of music to pacify the undead while uncovering the truth behind the outbreak.
 
 ## Features
 
@@ -12,7 +12,7 @@ A retro point-and-click adventure game set in 1982 Minneapolis during a zombie a
 - **Multiple Endings**: Your backstory and choices determine how the story concludes
 - **Point-and-Click & WASD**: Full keyboard and mouse support
 - **Procedural Audio**: Synthesized sound effects and dynamic music layers
-- **Retro Aesthetic**: CRT scanlines, neon lighting, and 80s visual effects
+- **Sierra-Style Art**: Hand-authored 320x200 scenes and 16x32 sprite walk cycles on a locked 32-color palette (ZQ-32), integer-scaled with CRT scanlines
 - **Save System**: Save and load your progress
 - **Accessibility Features**: Keyboard navigation, visual feedback, and customizable controls
 
@@ -20,8 +20,8 @@ A retro point-and-click adventure game set in 1982 Minneapolis during a zombie a
 
 ### Prerequisites
 
-- Python 3.7 or higher
-- Pygame 2.0+
+- Python 3.9 or higher
+- Pygame 2.5+
 
 ### Quick Start
 
