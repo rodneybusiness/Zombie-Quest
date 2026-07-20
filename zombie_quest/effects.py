@@ -352,6 +352,7 @@ class ScreenShake:
         self.intensity = 0.0
         self.duration = 0.0
         self.time = 0.0
+        self.offset: Tuple[int, int] = (0, 0)
 
     def shake(self, intensity: float = 5.0, duration: float = 0.3) -> None:
         """Trigger a screen shake."""
@@ -360,9 +361,10 @@ class ScreenShake:
         self.time = 0.0
 
     def update(self, dt: float) -> Tuple[int, int]:
-        """Update and return offset to apply."""
+        """Advance the shake once per frame; draw code reads .offset."""
         if self.time >= self.duration:
-            return (0, 0)
+            self.offset = (0, 0)
+            return self.offset
 
         self.time += dt
         remaining = 1.0 - (self.time / self.duration)
@@ -371,7 +373,8 @@ class ScreenShake:
         offset_x = int(random.uniform(-current_intensity, current_intensity))
         offset_y = int(random.uniform(-current_intensity, current_intensity))
 
-        return (offset_x, offset_y)
+        self.offset = (offset_x, offset_y)
+        return self.offset
 
 
 class ScanlineOverlay:
@@ -401,7 +404,11 @@ class CinematicPostFX:
         self.time += dt
 
     def draw(self, surface: pygame.Surface, infection: float = 0.0) -> None:
-        """Apply bloom, color grade, and subtle chromatic split."""
+        """Apply bloom, color grade, and subtle chromatic split.
+
+        `infection` is the hero's 0-100 percentage; normalized to 0-1 here.
+        """
+        infection = max(0.0, min(1.0, infection / 100.0))
         self._draw_bloom(surface, infection)
         self._draw_grade(surface, infection)
         self._draw_chromatic_split(surface, infection)
@@ -412,7 +419,7 @@ class CinematicPostFX:
         quarter = pygame.transform.smoothscale(surface, (max(1, w // 4), max(1, h // 4)))
         bloom = pygame.transform.smoothscale(quarter, (w, h))
 
-        bloom_strength = 70 + int(55 * infection)
+        bloom_strength = min(255, 70 + int(55 * infection))
         bloom_overlay = pygame.Surface((w, h), pygame.SRCALPHA)
         bloom_overlay.blit(bloom, (0, 0))
         bloom_overlay.fill((255, 235, 255, bloom_strength), special_flags=pygame.BLEND_RGBA_MULT)
@@ -428,7 +435,7 @@ class CinematicPostFX:
         magenta = int(30 * pulse)
 
         # Slightly bias toward red as infection rises.
-        red_push = int(40 * infection)
+        red_push = min(235, int(40 * infection))
         grade.fill((20 + red_push, cyan, magenta, 24 + int(20 * pulse)))
         surface.blit(grade, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 

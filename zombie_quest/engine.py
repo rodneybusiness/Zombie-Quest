@@ -952,8 +952,7 @@ class GameEngine:
 
     def draw(self) -> None:
         """Render the game."""
-        # Get shake offset
-        shake_x, shake_y = self.screen_shake.update(0)
+        shake_x, shake_y = self.screen_shake.offset
 
         # Clear screen
         self.screen.fill((0, 0, 0))
