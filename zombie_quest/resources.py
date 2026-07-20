@@ -182,14 +182,19 @@ def create_ui_icon(label: str, size: Tuple[int, int], color: Color) -> pygame.Su
     return create_placeholder_surface(size, color, label, border_color=(20, 20, 20), text_color=(250, 250, 250))
 
 
-def extract_priority_overlay(background: pygame.Surface, mask: pygame.Surface) -> pygame.Surface:
-    width, height = background.get_size()
-    overlay = pygame.Surface((width, height), pygame.SRCALPHA)
-    white = DEFAULT_PRIORITY_WHITE
-    for y in range(height):
-        for x in range(width):
-            if mask.get_at((x, y))[:3] == white:
-                overlay.set_at((x, y), background.get_at((x, y)))
-            else:
-                overlay.set_at((x, y), (0, 0, 0, 0))
-    return overlay
+def build_priority_overlay(background: pygame.Surface, mask: pygame.Surface) -> pygame.Surface:
+    """Copy background pixels where the priority mask is (near-)white.
+
+    Threshold matches Room.is_behind (channels > 200) rather than exact white,
+    and runs through pygame.mask at C speed instead of per-pixel Python.
+    """
+    bitmask = pygame.mask.from_threshold(mask, (255, 255, 255), (60, 60, 60))
+    size = background.get_size()
+    source = pygame.Surface(size, pygame.SRCALPHA, 32)
+    source.blit(background, (0, 0))
+    destination = pygame.Surface(size, pygame.SRCALPHA, 32)
+    return bitmask.to_surface(surface=destination, setsurface=source, unsetcolor=(0, 0, 0, 0))
+
+
+# Backwards-compatible name used by existing tests.
+extract_priority_overlay = build_priority_overlay

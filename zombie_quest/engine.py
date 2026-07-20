@@ -163,7 +163,7 @@ class GameEngine:
         for room_id, room in self.rooms.items():
             bg = get_room_background(room_id, room.size)
             if bg:
-                room.background = bg
+                room.set_background(bg)
 
     def run(self) -> None:
         """Main game loop."""
