@@ -1,0 +1,36 @@
+GIMP Palette
+Name: ZQ-32
+Columns: 4
+#
+  0   0   0	night_0
+ 30  10  60	night_1
+ 58  34 100	night_2
+ 94  62 148	night_3
+ 98  26 110	neon_magenta_0
+168  38 150	neon_magenta_1
+255  20 147	neon_magenta_2
+255 128 196	neon_magenta_3
+ 16  70  86	neon_cyan_0
+ 30 128 148	neon_cyan_1
+ 60 190 208	neon_cyan_2
+120 244 255	neon_cyan_3
+ 96  56  16	gold_0
+164 102  24	gold_1
+224 160  40	gold_2
+255 215   0	gold_3
+ 62  26  22	brick_0
+110  46  34	brick_1
+158  76  52	brick_2
+206 120  86	brick_3
+ 30  54  34	sick_0
+ 62 102  58	sick_1
+102 158  88	sick_2
+158 206 130	sick_3
+104  64  50	skin_0
+160 104  78	skin_1
+212 152 112	skin_2
+246 206 164	skin_3
+ 54  52  64	bone_0
+106 104 118	bone_1
+170 168 178	bone_2
+240 234 224	bone_3

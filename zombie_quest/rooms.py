@@ -139,6 +139,7 @@ class Room:
         else:
             self.background = create_placeholder_background(data.get("background_label", self.name), self.size)
         self.priority_mask = create_priority_mask(self.size, data.get("priority_regions", []))
+        self.emissive: Optional[pygame.Surface] = None  # authored neon/lamp layer
         self.walkable_mask = create_walkable_mask(self.size, data.get("walkable_zones", []))
         self.priority_overlay = extract_priority_overlay(self.background, self.priority_mask)
         self.pathfinder = GridPathfinder(self.walkable_mask)

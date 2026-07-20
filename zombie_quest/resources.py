@@ -1,3 +1,7 @@
+import json
+import os
+from dataclasses import dataclass
+
 import pygame
 from typing import Dict, List, Optional, Tuple
 
@@ -6,6 +10,101 @@ Color = Tuple[int, int, int]
 DEFAULT_BG_COLOR: Color = (40, 60, 80)
 DEFAULT_PRIORITY_WHITE: Color = (255, 255, 255)
 DEFAULT_PRIORITY_BLACK: Color = (0, 0, 0)
+
+
+@dataclass(frozen=True)
+class RoomAssets:
+    """Authored art for one room, loaded from assets/rooms/<id>/."""
+    background: pygame.Surface
+    priority_mask: Optional[pygame.Surface]
+    emissive: Optional[pygame.Surface]
+
+
+@dataclass(frozen=True)
+class CharacterSet:
+    """Authored animation set loaded from assets/characters/<name>/."""
+    animations: Dict[str, List[pygame.Surface]]
+    frame_size: Tuple[int, int]
+    anchor: Tuple[int, int]
+    animation_map: Dict[str, dict]
+    perspective_steps: Tuple[float, ...]
+
+
+def load_image(path: str, *, alpha: bool = False,
+               validate_palette: bool = True,
+               expected_size: Optional[Tuple[int, int]] = None) -> pygame.Surface:
+    """Load a PNG, optionally validating size and the ZQ-32 contract.
+
+    convert()/convert_alpha() only runs when a display exists, so unit
+    tests without set_mode still work (surfaces are just unconverted).
+    """
+    surface = pygame.image.load(path)
+    if expected_size and surface.get_size() != expected_size:
+        raise ValueError(f"{path}: size {surface.get_size()}, expected {expected_size}")
+    if validate_palette:
+        from .palette import assert_surface_palette
+        assert_surface_palette(surface, context=path)
+    if pygame.display.get_surface() is not None:
+        surface = surface.convert_alpha() if alpha else surface.convert()
+    return surface
+
+
+def load_room_assets(assets_root: str, room_id: str,
+                     expected_size: Tuple[int, int] = (320, 200)) -> Optional[RoomAssets]:
+    """Load a room's painted art, or None when the room has no assets yet
+    (caller falls back to the procedural generator - per-room migration)."""
+    room_dir = os.path.join(assets_root, "rooms", room_id)
+    bg_path = os.path.join(room_dir, "bg.png")
+    if not os.path.exists(bg_path):
+        return None
+    background = load_image(bg_path, expected_size=expected_size)
+
+    priority_path = os.path.join(room_dir, "priority.png")
+    priority_mask = None
+    if os.path.exists(priority_path):
+        priority_mask = load_image(priority_path, validate_palette=False,
+                                   expected_size=expected_size)
+
+    emissive_path = os.path.join(room_dir, "emissive.png")
+    emissive = None
+    if os.path.exists(emissive_path):
+        emissive = load_image(emissive_path, alpha=True, expected_size=expected_size)
+
+    return RoomAssets(background=background, priority_mask=priority_mask,
+                      emissive=emissive)
+
+
+def load_character_set(assets_root: str, name: str) -> Optional[CharacterSet]:
+    """Load sheet.png + meta.json for a character, or None if absent
+    (caller falls back to procedural sprite generation)."""
+    char_dir = os.path.join(assets_root, "characters", name)
+    sheet_path = os.path.join(char_dir, "sheet.png")
+    meta_path = os.path.join(char_dir, "meta.json")
+    if not (os.path.exists(sheet_path) and os.path.exists(meta_path)):
+        return None
+    with open(meta_path, encoding="utf-8") as handle:
+        meta = json.load(handle)
+    sheet = load_image(sheet_path, alpha=True)
+
+    frame_w, frame_h = meta["frame_size"]
+    directions = meta["directions"]
+    frames_per_direction = sheet.get_width() // frame_w
+    animations: Dict[str, List[pygame.Surface]] = {}
+    for row, direction in enumerate(directions):
+        frames = []
+        for col in range(frames_per_direction):
+            frame = pygame.Surface((frame_w, frame_h), pygame.SRCALPHA)
+            frame.blit(sheet, (0, 0), pygame.Rect(col * frame_w, row * frame_h, frame_w, frame_h))
+            frames.append(frame)
+        animations[direction] = frames
+
+    return CharacterSet(
+        animations=animations,
+        frame_size=(frame_w, frame_h),
+        anchor=tuple(meta["anchor"]),
+        animation_map=meta.get("animations", {}),
+        perspective_steps=tuple(meta.get("perspective_steps", (1.0,))),
+    )
 
 
 def ensure_font_initialized() -> None:

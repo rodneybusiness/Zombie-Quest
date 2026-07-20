@@ -14,11 +14,14 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
+import os
+
 import pygame
 
 from .characters import Hero, ZombieSpawner, ZombieMusicState, ZombieAlertness
 from .config import DISPLAY, GAMEPLAY, COLORS, GameState
 from .data_loader import build_items, build_rooms, load_game_data
+from .resources import load_room_assets
 from .rooms import Hotspot, Room
 from .ui import Inventory, InventoryWindow, MessageBox, Verb, VerbBar, PauseMenu, VERB_KEYS
 from .effects import (
@@ -56,6 +59,7 @@ class GameEngine:
         self.clock = pygame.time.Clock()
 
         # Load game data
+        self.base_path = base_path
         data = load_game_data(base_path)
         self.rooms = build_rooms(data.get("rooms", []))
         hero_data = data.get("hero", {})
@@ -162,8 +166,17 @@ class GameEngine:
         self.diegetic_audio.set_room(start_room_id)
 
     def _generate_room_backgrounds(self) -> None:
-        """Generate detailed backgrounds for all rooms."""
+        """Load painted room art where it exists; fall back to the
+        procedural generators. Rooms migrate one at a time by dropping
+        bg.png (+ optional priority.png/emissive.png) into assets/rooms/<id>/.
+        """
+        assets_root = os.path.join(self.base_path, "assets")
         for room_id, room in self.rooms.items():
+            assets = load_room_assets(assets_root, room_id, room.size)
+            if assets:
+                room.set_background(assets.background, assets.priority_mask)
+                room.emissive = assets.emissive
+                continue
             bg = get_room_background(room_id, room.size)
             if bg:
                 room.set_background(bg)
