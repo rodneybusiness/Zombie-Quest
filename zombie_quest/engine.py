@@ -23,7 +23,7 @@ from .config import DISPLAY, GAMEPLAY, COLORS, GameState
 from .data_loader import build_items, build_rooms, load_game_data
 from .resources import load_room_assets
 from .rooms import Hotspot, Room
-from .ui import Inventory, InventoryWindow, MessageBox, Verb, VerbBar, PauseMenu, VERB_KEYS
+from .ui import EndingScreen, Inventory, InventoryWindow, MessageBox, Verb, VerbBar, PauseMenu, VERB_KEYS
 from .effects import (
     ParticleSystem,
     ScreenTransition,
@@ -87,6 +87,7 @@ class GameEngine:
         self.message_box = MessageBox(native_size[0], MESSAGE_HEIGHT)
         self.message_box.rect.topleft = (0, native_size[1] - MESSAGE_HEIGHT)
         self.pause_menu = PauseMenu(native_size[0], native_size[1])
+        self.ending_screen = EndingScreen(native_size)
 
         # Inventory
         self.inventory = Inventory()
@@ -118,6 +119,10 @@ class GameEngine:
 
         # Dialogue system
         self.dialogue_manager = DialogueManager(native_size[0], native_size[1])
+        # Node-entry effects (where the ending flags are set) must reach
+        # game_flags; without this callback they were silently dropped.
+        self.dialogue_manager.effect_callback = (
+            lambda effect, value: self._apply_dialogue_effects([(effect, value)]))
         self.dialogue_trees: Dict[str, object] = {
             "clerk": create_clerk_dialogue(),
             "dj": create_dj_dialogue(),
@@ -223,7 +228,16 @@ class GameEngine:
                 event.pos = native_pos
 
             # Handle based on current state
-            if self.state == GameState.PAUSED:
+            if self.state == GameState.GAME_OVER:
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER, pygame.K_ESCAPE):
+                        self.running = False
+                    elif event.key == pygame.K_r:
+                        self.ending_screen.hide()
+                        self.game_flags = {flag: value for flag, value in self.game_flags.items()
+                                           if not flag.endswith("_ending") and flag != "maya_lost"}
+                        self._respawn_at_checkpoint()
+            elif self.state == GameState.PAUSED:
                 self._handle_pause_event(event)
             elif self.dialogue_manager.active:
                 self._handle_dialogue_event(event)
@@ -263,6 +277,16 @@ class GameEngine:
         )
         if effects:
             self._apply_dialogue_effects(effects)
+
+        # A conversation can conclude the story: check endings when the
+        # dialogue closes (terminal Maya nodes set the deciding flags).
+        if not self.dialogue_manager.active:
+            if self.state == GameState.DIALOGUE:
+                self.state = GameState.PLAYING
+            if self.state == GameState.PLAYING:
+                ending_id = self.check_ending_conditions()
+                if ending_id:
+                    self.trigger_ending(ending_id)
 
     def _apply_dialogue_effects(self, effects: List[Tuple[DialogueEffect, str]]) -> None:
         """Apply effects from dialogue choices."""
@@ -451,6 +475,8 @@ class GameEngine:
 
     def update(self, dt: float) -> None:
         """Update game state."""
+        if self.state == GameState.GAME_OVER:
+            return
         # Update audio (music layers, etc.)
         self.audio.update_music(dt)
 
@@ -1045,6 +1071,9 @@ class GameEngine:
         if self.state == GameState.PAUSED:
             self.pause_menu.draw(self.screen)
 
+        # Ending card over the frozen scene
+        self.ending_screen.draw(self.screen)
+
         # Draw transition effect last
         self.transition.draw(self.screen)
 
@@ -1148,12 +1177,7 @@ class GameEngine:
         ending_text = ending_data.get("text", "The story ends here.")
         ending_theme = ending_data.get("thematic_message", "")
 
-        # Create a comprehensive ending message
-        full_ending = f"=== {ending_name.upper()} ===\n\n{ending_text}"
-        if ending_theme:
-            full_ending += f"\n\n--- {ending_theme} ---"
-
-        self.message_box.show(full_ending)
+        self.ending_screen.show(ending_name, ending_text, ending_theme)
 
         # Play appropriate ending sound
         emotional_tone = ending_data.get("emotional_tone", "")
@@ -1172,7 +1196,11 @@ class GameEngine:
     def _trigger_infection_ending(self) -> None:
         """Trigger the transformation ending due to full infection."""
         self.state = GameState.GAME_OVER
-        self.message_box.show("=== TRANSFORMATION ===\n\nThe infection consumes you. Your humanity fades as you join the neon dead, shambling through the Minneapolis night forever.\n\n--- Sometimes the scene claims us all ---")
+        self.ending_screen.show(
+            "Transformation",
+            "The infection consumes you. Your humanity fades as you join the "
+            "neon dead, shambling through the Minneapolis night forever.",
+            "Sometimes the scene claims us all")
         self.audio.play("death", volume=0.8)
         self.glow.pulse(COLORS.INFECTION_VEIN, 3.0)
 

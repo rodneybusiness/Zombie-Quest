@@ -661,3 +661,72 @@ class PauseMenu:
                     (box_x + 30, y + 3),
                     (box_x + 30, y + 13),
                 ])
+
+
+class EndingScreen:
+    """Full-screen ending card: dither-dimmed scene, wrapped story text.
+
+    ENTER quits, R restarts from checkpoint. MessageBox can't render the
+    multi-line ending prose, so endings route here instead.
+    """
+
+    def __init__(self, size) -> None:
+        from .dither import dim_overlay
+        self.size = size
+        self.dim = dim_overlay(size, coverage=0.75)
+        self.title_font = load_serif_font(22)
+        self.body_font = load_serif_font(14)
+        self.title = ""
+        self.lines = []
+        self.tone_line = ""
+        self.visible = False
+
+    def show(self, name: str, text: str, theme: str = "") -> None:
+        self.title = name.upper()
+        self.lines = self._wrap(text, self.size[0] - 48)
+        self.tone_line = theme
+        self.visible = True
+
+    def hide(self) -> None:
+        self.visible = False
+
+    def _wrap(self, text: str, max_width: int):
+        lines = []
+        for paragraph in text.split("\n"):
+            words = paragraph.split()
+            if not words:
+                lines.append("")
+                continue
+            current = words[0]
+            for word in words[1:]:
+                candidate = f"{current} {word}"
+                if self.body_font.size(candidate)[0] <= max_width:
+                    current = candidate
+                else:
+                    lines.append(current)
+                    current = word
+            lines.append(current)
+        return lines
+
+    def draw(self, surface: pygame.Surface) -> None:
+        if not self.visible:
+            return
+        surface.blit(self.dim, (0, 0))
+        center_x = self.size[0] // 2
+        y = 42
+        title_surface = self.title_font.render(self.title, False, COLORS.NEON_GOLD)
+        surface.blit(title_surface, (center_x - title_surface.get_width() // 2, y))
+        y += title_surface.get_height() + 12
+        for line in self.lines:
+            if line:
+                line_surface = self.body_font.render(line, False, COLORS.UI_TEXT)
+                surface.blit(line_surface, (center_x - line_surface.get_width() // 2, y))
+            y += self.body_font.get_linesize()
+        if self.tone_line:
+            y += 8
+            tone_surface = self.body_font.render(self.tone_line, False, COLORS.UI_BORDER)
+            surface.blit(tone_surface, (center_x - tone_surface.get_width() // 2, y))
+            y += tone_surface.get_height()
+        y += 16
+        prompt = self.body_font.render("ENTER - quit    R - back to checkpoint", False, COLORS.UI_TEXT)
+        surface.blit(prompt, (center_x - prompt.get_width() // 2, min(y, self.size[1] - 24)))
